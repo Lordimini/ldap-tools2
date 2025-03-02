@@ -301,20 +301,20 @@
                 document.getElementById('actualSubmitForm').submit();
             });
             
-            // Gestionnaire pour le bouton de vérification du nom
+            // Dans le template user_creation.html - gestionnaire pour le bouton de vérification du nom
             document.getElementById('checkNameBtn').addEventListener('click', function() {
                 const givenName = document.getElementById('givenName').value.trim();
                 const sn = document.getElementById('sn').value.trim();
                 const resultDiv = document.getElementById('nameCheckResult');
-                
+    
                 if (!givenName || !sn) {
                     resultDiv.innerHTML = '<div class="alert alert-warning">Veuillez saisir le prénom et le nom.</div>';
                     return;
                 }
-                
+    
                 // Afficher un indicateur de chargement
                 resultDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Vérification en cours...</div>';
-                
+    
                 // Envoyer la requête AJAX
                 fetch('{{ url_for("usercreation.check_name_exists") }}', {
                     method: 'POST',
@@ -329,9 +329,11 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'exists') {
-                        resultDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                        // Ici, on affiche sn + givenName (au lieu de givenName + sn) pour être cohérent avec le format LDAP
+                        resultDiv.innerHTML = `<div class="alert alert-danger">Un utilisateur avec le nom '${sn} ${givenName}' existe déjà dans l'annuaire (${data.message}).</div>`;
                     } else if (data.status === 'ok') {
-                        resultDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                        // Même modification ici
+                        resultDiv.innerHTML = `<div class="alert alert-success">Aucun utilisateur existant avec le nom '${sn} ${givenName}'.</div>`;
                     } else {
                         resultDiv.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
                     }

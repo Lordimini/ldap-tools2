@@ -256,12 +256,12 @@ def check_name_exists():
     if exists:
         return jsonify({
             'status': 'exists',
-            'message': f"Un utilisateur avec le nom '{given_name} {sn}' existe déjà dans l'annuaire ({existing_dn})."
+            'message': existing_dn  # On retourne juste le DN, le message complet sera formaté côté client
         })
     else:
         return jsonify({
             'status': 'ok',
-            'message': f"Aucun utilisateur existant avec le nom '{given_name} {sn}'."
+            'message': ''  # Le message sera formaté côté client
         })
 
 @usercreation_bp.route('/check_favvnatnr_exists', methods=['POST'])

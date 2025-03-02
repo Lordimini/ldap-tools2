@@ -23,7 +23,7 @@
     {% endwith %}
 
     <!-- Form to create a new user -->
-    <form method="POST" class="card p-4 shadow" id="userCreationForm">
+    <form method="POST" class="card p-4 shadow" id="userCreationForm" onsubmit="return validateForm(event);">
         {{ form.hidden_tag() }}
         
         <!-- Dropdown for User Type -->
@@ -87,7 +87,7 @@
         </div>
 
         <!-- Submit button -->
-        <button type="submit" class="btn btn-primary">Create User</button>
+        <button type="submit" class="btn btn-primary">Preview & Create User</button>
     </form>
 
     <!-- Email Warning Modal -->
@@ -149,6 +149,49 @@
             </div>
         </div>
     </div>
+    
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-info text-white">
+            <h5 class="modal-title" id="confirmationModalLabel">Confirm User Creation</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <h6>Please review the user information before creating:</h6>
+            
+            <div id="userSummary" class="card p-3 mb-3">
+              <!-- User info will be populated here via JavaScript -->
+            </div>
+            
+            <button id="copyToClipboard" class="btn btn-outline-secondary mb-3">
+              <i class="fas fa-copy"></i> Copy to Clipboard
+            </button>
+            <div class="alert alert-success d-none" id="copySuccess">
+              Copied to clipboard!
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirmCreate">Create User</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Hidden form for actual submission -->
+    <form id="actualSubmitForm" method="POST" style="display: none;">
+      <input type="hidden" name="user_type" id="hidden_user_type">
+      <input type="hidden" name="givenName" id="hidden_givenName">
+      <input type="hidden" name="sn" id="hidden_sn">
+      <input type="hidden" name="email" id="hidden_email">
+      <input type="hidden" name="email_override" id="hidden_email_override">
+      <input type="hidden" name="favvNatNr" id="hidden_favvNatNr">
+      <input type="hidden" name="favvNatNr_override" id="hidden_favvNatNr_override">
+      <input type="hidden" name="manager" id="hidden_manager">
+      <input type="hidden" name="manager_override" id="hidden_manager_override">
+    </form>
 
     <!-- Include Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -247,46 +290,187 @@
                     .appendTo(ul);
             };
             
-            // Form submission handling
-            document.getElementById('userCreationForm').addEventListener('submit', function(event) {
-                // Check if form is valid
-                if (!this.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
+            // Handle confirmation button
+            document.getElementById('confirmCreate').addEventListener('click', function() {
+                document.getElementById('actualSubmitForm').submit();
+            });
+            
+            // Copy to clipboard functionality
+            document.getElementById('copyToClipboard').addEventListener('click', function() {
+                // Get HTML content for email
+                const userSummary = document.getElementById('userSummary');
                 
-                // Check if email is required and empty
-                const emailField = document.getElementById('email');
-                const emailOverride = document.getElementById('email_override').value === 'true';
+                // Create formatted HTML for email
+                const emailHTML = `
+                  <h3>New User Creation Details</h3>
+                  ${userSummary.innerHTML}
+                  <p>This user has been created in the LDAP directory.</p>
+                `;
                 
-                if (!emailField.value && !emailOverride) {
-                    event.preventDefault();
-                    alert('Email address is required. Use the override button if you want to proceed without an email.');
-                }
+                // Copy to clipboard
+                copyHtmlToClipboard(emailHTML);
                 
-                // Check if FavvNatNr is required and empty
-                if (favvNatNrContainer.style.display !== 'none') {
-                    const favvNatNrField = document.getElementById('favvNatNr');
-                    const favvNatNrOverride = document.getElementById('favvNatNr_override').value === 'true';
-                    
-                    if (!favvNatNrField.value && !favvNatNrOverride) {
-                        event.preventDefault();
-                        alert('National Register Number is required for this user type. Use the override button if you want to proceed without it.');
-                    }
-                }
-                
-                // Check if Manager is required and empty
-                if (managerContainer.style.display !== 'none') {
-                    const managerField = document.getElementById('manager');
-                    const managerOverride = document.getElementById('manager_override').value === 'true';
-                    
-                    if (!managerField.value && !managerOverride) {
-                        event.preventDefault();
-                        alert('Hierarchical Manager is required for trainees. Use the override button if you want to proceed without it.');
-                    }
-                }
+                // Show success message
+                const successAlert = document.getElementById('copySuccess');
+                successAlert.classList.remove('d-none');
+                setTimeout(() => {
+                  successAlert.classList.add('d-none');
+                }, 3000);
             });
         });
+        
+        // Form submission handling with confirmation
+        function validateForm(event) {
+          event.preventDefault();
+          
+          // Check form validity
+          const form = document.getElementById('userCreationForm');
+          if (!form.checkValidity()) {
+            return false;
+          }
+          
+          // Check required fields with overrides
+          const emailField = document.getElementById('email');
+          const emailOverride = document.getElementById('email_override').value === 'true';
+          if (!emailField.value && !emailOverride) {
+            alert('Email address is required. Use the override button if you want to proceed without an email.');
+            return false;
+          }
+          
+          // Check FavvNatNr if needed
+          const favvNatNrContainer = document.getElementById('favvNatNr_container');
+          if (favvNatNrContainer.style.display !== 'none') {
+            const favvNatNrField = document.getElementById('favvNatNr');
+            const favvNatNrOverride = document.getElementById('favvNatNr_override').value === 'true';
+            if (!favvNatNrField.value && !favvNatNrOverride) {
+              alert('National Register Number is required for this user type. Use the override button if you want to proceed without it.');
+              return false;
+            }
+          }
+          
+          // Check Manager if needed
+          const managerContainer = document.getElementById('manager_container');
+          if (managerContainer.style.display !== 'none') {
+            const managerField = document.getElementById('manager');
+            const managerOverride = document.getElementById('manager_override').value === 'true';
+            if (!managerField.value && !managerOverride) {
+              alert('Hierarchical Manager is required for trainees. Use the override button if you want to proceed without it.');
+              return false;
+            }
+          }
+          
+          // All validations passed, populate the confirmation modal
+          populateConfirmationModal();
+          
+          // Show the confirmation modal
+          const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+          confirmationModal.show();
+          
+          return false; // Prevent normal form submission
+        }
+        
+        // Populate the confirmation modal with user info
+        function populateConfirmationModal() {
+          const userType = document.getElementById('user_type');
+          const userTypeText = userType.options[userType.selectedIndex].text;
+          const givenName = document.getElementById('givenName').value;
+          const sn = document.getElementById('sn').value;
+          const email = document.getElementById('email').value || 'No email specified (Override)';
+          const favvNatNr = document.getElementById('favvNatNr').value || 'No National Register Number (Override)';
+          const manager = document.getElementById('manager').value || 'No manager specified (Override)';
+          
+          // Create HTML for the summary
+          let html = `
+            <table class="table table-striped">
+              <tr>
+                <th>User Type:</th>
+                <td>${userTypeText} (${userType.value})</td>
+              </tr>
+              <tr>
+                <th>Full Name:</th>
+                <td>${sn} ${givenName}</td>
+              </tr>
+              <tr>
+                <th>Email:</th>
+                <td>${email}</td>
+              </tr>`;
+          
+          // Add conditional fields
+if (document.getElementById('favvNatNr_container').style.display !== 'none') {
+  html += `
+    <tr>
+      <th>National Register Number:</th>
+      <td>${favvNatNr}</td>
+    </tr>`;
+}
+
+if (document.getElementById('manager_container').style.display !== 'none') {
+  html += `
+    <tr>
+      <th>Hierarchical Manager:</th>
+      <td>${manager}</td>
+    </tr>`;
+}
+
+html += `</table>`;
+
+// Set the HTML in the modal
+document.getElementById('userSummary').innerHTML = html;
+
+// Also populate the hidden form for submission
+document.getElementById('hidden_user_type').value = userType.value;
+document.getElementById('hidden_givenName').value = givenName;
+document.getElementById('hidden_sn').value = sn;
+document.getElementById('hidden_email').value = document.getElementById('email').value;
+document.getElementById('hidden_email_override').value = document.getElementById('email_override').value;
+document.getElementById('hidden_favvNatNr').value = document.getElementById('favvNatNr').value;
+document.getElementById('hidden_favvNatNr_override').value = document.getElementById('favvNatNr_override').value;
+document.getElementById('hidden_manager').value = document.getElementById('manager').value;
+document.getElementById('hidden_manager_override').value = document.getElementById('manager_override').value;
+
+
+
+
+
+// Function to copy HTML to clipboard
+function copyHtmlToClipboard(html) {
+  // For newer browsers using the Clipboard API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(html)
+      .then(() => {
+        console.log('HTML copied to clipboard');
+      })
+      .catch(err => {
+        console.error('Failed to copy HTML: ', err);
+        fallbackCopyHtmlToClipboard(html);
+      });
+  } else {
+    // Fallback for older browsers
+    fallbackCopyHtmlToClipboard(html);
+  }
+}
+
+// Fallback copy method
+function fallbackCopyHtmlToClipboard(html) {
+  // Create a temporary textarea element
+  const textarea = document.createElement('textarea');
+  textarea.value = html;
+  document.body.appendChild(textarea);
+  textarea.select();
+  
+  try {
+    // Execute copy command
+    document.execCommand('copy');
+    console.log('HTML copied to clipboard using fallback');
+  } catch (err) {
+    console.error('Failed to copy HTML using fallback: ', err);
+  }
+  
+  // Clean up
+  document.body.removeChild(textarea);
+}
+}
     </script>
 </div>
 {% endblock %}
+                    

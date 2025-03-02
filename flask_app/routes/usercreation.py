@@ -44,18 +44,19 @@ def create_user():
     }
     
     if request.method == 'POST':
-        # Récupérer les données du formulaire
-        user_type = request.form.get('user_type')
-        given_name = request.form.get('givenName')
-        sn = request.form.get('sn')
-        email = request.form.get('email')
-        favvnatnr = request.form.get('favvNatNr', '')
-        manager = request.form.get('manager', '')
+        # Récupérer les données du formulaire (peut être soit du formulaire visible ou caché)
+        user_type = request.form.get('user_type') or request.form.get('hidden_user_type')
+        given_name = request.form.get('givenName') or request.form.get('hidden_givenName')
+        sn = request.form.get('sn') or request.form.get('hidden_sn')
+        email = request.form.get('email') or request.form.get('hidden_email')
+        favvnatnr = request.form.get('favvNatNr') or request.form.get('hidden_favvNatNr', '')
+        manager = request.form.get('manager') or request.form.get('hidden_manager', '')
         
         # Récupérer les valeurs des overrides
-        email_override = request.form.get('email_override') == 'true'
-        favvnatnr_override = request.form.get('favvNatNr_override') == 'true'
-        manager_override = request.form.get('manager_override') == 'true'
+        email_override = (request.form.get('email_override') == 'true') or (request.form.get('hidden_email_override') == 'true')
+        favvnatnr_override = (request.form.get('favvNatNr_override') == 'true') or (request.form.get('hidden_favvNatNr_override') == 'true')
+        manager_override = (request.form.get('manager_override') == 'true') or (request.form.get('hidden_manager_override') == 'true')
+        
         
         # Sauvegarder les valeurs du formulaire
         form_data = {
@@ -192,3 +193,19 @@ def create_user():
 
     # Rendre le template avec le formulaire (pour les requêtes GET)
     return render_template('user_creation.html', form=form, form_data=form_data)
+
+
+# @usercreation_bp.route('/get_template_details', methods=['GET'])
+# @login_required
+# def get_template_details():
+#     template_cn = request.args.get('template_cn', '')
+#     if not template_cn:
+#         return jsonify({'error': 'Template CN is required'}), 400
+    
+#     ldap_model = LDAPModel()
+#     template_details = ldap_model.get_template_details(template_cn)
+    
+#     if template_details:
+#         return jsonify(template_details)
+#     else:
+#         return jsonify({'error': 'Template not found'}), 404

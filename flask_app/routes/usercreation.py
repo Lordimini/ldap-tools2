@@ -4,6 +4,7 @@ from flask_app.utils.ldap_utils import login_required
 from flask_wtf import FlaskForm
 from wtforms import SelectField, StringField, HiddenField
 from wtforms.validators import DataRequired
+from ldap3 import Server, Connection, ALL, MODIFY_ADD, SUBTREE
 
 usercreation_bp = Blueprint('usercreation', __name__)
 
@@ -57,8 +58,7 @@ def create_user():
         favvnatnr_override = (request.form.get('favvNatNr_override') == 'true') or (request.form.get('hidden_favvNatNr_override') == 'true')
         manager_override = (request.form.get('manager_override') == 'true') or (request.form.get('hidden_manager_override') == 'true')
         
-        
-        # Sauvegarder les valeurs du formulaire
+        # Sauvegarder les valeurs du formulaire pour l'affichage en cas d'erreur
         form_data = {
             'user_type': user_type,
             'givenName': given_name,
@@ -84,27 +84,13 @@ def create_user():
             flash("Un chef hiérarchique est obligatoire pour les stagiaires.", 'error')
             return render_template('user_creation.html', form=form, form_data=form_data)
         
-        # Vérifier si un utilisateur avec cette combinaison de nom existe déjà
-        exists, existing_dn = ldap_model.check_name_combination_exists(given_name, sn)
-        if exists:
-            flash(f"Un utilisateur avec le nom '{given_name} {sn}' existe déjà dans l'annuaire ({existing_dn}). Veuillez utiliser une combinaison de nom différente.", 'error')
-            return render_template('user_creation.html', form=form, form_data=form_data)
+        # Nous ne vérifions plus automatiquement l'unicité du nom complet et du FavvNatNr ici
+        # Ces vérifications seront faites via les boutons de vérification spécifiques
         
-        # Vérifier le FavvNatNr si le type d'utilisateur est BOODOCI ou OCI
-        if (user_type == "BOODOCI" or user_type == "OCI"):
-            if not favvnatnr and not favvnatnr_override:
-                flash("Le numéro de registre national est obligatoire pour les utilisateurs de type OCI.", 'error')
-                return render_template('user_creation.html', form=form, form_data=form_data)
-            
-            # Vérifier si ce FavvNatNr existe déjà (seulement s'il est fourni)
-            if favvnatnr:
-                # Normaliser le FavvNatNr
-                normalized_favvnatnr = favvnatnr.replace(' ', '').replace('-', '')
-                
-                exists, existing_dn, fullname = ldap_model.check_favvnatnr_exists(normalized_favvnatnr)
-                if exists:
-                    flash(f"Un utilisateur avec le numéro national '{favvnatnr}' existe déjà dans l'annuaire: {fullname} ({existing_dn}). Veuillez utiliser un numéro différent.", 'error')
-                    return render_template('user_creation.html', form=form, form_data=form_data)
+        # Vérifier si le FavvNatNr est requis pour certains types d'utilisateurs
+        if (user_type == "BOODOCI" or user_type == "OCI") and not favvnatnr and not favvnatnr_override:
+            flash("Le numéro de registre national est obligatoire pour les utilisateurs de type OCI.", 'error')
+            return render_template('user_creation.html', form=form, form_data=form_data)
         
         # Obtenir les détails du modèle sélectionné
         template_details = ldap_model.get_template_details(user_type)
@@ -174,16 +160,8 @@ def create_user():
             if result:
                 # Afficher un message de succès avec le mot de passe généré
                 flash(f"Utilisateur {sn} {given_name} (CN: {cn}) créé avec succès! Mot de passe: {generated_password}", 'success')
-                # Réinitialiser form_data pour un nouveau formulaire vide
-                form_data = {
-                    'user_type': '',
-                    'givenName': '',
-                    'sn': '',
-                    'email': '',
-                    'favvNatNr': '',
-                    'manager': ''
-                }
-                return render_template('user_creation.html', form=form, form_data=form_data)
+                # Rediriger vers une nouvelle page vide pour éviter la resoumission du formulaire en cas de rafraîchissement
+                return redirect(url_for('usercreation.create_user'))
             else:
                 flash(f"Échec de la création de l'utilisateur.", 'error')
                 return render_template('user_creation.html', form=form, form_data=form_data)
@@ -191,9 +169,8 @@ def create_user():
             flash(f"Une erreur est survenue: {str(e)}", 'error')
             return render_template('user_creation.html', form=form, form_data=form_data)
 
-    # Rendre le template avec le formulaire (pour les requêtes GET)
+    # Pour les requêtes GET, toujours retourner un formulaire vide
     return render_template('user_creation.html', form=form, form_data=form_data)
-
 
 
 @usercreation_bp.route('/preview_user_details', methods=['POST'])
@@ -201,15 +178,16 @@ def create_user():
 def preview_user_details():
     """
     API endpoint to generate a preview of user details before creation,
-    including the CN and password that would be generated.
+    including the CN, password, and template attributes.
     """
     try:
         # Get form data
         given_name = request.json.get('givenName', '')
         sn = request.json.get('sn', '')
+        user_type = request.json.get('user_type', '')
         
-        if not given_name or not sn:
-            return jsonify({'error': 'Given name and surname are required'}), 400
+        if not given_name or not sn or not user_type:
+            return jsonify({'error': 'Given name, surname and user type are required'}), 400
         
         # Instantiate the LDAP model
         ldap_model = LDAPModel()
@@ -217,10 +195,7 @@ def preview_user_details():
         # Generate the CN
         cn = ldap_model.generate_unique_cn(given_name, sn)
         
-        # We don't want to expose the actual password generation logic here,
-        # but we can emulate it using the same algorithm from the LDAPModel class
-        
-        # Generate password (this matches the logic in the model)
+        # Generate password
         if len(cn) < 5:
             password = cn.lower() + '*987'
         elif len(cn) == 5:
@@ -232,11 +207,87 @@ def preview_user_details():
             second_part = cn[3:6]
             password = (second_part + first_part).lower() + '*987'
         
-        # Return the generated CN and password
+        # Get template details
+        template_details = ldap_model.get_template_details(user_type)
+        
+        # Get service manager's fullName if FavvExtDienstMgrDn is present
+        if template_details and template_details.get('FavvExtDienstMgrDn'):
+            try:
+                conn = Connection(ldap_model.ldap_server, user=ldap_model.bind_dn, password=ldap_model.password, auto_bind=True)
+                conn.search(template_details['FavvExtDienstMgrDn'], '(objectClass=*)', attributes=['fullName'])
+                
+                if conn.entries and conn.entries[0].fullName:
+                    template_details['ServiceManagerName'] = conn.entries[0].fullName.value
+                else:
+                    template_details['ServiceManagerName'] = "Nom non trouvé"
+                
+                conn.unbind()
+            except Exception as e:
+                print(f"Erreur lors de la récupération du nom du manager: {str(e)}")
+                template_details['ServiceManagerName'] = "Erreur de recherche"
+        
+        # Return the generated CN, password, and template details
         return jsonify({
             'cn': cn,
-            'password': password
+            'password': password,
+            'template_details': template_details
         })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+    
+    
+@usercreation_bp.route('/check_name_exists', methods=['POST'])
+@login_required
+def check_name_exists():
+    """
+    Route pour vérifier si un utilisateur avec le nom et prénom donnés existe déjà
+    """
+    given_name = request.json.get('givenName', '')
+    sn = request.json.get('sn', '')
+    
+    if not given_name or not sn:
+        return jsonify({'status': 'error', 'message': 'Prénom et nom sont requis'}), 400
+    
+    ldap_model = LDAPModel()
+    exists, existing_dn = ldap_model.check_name_combination_exists(given_name, sn)
+    
+    if exists:
+        return jsonify({
+            'status': 'exists',
+            'message': f"Un utilisateur avec le nom '{given_name} {sn}' existe déjà dans l'annuaire ({existing_dn})."
+        })
+    else:
+        return jsonify({
+            'status': 'ok',
+            'message': f"Aucun utilisateur existant avec le nom '{given_name} {sn}'."
+        })
+
+@usercreation_bp.route('/check_favvnatnr_exists', methods=['POST'])
+@login_required
+def check_favvnatnr_exists():
+    """
+    Route pour vérifier si un utilisateur avec le numéro de registre national donné existe déjà
+    """
+    favvnatnr = request.json.get('favvNatNr', '')
+    
+    if not favvnatnr:
+        return jsonify({'status': 'error', 'message': 'Numéro de registre national requis'}), 400
+    
+    # Normaliser le FavvNatNr
+    normalized_favvnatnr = favvnatnr.replace(' ', '').replace('-', '')
+    
+    ldap_model = LDAPModel()
+    exists, existing_dn, fullname = ldap_model.check_favvnatnr_exists(normalized_favvnatnr)
+    
+    if exists:
+        return jsonify({
+            'status': 'exists',
+            'message': f"Un utilisateur avec le numéro national '{favvnatnr}' existe déjà dans l'annuaire: {fullname} ({existing_dn})."
+        })
+    else:
+        return jsonify({
+            'status': 'ok',
+            'message': f"Aucun utilisateur existant avec le numéro national '{favvnatnr}'."
+        })

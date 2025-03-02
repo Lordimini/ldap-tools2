@@ -45,7 +45,13 @@
         <!-- Surname -->
         <div class="mb-3">
             <label for="sn" class="form-label">Surname:</label>
-            <input type="text" id="sn" name="sn" class="form-control" value="{{ form_data.sn if form_data else '' }}" required>
+            <div class="input-group">
+                <input type="text" id="sn" name="sn" class="form-control" value="{{ form_data.sn if form_data else '' }}" required>
+                <button type="button" id="checkNameBtn" class="btn btn-outline-primary">
+                    <i class="fas fa-check"></i> Vérifier
+                </button>
+            </div>
+            <div id="nameCheckResult" class="mt-2"></div>
         </div>
 
         <!-- Email (Now Required) -->
@@ -81,8 +87,12 @@
                 <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#favvNatNrWarningModal">
                     <i class="fas fa-exclamation-triangle"></i> Override
                 </button>
+                <button type="button" id="checkFavvNatNrBtn" class="btn btn-outline-primary">
+                    <i class="fas fa-check"></i> Vérifier
+                </button>
             </div>
             <small class="form-text text-muted">Format will be automatically normalized to remove spaces and hyphens.</small>
+            <div id="favvNatNrCheckResult" class="mt-2"></div>
             <input type="hidden" id="favvNatNr_override" name="favvNatNr_override" value="false">
         </div>
 
@@ -164,13 +174,6 @@
                     <div id="userSummary" class="card p-3 mb-3">
                         <!-- User info will be populated here via JavaScript -->
                     </div>
-                    
-                    <button id="copyToClipboard" class="btn btn-outline-secondary mb-3">
-                        <i class="fas fa-copy"></i> Copy to Clipboard
-                    </button>
-                    <div class="alert alert-success d-none" id="copySuccess">
-                        Copied to clipboard!
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -238,6 +241,9 @@
                 
                 // Update input value with normalized string
                 e.target.value = normalized;
+                
+                // Clear check result when input changes
+                document.getElementById('favvNatNrCheckResult').innerHTML = '';
             });
             
             // Handle FavvNatNr Override
@@ -295,37 +301,108 @@
                 document.getElementById('actualSubmitForm').submit();
             });
             
-            // Copy to clipboard functionality
-            document.getElementById('copyToClipboard').addEventListener('click', function() {
-                // Get HTML content for email
-                const userSummary = document.getElementById('userSummary');
+            // Gestionnaire pour le bouton de vérification du nom
+            document.getElementById('checkNameBtn').addEventListener('click', function() {
+                const givenName = document.getElementById('givenName').value.trim();
+                const sn = document.getElementById('sn').value.trim();
+                const resultDiv = document.getElementById('nameCheckResult');
                 
-                // Create formatted HTML for email
-                const emailHTML = `
-                    <h3>New User Creation Details</h3>
-                    ${userSummary.innerHTML}
-                    <p>This user has been created in the LDAP directory.</p>
-                `;
+                if (!givenName || !sn) {
+                    resultDiv.innerHTML = '<div class="alert alert-warning">Veuillez saisir le prénom et le nom.</div>';
+                    return;
+                }
                 
-                // Copy to clipboard
-                copyHtmlToClipboard(emailHTML);
+                // Afficher un indicateur de chargement
+                resultDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Vérification en cours...</div>';
                 
-                // Show success message
-                const successAlert = document.getElementById('copySuccess');
-                successAlert.classList.remove('d-none');
-                setTimeout(() => {
-                    successAlert.classList.add('d-none');
-                }, 3000);
+                // Envoyer la requête AJAX
+                fetch('{{ url_for("usercreation.check_name_exists") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        givenName: givenName,
+                        sn: sn
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'exists') {
+                        resultDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                    } else if (data.status === 'ok') {
+                        resultDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                    } else {
+                        resultDiv.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    resultDiv.innerHTML = '<div class="alert alert-danger">Erreur lors de la vérification. Veuillez réessayer.</div>';
+                });
+            });
+            
+            // Gestionnaire pour le bouton de vérification du FavvNatNr
+            const checkFavvNatNrBtn = document.getElementById('checkFavvNatNrBtn');
+            if (checkFavvNatNrBtn) {
+                checkFavvNatNrBtn.addEventListener('click', function() {
+                    const favvNatNr = document.getElementById('favvNatNr').value.trim();
+                    const resultDiv = document.getElementById('favvNatNrCheckResult');
+                    
+                    if (!favvNatNr) {
+                        resultDiv.innerHTML = '<div class="alert alert-warning">Veuillez saisir un numéro de registre national.</div>';
+                        return;
+                    }
+                    
+                    // Afficher un indicateur de chargement
+                    resultDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Vérification en cours...</div>';
+                    
+                    // Envoyer la requête AJAX
+                    fetch('{{ url_for("usercreation.check_favvnatnr_exists") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            favvNatNr: favvNatNr
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'exists') {
+                            resultDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                        } else if (data.status === 'ok') {
+                            resultDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                        } else {
+                            resultDiv.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        resultDiv.innerHTML = '<div class="alert alert-danger">Erreur lors de la vérification. Veuillez réessayer.</div>';
+                    });
+                });
+            }
+            
+            // Effacer les résultats de vérification lorsque les champs sont modifiés
+            document.getElementById('givenName').addEventListener('input', function() {
+                document.getElementById('nameCheckResult').innerHTML = '';
+            });
+            
+            document.getElementById('sn').addEventListener('input', function() {
+                document.getElementById('nameCheckResult').innerHTML = '';
             });
         });
         
-        // Form submission handling with confirmation
+        // Fonction de validation du formulaire
         function validateForm(event) {
             event.preventDefault();
             
             // Check form validity
             const form = document.getElementById('userCreationForm');
             if (!form.checkValidity()) {
+                // Activer la validation native du navigateur
+                form.reportValidity();
                 return false;
             }
             
@@ -359,7 +436,7 @@
                 }
             }
             
-            // Toutes les validations passées, récupérer le CN et le mot de passe avant d'afficher la modal
+            // Récupérer le CN et le mot de passe avant d'afficher la modal
             fetch('{{ url_for("usercreation.preview_user_details") }}', {
                 method: 'POST',
                 headers: {
@@ -367,7 +444,8 @@
                 },
                 body: JSON.stringify({
                     givenName: document.getElementById('givenName').value,
-                    sn: document.getElementById('sn').value
+                    sn: document.getElementById('sn').value,
+                    user_type: document.getElementById('user_type').value
                 })
             })
             .then(response => response.json())
@@ -377,21 +455,8 @@
                     return;
                 }
                 
-                // Stocker le CN et le mot de passe dans des champs cachés pour soumission
-                const cnField = document.createElement('input');
-                cnField.type = 'hidden';
-                cnField.id = 'preview_cn';
-                cnField.value = data.cn;
-                document.getElementById('userCreationForm').appendChild(cnField);
-                
-                const passwordField = document.createElement('input');
-                passwordField.type = 'hidden';
-                passwordField.id = 'preview_password';
-                passwordField.value = data.password;
-                document.getElementById('userCreationForm').appendChild(passwordField);
-                
                 // Remplir la modal avec les données
-                populateConfirmationModal(data.cn, data.password);
+                populateConfirmationModal(data.cn, data.password, data.template_details);
                 
                 // Afficher la modal de confirmation
                 const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
@@ -406,7 +471,7 @@
         }
         
         // Populate the confirmation modal with user info
-        function populateConfirmationModal(cn, password) {
+        function populateConfirmationModal(cn, password, template_details) {
             const userType = document.getElementById('user_type');
             const userTypeText = userType.options[userType.selectedIndex].text;
             const givenName = document.getElementById('givenName').value;
@@ -456,9 +521,63 @@
                     </tr>`;
             }
             
+            // Add template details if available
+            if (template_details) {
+                html += `<tr><th colspan="2" class="table-secondary">Template Attributes</th></tr>`;
+                
+                if (template_details.description) {
+                    html += `
+                        <tr>
+                            <th>Description:</th>
+                            <td>${template_details.description}</td>
+                        </tr>`;
+                }
+                
+                if (template_details.title) {
+                    html += `
+                        <tr>
+                            <th>Title:</th>
+                            <td>${template_details.title}</td>
+                        </tr>`;
+                }
+                
+                if (template_details.ou) {
+                    html += `
+                        <tr>
+                            <th>Service/OU:</th>
+                            <td>${template_details.ou}</td>
+                        </tr>`;
+                }
+                
+                if (template_details.FavvEmployeeType) {
+                    html += `
+                        <tr>
+                            <th>Employee Type:</th>
+                            <td>${template_details.FavvEmployeeType}</td>
+                        </tr>`;
+                }
+                
+                if (template_details.FavvEmployeeSubType) {
+                    html += `
+                        <tr>
+                            <th>Employee SubType:</th>
+                            <td>${template_details.FavvEmployeeSubType}</td>
+                        </tr>`;
+                }
+                
+                if (template_details.FavvExtDienstMgrDn) {
+                    html += `
+                        <tr>
+                            <th>Service Manager:</th>
+                            <td>${template_details.ServiceManagerName || 'Non disponible'} <span class="text-muted small">(${template_details.FavvExtDienstMgrDn})</span></td>
+                        </tr>`;
+                }
+            }
+            
             html += `</table>
                 <div class="alert alert-info">
                     <strong>Note:</strong> Le CN et le mot de passe sont générés automatiquement en fonction du nom.
+                    ${template_details ? 'Les attributs du template seront automatiquement appliqués lors de la création.' : ''}
                 </div>`;
             
             // Set the HTML in the modal
@@ -474,44 +593,6 @@
             document.getElementById('hidden_favvNatNr_override').value = document.getElementById('favvNatNr_override').value;
             document.getElementById('hidden_manager').value = document.getElementById('manager').value;
             document.getElementById('hidden_manager_override').value = document.getElementById('manager_override').value;
-        }
-        
-        // Function to copy HTML to clipboard
-        function copyHtmlToClipboard(html) {
-            // For newer browsers using the Clipboard API
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(html)
-                    .then(() => {
-                        console.log('HTML copied to clipboard');
-                    })
-                    .catch(err => {
-                        console.error('Failed to copy HTML: ', err);
-                        fallbackCopyHtmlToClipboard(html);
-                    });
-            } else {
-                // Fallback for older browsers
-                fallbackCopyHtmlToClipboard(html);
-            }
-        }
-        
-        // Fallback copy method
-        function fallbackCopyHtmlToClipboard(html) {
-            // Create a temporary textarea element
-            const textarea = document.createElement('textarea');
-            textarea.value = html;
-            document.body.appendChild(textarea);
-            textarea.select();
-            
-            try {
-                // Execute copy command
-                document.execCommand('copy');
-                console.log('HTML copied to clipboard using fallback');
-            } catch (err) {
-                console.error('Failed to copy HTML using fallback: ', err);
-            }
-            
-            // Clean up
-            document.body.removeChild(textarea);
         }
     </script>
 </div>

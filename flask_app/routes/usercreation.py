@@ -195,17 +195,48 @@ def create_user():
     return render_template('user_creation.html', form=form, form_data=form_data)
 
 
-# @usercreation_bp.route('/get_template_details', methods=['GET'])
-# @login_required
-# def get_template_details():
-#     template_cn = request.args.get('template_cn', '')
-#     if not template_cn:
-#         return jsonify({'error': 'Template CN is required'}), 400
-    
-#     ldap_model = LDAPModel()
-#     template_details = ldap_model.get_template_details(template_cn)
-    
-#     if template_details:
-#         return jsonify(template_details)
-#     else:
-#         return jsonify({'error': 'Template not found'}), 404
+
+@usercreation_bp.route('/preview_user_details', methods=['POST'])
+@login_required
+def preview_user_details():
+    """
+    API endpoint to generate a preview of user details before creation,
+    including the CN and password that would be generated.
+    """
+    try:
+        # Get form data
+        given_name = request.json.get('givenName', '')
+        sn = request.json.get('sn', '')
+        
+        if not given_name or not sn:
+            return jsonify({'error': 'Given name and surname are required'}), 400
+        
+        # Instantiate the LDAP model
+        ldap_model = LDAPModel()
+        
+        # Generate the CN
+        cn = ldap_model.generate_unique_cn(given_name, sn)
+        
+        # We don't want to expose the actual password generation logic here,
+        # but we can emulate it using the same algorithm from the LDAPModel class
+        
+        # Generate password (this matches the logic in the model)
+        if len(cn) < 5:
+            password = cn.lower() + '*987'
+        elif len(cn) == 5:
+            first_part = cn[:3]
+            second_part = cn[3:]
+            password = (second_part + first_part).lower() + '*987'
+        else:
+            first_part = cn[:3]
+            second_part = cn[3:6]
+            password = (second_part + first_part).lower() + '*987'
+        
+        # Return the generated CN and password
+        return jsonify({
+            'cn': cn,
+            'password': password
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

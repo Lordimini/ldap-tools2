@@ -359,18 +359,54 @@
                 }
             }
             
-            // All validations passed, populate the confirmation modal
-            populateConfirmationModal();
+            // Toutes les validations passées, récupérer le CN et le mot de passe avant d'afficher la modal
+            fetch('{{ url_for("usercreation.preview_user_details") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    givenName: document.getElementById('givenName').value,
+                    sn: document.getElementById('sn').value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Erreur lors de la prévisualisation: ' + data.error);
+                    return;
+                }
+                
+                // Stocker le CN et le mot de passe dans des champs cachés pour soumission
+                const cnField = document.createElement('input');
+                cnField.type = 'hidden';
+                cnField.id = 'preview_cn';
+                cnField.value = data.cn;
+                document.getElementById('userCreationForm').appendChild(cnField);
+                
+                const passwordField = document.createElement('input');
+                passwordField.type = 'hidden';
+                passwordField.id = 'preview_password';
+                passwordField.value = data.password;
+                document.getElementById('userCreationForm').appendChild(passwordField);
+                
+                // Remplir la modal avec les données
+                populateConfirmationModal(data.cn, data.password);
+                
+                // Afficher la modal de confirmation
+                const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+                confirmationModal.show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Une erreur est survenue lors de la prévisualisation des détails utilisateur.');
+            });
             
-            // Show the confirmation modal
-            const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
-            confirmationModal.show();
-            
-            return false; // Prevent normal form submission
+            return false; // Empêcher la soumission normale du formulaire
         }
         
         // Populate the confirmation modal with user info
-        function populateConfirmationModal() {
+        function populateConfirmationModal(cn, password) {
             const userType = document.getElementById('user_type');
             const userTypeText = userType.options[userType.selectedIndex].text;
             const givenName = document.getElementById('givenName').value;
@@ -379,7 +415,7 @@
             const favvNatNr = document.getElementById('favvNatNr').value || 'No National Register Number (Override)';
             const manager = document.getElementById('manager').value || 'No manager specified (Override)';
             
-            // Create HTML for the summary
+            // Créer le HTML pour le résumé
             let html = `
                 <table class="table table-striped">
                     <tr>
@@ -389,6 +425,14 @@
                     <tr>
                         <th>Full Name:</th>
                         <td>${sn} ${givenName}</td>
+                    </tr>
+                    <tr class="table-primary">
+                        <th>Common Name (CN):</th>
+                        <td><strong>${cn}</strong></td>
+                    </tr>
+                    <tr class="table-primary">
+                        <th>Generated Password:</th>
+                        <td><code>${password}</code></td>
                     </tr>
                     <tr>
                         <th>Email:</th>
@@ -412,12 +456,15 @@
                     </tr>`;
             }
             
-            html += `</table>`;
+            html += `</table>
+                <div class="alert alert-info">
+                    <strong>Note:</strong> Le CN et le mot de passe sont générés automatiquement en fonction du nom.
+                </div>`;
             
             // Set the HTML in the modal
             document.getElementById('userSummary').innerHTML = html;
             
-            // Also populate the hidden form for submission
+            // Peupler également le formulaire caché pour la soumission
             document.getElementById('hidden_user_type').value = userType.value;
             document.getElementById('hidden_givenName').value = givenName;
             document.getElementById('hidden_sn').value = sn;

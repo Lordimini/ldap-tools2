@@ -624,8 +624,6 @@ class LDAPModel:
     
         return cn
     
-    
-    
     def create_user(self, cn, ldap_attributes):
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
@@ -637,11 +635,11 @@ class LDAPModel:
 
             # Generate password from CN
             password = self.generate_password_from_cn(cn)
-        
+    
             # Add userPassword attribute
             ldap_attributes['userPassword'] = [password]
 
-            # Ensure proper objectClass values
+            # Ensure proper objectClass values - make sure FavvAfscaUser is included
             ldap_attributes['objectClass'] = [
                 'inetOrgPerson', 
                 'top',
@@ -662,6 +660,8 @@ class LDAPModel:
         except Exception as e:
             print(f"An error occurred: {str(e)}", 'error')
             return False, None
+    
+    
         
     def get_user_types_from_ldap(self, dn):
         conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
@@ -742,34 +742,40 @@ class LDAPModel:
         """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
-        
+    
             search_base = "ou=tpl,ou=sync,o=copy"  # Base DN for templates
             search_filter = f'(cn={template_cn})'
-        
+    
             conn.search(
                 search_base=search_base,
                 search_filter=search_filter,
                 search_scope=SUBTREE,
-                attributes=['cn', 'description', 'title', 'objectClass']
+                attributes=['cn', 'description', 'title', 'objectClass', 'ou', 
+                            'FavvExtDienstMgrDn', 'FavvEmployeeType', 'FavvEmployeeSubType']
             )
-        
+    
             if conn.entries:
                 entry = conn.entries[0]
                 template_data = {
                     'cn': entry.cn.value,
                     'description': entry.description.value if hasattr(entry, 'description') and entry.description else None,
                     'title': entry.title.value if hasattr(entry, 'title') and entry.title else None,
-                    'objectClass': entry.objectClass.values if hasattr(entry, 'objectClass') and entry.objectClass else []
+                    'objectClass': entry.objectClass.values if hasattr(entry, 'objectClass') and entry.objectClass else [],
+                    'ou': entry.ou.value if hasattr(entry, 'ou') and entry.ou else None,
+                    'FavvExtDienstMgrDn': entry.FavvExtDienstMgrDn.value if hasattr(entry, 'FavvExtDienstMgrDn') and entry.FavvExtDienstMgrDn else None,
+                    'FavvEmployeeType': entry.FavvEmployeeType.value if hasattr(entry, 'FavvEmployeeType') and entry.FavvEmployeeType else None,
+                    'FavvEmployeeSubType': entry.FavvEmployeeSubType.value if hasattr(entry, 'FavvEmployeeSubType') and entry.FavvEmployeeSubType else None
                 }
                 conn.unbind()
                 return template_data
-        
+    
             conn.unbind()
             return None
-        
+    
         except Exception as e:
             print(f"Error retrieving template details: {str(e)}")
-            return None    
+            return None
+    
 
     def generate_password_from_cn(self, cn):
         """
@@ -795,3 +801,116 @@ class LDAPModel:
             first_part = cn[:3]
             second_part = cn[3:6]
             return (second_part + first_part).lower() + '*987'
+    
+    
+    def check_favvnatnr_exists(self, favvnatnr):
+        """
+        Vérifie si un utilisateur avec le numéro FavvNatNr donné existe déjà dans LDAP.
+    
+        Parameters:
+        favvnatnr (str): Le numéro FavvNatNr à vérifier
+    
+        Returns:
+        tuple: (bool, str) - (True si existe + user DN, False si n'existe pas + chaîne vide)
+        """
+        try:
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+        
+            # Normaliser le FavvNatNr (enlever espaces et tirets)
+            normalized_favvnatnr = favvnatnr.replace(' ', '').replace('-', '')
+        
+            # Créer un filtre de recherche pour le FavvNatNr
+            search_filter = f'(FavvNatNr={normalized_favvnatnr})'
+        
+            # Rechercher dans le conteneur d'utilisateurs
+            search_base = "ou=users,ou=sync,o=COPY"
+        
+            conn.search(search_base=search_base,
+                    search_filter=search_filter,
+                    search_scope=SUBTREE,
+                    attributes=['cn', 'FavvNatNr', 'fullName'])
+        
+            if conn.entries:
+                # L'utilisateur existe déjà, retourner le DN du premier utilisateur correspondant
+                user_dn = conn.entries[0].entry_dn
+                fullname = conn.entries[0].fullName.value if hasattr(conn.entries[0], 'fullName') else "Unknown"
+                conn.unbind()
+                return True, user_dn, fullname
+        
+            conn.unbind()
+            return False, "", ""
+        
+        except Exception as e:
+            print(f"Une erreur s'est produite lors de la vérification du FavvNatNr: {str(e)}")
+            return False, "", ""    
+        
+        
+    def get_managers(self):
+        """
+        Récupère la liste des utilisateurs ayant FavvDienstHoofd=YES
+    
+        Returns:
+        list: Liste des utilisateurs chefs hiérarchiques avec leur fullName et DN
+        """
+        try:
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+        
+            # Rechercher les utilisateurs avec FavvDienstHoofd=YES
+            search_base = "ou=users,ou=sync,o=COPY"
+            search_filter = '(FavvDienstHoofd=YES)'
+        
+            conn.search(search_base=search_base,
+                        search_filter=search_filter,
+                        search_scope=SUBTREE,
+                        attributes=['cn', 'fullName', 'title', 'mail'])
+        
+            managers = []
+            for entry in conn.entries:
+                managers.append({
+                    'dn': entry.entry_dn,
+                    'fullName': entry.fullName.value if entry.fullName else '',
+                    'title': entry.title.value if entry.title else '',
+                    'mail': entry.mail.value if entry.mail else ''
+                })
+        
+            conn.unbind()
+            return managers
+        
+        except Exception as e:
+            print(f"Erreur lors de la récupération des chefs hiérarchiques: {str(e)}")
+            return []
+        
+    def autocomplete_managers(self, search_term):
+        """
+        Fournit une fonctionnalité d'autocomplétion pour les chefs hiérarchiques
+    
+        Parameters:
+        search_term (str): Terme de recherche pour filtrer les chefs hiérarchiques
+    
+        Returns:
+        list: Liste des chefs hiérarchiques correspondant au terme de recherche
+        """
+        try:
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+        
+            managers = []
+            search_base = "ou=users,ou=sync,o=COPY"
+            search_filter = f'(&(FavvDienstHoofd=YES)(fullName=*{search_term}*))'
+        
+            conn.search(search_base=search_base,
+                    search_filter=search_filter,
+                    search_scope=SUBTREE,
+                    attributes=['cn', 'fullName', 'title', 'mail'])
+        
+            for entry in conn.entries:
+                managers.append({
+                    'label': f"{entry.fullName.value} - {entry.mail.value if entry.mail else 'No email'} - {entry.title.value if entry.title else 'No title'}",
+                    'value': entry.fullName.value
+                })
+        
+            conn.unbind()
+            return managers
+        
+        except Exception as e:
+            print(f"Erreur lors de l'autocomplétion des chefs hiérarchiques: {str(e)}")
+            return []

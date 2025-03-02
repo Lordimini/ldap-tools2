@@ -49,3 +49,15 @@ def autocomplete_services():
         return jsonify(result)
     except Exception as e:
         return jsonify([]), 500
+    
+
+@autocomplete_bp.route('/autocomplete_managers', methods=['GET'])
+@login_required
+def autocomplete_managers():
+    search_term = request.args.get('term', '')
+    try:
+        ldap_model = LDAPModel()
+        result = ldap_model.autocomplete_managers(search_term)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify([]), 500

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}LDAP Browser - LDAP Manager{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Role Browser</h1>
+    <!-- Back Button -->
+    {% if parent_dn %}
+    <div class="mb-4">
+        <a href="{{ url_for('ldap.ldap_browser') }}?dn={{ parent_dn }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Parent Container
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Child Entries -->
+    <div class="card p-4 shadow">
+        <!-- <h2 class="mb-4">Contents of {{ current_dn }}</h2> -->
+
+        <!-- Containers (nrfRoleDefs) -->
+        {% if children %}
+            <h3>Containers</h3>
+            <table id="containersTable" class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-folder"></i> Name</th>
+                        <th><i class="fas fa-link"></i> Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for child in children if child.type == 'container' %}
+                    <tr>
+                        <td>{{ child.name }}</td>
+                        <td>
+                            <a href="{{ url_for('ldap.ldap_browser') }}?dn={{ child.dn }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Roles (nrfRole) -->
+            <h3>Roles</h3>
+            <table id="rolesTable" class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-user-shield"></i> Name</th>
+                        <th><i class="fas fa-link"></i> Action</th>
+                        <th><i class="fas fa-link"></i> Resources</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for child in children if child.type == 'role' %}
+                    <tr>
+                        <td>{{ child.name }}</td>
+                        <td>
+                            <a href="{{ url_for('role.view_role', dn=child.dn) }}" class="btn btn-info btn-sm">
+                                <i class="fas fa-info-circle"></i> Assignments
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('role.role_groups') }}?role_cn={{ child.role_cn }}" class="btn btn-info btn-sm">
+                                <i class="fas fa-info-circle"></i> Resources
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-center">No entries found in this container.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Include DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+<!-- Include Font Awesome for Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<!-- Include jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Include DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        // Initialize DataTables on the containers table
+        $('#containersTable').DataTable({
+            paging: false, // Disable pagination if not needed
+            searching: true, // Enable search bar
+            info: false, // Disable "Showing X of Y entries" text
+            order: [[0, 'asc']] // Default sorting by the first column (Name) in ascending order
+        });
+
+        // Initialize DataTables on the roles table
+        $('#rolesTable').DataTable({
+            paging: false, // Disable pagination if not needed
+            searching: true, // Enable search bar
+            info: false, // Disable "Showing X of Y entries" text
+            order: [[0, 'asc']] // Default sorting by the first column (Name) in ascending order
+        });
+    });
+</script>
+{% endblock %}

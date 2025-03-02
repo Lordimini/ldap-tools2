@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Role Users - LDAP Manager{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Role Users</h1>
+    <form method="POST" action="{{ url_for('role.role_users') }}" class="card p-4 shadow mb-4">
+        <div class="mb-3">
+            <label for="role_cn" class="form-label">Search Role:</label>
+            <input type="text" class="form-control" id="role_cn" name="role_cn" placeholder="Start typing a role name..." value="{{ prefill_role_cn }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    {% if result and result.users %}
+<div class="card p-4 shadow">
+    <h2 class="text-center mb-4">Users in Role: {{ result.role_cn }} ({{ result.role_dn }})</h2>
+    <div class="text-end mb-3">
+        <a href="{{ url_for('role.export_role_users_csv', role_cn=result.role_cn) }}" class="btn btn-success">
+            <i class="fas fa-file-csv"></i> Export to CSV
+        </a>
+    </div>
+    <table id="usersTable" data-toggle="table" class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th data-field="cn" data-sortable="true">CN</th>
+                <th data-field="fullName" data-sortable="true">Full Name</th>
+                <th data-field="title" data-sortable="true">Title</th>
+                <th data-field="service" data-sortable="true">Service</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in result.users %}
+            <tr data-cn="{{ user.CN }}" style="cursor: pointer;">
+                <td>{{ user.CN }}</td>
+                <td>{{ user.fullName }}</td>
+                <td>{{ user.title }}</td>
+                <td>{{ user.ou }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+</div>
+
+
+
+<!-- jQuery (required for autocomplete) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- jQuery UI (for autocomplete) -->
+<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+
+<script>
+    $(function() {
+        $('#role_cn').autocomplete({
+            source: function(request, response) {
+                $.getJSON("{{ url_for('autocomplete.autocomplete_roles') }}", {
+                    term: request.term
+                }, function(data) {
+                    response(data);
+                });
+            },
+            select: function(event, ui) {
+                $('#role_cn').val(ui.item.value);
+                return false;
+            }
+        }).data('ui-autocomplete')._renderItem = function(ul, item) {
+            return $('<li>')
+                .append(`<div>${item.label}</div>`)
+                .appendTo(ul);
+        };
+    });
+</script>
+<!-- Add this script at the bottom of your HTML file -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Attach a click event listener to the table
+        const table = document.getElementById('usersTable');
+        table.addEventListener('click', function (event) {
+            // Find the closest <tr> element that was clicked
+            const row = event.target.closest('tr');
+            if (row && row.tagName === 'TR') {
+                // Get the CN value from the data-cn attribute
+                const cn = row.getAttribute('data-cn');
+                if (cn) {
+                    // Redirect to the search_user page with the CN parameter
+                    window.location.href = `{{ url_for('search.search_user') }}?cn=${encodeURIComponent(cn)}`;
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

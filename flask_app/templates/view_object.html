@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}View Object - LDAP Manager{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Object Details</h1>
+    <div class="card p-4 shadow">
+        <h2 class="mb-4">{{ dn }}</h2>
+        {% if attributes %}
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Attribute</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attr, values in attributes.items() %}
+                        <tr>
+                            <td>{{ attr }}</td>
+                            <td>
+                                {% if values is iterable and values is not string %}
+                                    <ul>
+                                        {% for value in values %}
+                                            <li>{{ value }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    {{ values }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-center">No attributes found for this object.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

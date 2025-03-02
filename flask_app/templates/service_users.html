@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Service Users - LDAP Manager{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Service Users</h1>
+    <form method="POST" action="{{ url_for('service.service_users') }}" class="card p-4 shadow mb-4">
+        <div class="mb-3">
+            <label for="service_name" class="form-label">Search Service (OU):</label>
+            <input type="text" class="form-control" id="service_name" name="service_name" placeholder="Start typing a service name..." required>
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+    
+   
+
+{% if result and result.users %}
+<div class="card p-4 shadow">
+    <h2 class="text-center mb-4">Users in Service: {{ result.service_name }}</h2>
+    <div class="text-end mb-3">
+        <a href="{{ url_for('service.export_service_users_csv', service_name=result.service_name) }}" class="btn btn-success">
+            <i class="fas fa-file-csv"></i> Export to CSV
+        </a>
+    </div>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>CN</th>
+                <th>Full Name</th>
+                <th>Title</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in result.users %}
+            <tr onclick="window.location.href='{{ url_for('search.search_user') }}?cn={{ user.CN }}'" style="cursor: pointer;">
+                <td>{{ user.CN }}</td>
+                <td>{{ user.fullName }}</td>
+                <td>{{ user.title }}</td>
+                <td>{{ user.mail }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+</div>
+
+ <!-- jQuery (required for autocomplete) -->
+ <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+ <!-- jQuery UI (for autocomplete) -->
+ <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+ <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+ 
+ <script>
+     $(function() {
+         $('#service_name').autocomplete({
+             source: function(request, response) {
+                 $.getJSON("{{ url_for('autocomplete.autocomplete_services') }}", {
+                     term: request.term
+                 }, function(data) {
+                     response(data);
+                 });
+             },
+             select: function(event, ui) {
+                 $('#service_name').val(ui.item.value);
+                 return false;
+             }
+         }).data('ui-autocomplete')._renderItem = function(ul, item) {
+             return $('<li>')
+                 .append(`<div>${item.label}</div>`)
+                 .appendTo(ul);
+         };
+     });
+ </script>
+{% endblock %}

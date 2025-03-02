@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Create User - LDAP Manager
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Create User Account</h1>
+    
+    <!-- Flash messages for any errors/warnings -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Flash messages for any errors/warnings -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert-messages mb-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'success' %}success{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Form to create a new user -->
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        
+        <!-- Dropdown for User Type -->
+        <!-- Dropdown for User Type -->
+        <div class="mb-3">
+            <label for="user_type" class="form-label">User Type:</label>
+            <select id="user_type" name="user_type" class="form-select">
+                {% for choice in form.user_type.choices %}
+                    <option value="{{ choice[0] }}">{{ choice[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Given Name -->
+        <div class="mb-3">
+            <label for="givenName" class="form-label">Given Name:</label>
+            <input type="text" id="givenName" name="givenName" class="form-control">
+        </div>
+
+        <!-- Surname -->
+        <div class="mb-3">
+            <label for="sn" class="form-label">Surname:</label>
+            <input type="text" id="sn" name="sn" class="form-control">
+        </div>
+
+        <!-- Email (Optional) -->
+        <div class="mb-3">
+            <label for="email" class="form-label">Email (optional):</label>
+            <input type="text" id="email" name="email" class="form-control">
+        </div>
+
+        <!-- OCI Specific Field (if selected) -->
+        {% if form.favvNatNr %}
+            <div class="mb-3">
+                <label for="favvNatNr" class="form-label">FavvNatNr:</label>
+                <input type="text" id="favvNatNr" name="favvNatNr" class="form-control">
+            </div>
+        {% endif %}
+
+        <!-- Submit button -->
+        <button type="submit" class="btn btn-primary">Create User</button>
+    </form>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show/hide FavvNatNr field based on user type selection
+            $('#user_type').on('change', function() {
+                const selectedType = $(this).val();
+                if (selectedType === 'OCI') {
+                    $('#favvNatNr_container').show();
+                } else {
+                    $('#favvNatNr_container').hide();
+                }
+            });
+
+            // Optional: Trigger the change event to initialize the form correctly
+            $('#user_type').trigger('change');
+        });
+    </script>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Result - LDAP Manager{% endblock %}
+
+
+{% block content %}
+    <h1 class="text-center mb-4">Operation Results</h1>
+    {% if success_count > 0 %}
+    <div class="alert alert-success" role="alert">
+        Successfully added {{ success_count }} users.
+    </div>
+    {% endif %}
+    {% if failure_count > 0 %}
+    <div class="alert alert-danger" role="alert">
+        Failed to add {{ failure_count }} users.
+    </div>
+    {% endif %}
+    
+    {% if failures %}
+    <h2>Failures:</h2>
+    <ul class="list-group">
+        {% for failure in failures %}
+        <li class="list-group-item list-group-item-danger">{{ failure }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    
+    <a href="/" class="btn btn-secondary mt-3">Upload another file</a>
+{% endblock %}

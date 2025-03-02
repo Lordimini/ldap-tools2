@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}View Role - LDAP Manager{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Role Details</h1>
+    <div class="card p-4 shadow">
+        <!-- Role Name and User Count -->
+        <h2>{{ role_cn }}</h2>
+        <p class="text-muted">{{ user_count }} user(s) assigned to this role.</p>
+
+        <!-- Back Button -->
+        <a href="{{ url_for('ldap.ldap_browser') }}?dn={{ parent_dn }}" class="btn btn-secondary mb-4">
+            <i class="fas fa-arrow-left"></i> Back to Parent Container
+        </a>
+
+        <!-- Export Buttons -->
+        <div class="text-end mb-3">
+            <a href="{{ url_for('role.export_role_users_csv', role_cn=role_cn) }}" class="btn btn-success me-2">
+                <i class="fas fa-file-csv"></i> Export to CSV
+            </a>
+            <a href="{{ url_for('role.export_role_users_pdf', role_cn=role_cn) }}" class="btn btn-danger">
+                <i class="fas fa-file-pdf"></i> Export to PDF
+            </a>
+        </div>
+
+        {% if users %}
+            <table id="usersTable" class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-id-card"></i> CN</th>
+                        <th><i class="fas fa-user"></i> Full Name</th>
+                        <th><i class="fas fa-building"></i> Service (OU)</th>
+                        <th><i class="fas fa-info-circle"></i> Assignment Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for user in users %}
+                    <tr data-cn="{{ user.CN }}" style="cursor: pointer;">
+                        <td>{{ user.CN }}</td>
+                        <td>{{ user.fullName }}</td>
+                        <td>{{ user.ou }}</td>
+                        <td>{{ user.req_desc }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-center">No users found for this role.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Include DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+<!-- Include Font Awesome for Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<!-- Include jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Include DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        // Initialize DataTables on the table
+        $('#usersTable').DataTable({
+            paging: true, // Enable pagination
+            searching: true, // Enable search bar
+            info: true, // Show "Showing X of Y entries" text
+            order: [[0, 'asc']], // Default sorting by the first column (CN) in ascending order
+            columnDefs: [
+                { orderable: true, targets: '_all' } // Enable sorting for all columns
+            ]
+        });
+    });
+</script>
+
+<!-- Add this script at the bottom of your HTML file -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Attach a click event listener to the table
+        const table = document.getElementById('usersTable');
+        table.addEventListener('click', function (event) {
+            // Find the closest <tr> element that was clicked
+            const row = event.target.closest('tr');
+            if (row && row.tagName === 'TR') {
+                // Get the CN value from the data-cn attribute
+                const cn = row.getAttribute('data-cn');
+                if (cn) {
+                    // Redirect to the search_user page with the CN parameter
+                    window.location.href = `{{ url_for('search.search_user') }}?cn=${encodeURIComponent(cn)}`;
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

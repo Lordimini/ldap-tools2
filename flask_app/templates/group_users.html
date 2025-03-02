@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Group Users - LDAP Manager{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Group Users</h1>
+    <form method="POST" action="{{ url_for('group.group_users') }}" class="card p-4 shadow mb-4">
+        <div class="mb-3">
+            <label for="group_name" class="form-label">Search Group:</label>
+            <input type="text" class="form-control" id="group_name" name="group_name" placeholder="Start typing a group name..." value="{{ prefill_group_name }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    {% if result %}
+    <div class="card p-4 shadow">
+        <h2 class="text-center mb-4">Users in Group: {{ result.group_name }} ({{ result.group_dn }})</h2>
+        <div class="text-end mb-3">
+            <a href="{{ url_for('group.export_group_users_csv', group_name=result.group_name) }}" class="btn btn-success">
+                <i class="fas fa-file-csv"></i> Export to CSV
+            </a>
+        </div>
+        {% if result.users %}
+        <table id="usersTable" class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>CN</th>
+                    <th>Full Name</th>
+                    <th>Title</th>
+                    <th>Service</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in result.users %}
+                <tr 
+                    role="button" 
+                    onclick="window.location.href='{{ url_for('search.search_user') }}?cn={{ user.CN | urlencode }}'" 
+                    style="cursor: pointer;"
+                >
+                    <td>{{ user.CN | default('N/A') }}</td>
+                    <td>{{ user.fullName | default('N/A') }}</td>
+                    <td>{{ user.title | default('N/A') }}</td>
+                    <td>{{ user.service | default('N/A') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-center">No users found in this group.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Include DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+
+<!-- Include DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        // Initialize DataTables on the table
+        $('#usersTable').DataTable({
+            paging: false, // Disable pagination if not needed
+            searching: false, // Disable search bar if not needed
+            info: false, // Disable "Showing X of Y entries" text
+            order: [[0, 'asc']], // Default sorting by the first column (CN) in ascending order
+            columnDefs: [
+                { orderable: true, targets: [0, 1, 2, 3] } // Enable sorting for all columns
+            ]
+        });
+    });
+</script>
+
+<!-- jQuery (required for autocomplete) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- jQuery UI (for autocomplete) -->
+<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+<script>
+    $(function() {
+        $('#group_name').autocomplete({
+            source: function(request, response) {
+                $.getJSON("{{ url_for('autocomplete.autocomplete_groups') }}", {
+                    term: request.term
+                }, function(data) {
+                    response(data);
+                });
+            },
+            select: function(event, ui) {
+                $('#group_name').val(ui.item.value);
+                return false;
+            }
+        }).data('ui-autocomplete')._renderItem = function(ul, item) {
+            return $('<li>')
+                .append(`<div>${item.label}</div>`)
+                .appendTo(ul);
+        };
+    });
+</script>
+{% endblock %}

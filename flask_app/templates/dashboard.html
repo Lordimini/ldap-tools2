@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - LDAP Manager{% endblock %}
+
+    {% block content %}
+        <h1 class="text-center mb-4">Dashboard</h1>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">Upload CSV</h5>
+                        <p class="card-text">Upload a CSV file to manage user-group assignments.</p>
+                        <a href="{{ url_for('upload.upload_file') }}" class="btn btn-primary">Go to Upload</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">Reports</h5>
+                        <p class="card-text">View reports of recent operations.</p>
+                        <a href="#" class="btn btn-primary">View Reports</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">Search User</h5>
+                        <p class="card-text">Search for a user in the LDAP directory.</p>
+                        <a href="{{ url_for('search.search_user') }}" class="btn btn-info">Go to Search</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">Search Group</h5>
+                        <p class="card-text">Search Groups for list of users.</p>
+                        <a href="{{ url_for('group.group_users') }}" class="btn btn-info">Go to Search</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">Search Role</h5>
+                        <p class="card-text">Search Role for list of users.</p>
+                        <a href="{{ url_for('role.role_users') }}" class="btn btn-info">Go to Search</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">List groups associated to a Role</h5>
+                        <p class="card-text">Search Role for list of groups.</p>
+                        <a href="{{ url_for('role.role_groups') }}" class="btn btn-info">Go to Search</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">Search Services</h5>
+                        <p class="card-text">Search Services for list of users.</p>
+                        <a href="{{ url_for('service.service_users') }}" class="btn btn-info">Go to Search</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">Role Browser</h5>
+                        <p class="card-text">Browse roles.</p>
+                        <a href="{{ url_for('ldap.ldap_browser') }}" class="btn btn-info">Go to role browser</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">Settings</h5>
+                        <p class="card-text">Manage application settings.</p>
+                        <a href="#" class="btn btn-primary">Go to Settings</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endblock %}
+
+
+    

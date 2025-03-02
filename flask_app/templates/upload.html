@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Upload CSV - LDAP Manager{% endblock %}
+
+
+    {% block content %}
+    <h1 class="text-center mb-4">CSV bulk groups populate</h1>
+    <form method="POST" enctype="multipart/form-data" class="card p-4 shadow">
+        <div class="mb-3">
+            <label for="group_dn" class="form-label">Select the application for which you wish to populate groups:</label>
+            <select id="group_dn" name="group_dn" class="form-select" required>
+                {% for option in group_dn_options %}
+                <option value="{{ option.value }}">{{ option.label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="file" class="form-label">Choose CSV File:</label>
+            <input type="file" name="file" class="form-control" accept=".csv" required>
+        </div>
+		<button type="submit" class="btn btn-primary" id="uploadButton">
+			<span id="uploadText">Validate</span>
+			<span id="uploadSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+		</button>
+
+		<script>
+		document.querySelector('form').addEventListener('submit', function() {
+        document.getElementById('uploadText').classList.add('d-none');
+        document.getElementById('uploadSpinner').classList.remove('d-none');
+        document.getElementById('uploadButton').disabled = true;
+			});
+		</script>
+        <!-- <button type="submit" class="btn btn-primary">Upload</button> -->
+    </form>
+	{% endblock %}
+	

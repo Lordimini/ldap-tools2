@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Users in Role: {{ role_cn }}</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>CN</th>
+                <th>Full Name</th>
+                <th>Title</th>
+                <th>Service</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.CN }}</td>
+                <td>{{ user.fullName }}</td>
+                <td>{{ user.title }}</td>
+                <td>{{ user.ou }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

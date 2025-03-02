@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Generate Token - LDAP Manager{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Generate Token</h1>
+    <div class="card p-4 shadow">
+        <!-- Generate Response Button -->
+        <form method="POST" class="mb-3">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-sync"></i> Generate Response
+            </button>
+        </form>
+
+        <!-- Display JSON Response -->
+        {% if response_data %}
+        <div>
+            <h4>Token Response:</h4>
+            <textarea class="form-control" rows="10" readonly>{{ response_data }}</textarea>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -5,10 +5,7 @@ from flask_wtf import FlaskForm
 from wtforms import SelectField, StringField, HiddenField
 from wtforms.validators import DataRequired
 
-
 usercreation_bp = Blueprint('usercreation', __name__)
-
-
 
 class UserCreationForm(FlaskForm):
     user_type = SelectField('User Type', validators=[DataRequired()], choices=[])

@@ -11,17 +11,6 @@
     <!-- Flash messages for any errors/warnings -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <ul>
-                {% for category, message in messages %}
-                    <li class="{{ category }}">{{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-    {% endwith %}
-
-    <!-- Flash messages for any errors/warnings -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
             <div class="alert-messages mb-4">
                 {% for category, message in messages %}
                     <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'success' %}success{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
@@ -34,10 +23,9 @@
     {% endwith %}
 
     <!-- Form to create a new user -->
-    <form method="POST">
+    <form method="POST" class="card p-4 shadow">
         {{ form.hidden_tag() }}
         
-        <!-- Dropdown for User Type -->
         <!-- Dropdown for User Type -->
         <div class="mb-3">
             <label for="user_type" class="form-label">User Type:</label>
@@ -51,28 +39,27 @@
         <!-- Given Name -->
         <div class="mb-3">
             <label for="givenName" class="form-label">Given Name:</label>
-            <input type="text" id="givenName" name="givenName" class="form-control">
+            <input type="text" id="givenName" name="givenName" class="form-control" required>
         </div>
 
         <!-- Surname -->
         <div class="mb-3">
             <label for="sn" class="form-label">Surname:</label>
-            <input type="text" id="sn" name="sn" class="form-control">
+            <input type="text" id="sn" name="sn" class="form-control" required>
         </div>
 
         <!-- Email (Optional) -->
         <div class="mb-3">
             <label for="email" class="form-label">Email (optional):</label>
-            <input type="text" id="email" name="email" class="form-control">
+            <input type="email" id="email" name="email" class="form-control">
         </div>
 
-        <!-- OCI Specific Field (if selected) -->
-        {% if form.favvNatNr %}
-            <div class="mb-3">
-                <label for="favvNatNr" class="form-label">FavvNatNr:</label>
-                <input type="text" id="favvNatNr" name="favvNatNr" class="form-control">
-            </div>
-        {% endif %}
+        <!-- OCI Specific Field (shown conditionally) -->
+        <div id="favvNatNr_container" class="mb-3" style="display: none;">
+            <label for="favvNatNr" class="form-label">National Register Number (National Register Number):</label>
+            <input type="text" id="favvNatNr" name="favvNatNr" class="form-control" placeholder="Enter National Register Number">
+            <small class="form-text text-muted">Format will be automatically normalized to remove spaces and hyphens.</small>
+        </div>
 
         <!-- Submit button -->
         <button type="submit" class="btn btn-primary">Create User</button>
@@ -85,17 +72,33 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Show/hide FavvNatNr field based on user type selection
-            $('#user_type').on('change', function() {
-                const selectedType = $(this).val();
-                if (selectedType === 'OCI') {
-                    $('#favvNatNr_container').show();
+            const userTypeSelect = document.getElementById('user_type');
+            const favvNatNrContainer = document.getElementById('favvNatNr_container');
+            
+            // Function to toggle FavvNatNr visibility
+            function toggleFavvNatNr() {
+                if (userTypeSelect.value === 'BOODOCI') {
+                    favvNatNrContainer.style.display = 'block';
                 } else {
-                    $('#favvNatNr_container').hide();
+                    favvNatNrContainer.style.display = 'none';
                 }
+            }
+            
+            // Initial check
+            toggleFavvNatNr();
+            
+            // Listen for changes
+            userTypeSelect.addEventListener('change', toggleFavvNatNr);
+            
+            // FavvNatNr normalization
+            const favvNatNrInput = document.getElementById('favvNatNr');
+            favvNatNrInput.addEventListener('input', function(e) {
+                // Remove all non-digit characters
+                const normalized = e.target.value.replace(/[^0-9]/g, '');
+                
+                // Update input value with normalized string
+                e.target.value = normalized;
             });
-
-            // Optional: Trigger the change event to initialize the form correctly
-            $('#user_type').trigger('change');
         });
     </script>
 </div>

@@ -28,43 +28,43 @@
         <table class="table table-dark table-bordered">
             <thead>
                 <tr>
-                    <th>Attribute</th>
-                    <th>Value</th>
+                    <th style="width: 30%;">Attribute</th>
+                    <th style="width: 70%;">Value</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>Intranet Contact</td>
+                    <td class="attribute-cell">Intranet Contact</td>
                     <td>
                         <a href="http://intranet.linux.ici/contact/fr/ICIPDetail.asp?StamNr={{ result.workforceID }}">{{ result.givenName + ' ' + result.sn }}</a>
                     </td>
                 </tr>
                 <tr>
-                    <td>CN</td>
+                    <td class="attribute-cell">CN</td>
                     <td>{{ result.CN }}</td>
                 </tr>
                 <tr>
-                    <td>Employee Type</td>
+                    <td class="attribute-cell">Employee Type</td>
                     <td>{{ result.favvEmployeeType }}</td>
                 </tr>
                 <tr>
-                    <td>Full Name</td>
+                    <td class="attribute-cell">Full Name</td>
                     <td>{{ result.fullName }}</td>
                 </tr>
                 <tr>
-                    <td>Email</td>
+                    <td class="attribute-cell">Email</td>
                     <td>{{ result.mail }}</td>
                 </tr>
                 <tr>
-                    <td>Stamnummer - numéro de matricule</td>
+                    <td class="attribute-cell">Stamnummer - numéro de matricule</td>
                     <td>{{ result.workforceID }}</td>
                 </tr>
                 <tr>
-                    <td>RRN - NRN</td>
+                    <td class="attribute-cell">RRN - NRN</td>
                     <td>{{ result.FavvNatNr }}</td>
                 </tr>
                 <tr>
-                    <td>Service - Dienst</td>
+                    <td class="attribute-cell">Service - Dienst</td>
                     <td>
                         {% if result.service %}
                             <a href="{{ url_for('service.service_users') }}?service_name={{ result.service }}">{{ result.service }}</a>
@@ -74,27 +74,27 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>Title</td>
+                    <td class="attribute-cell">Title</td>
                     <td>{{ result.title }}</td>
                 </tr>
                 <tr {% if result.loginDisabled == 'YES' %}class="table-danger"{% endif %}>
-                    <td>Login Disabled</td>
+                    <td class="attribute-cell">Login Disabled</td>
                     <td>{{ result.loginDisabled }}</td>
                 </tr>
                 <tr>
-                    <td>Last Login time</td>
+                    <td class="attribute-cell">Last Login time</td>
                     <td>{{ result.loginTime }}</td>
                 </tr>
                 <tr>
-                    <td>Password Expiration date</td>
+                    <td class="attribute-cell">Password Expiration date</td>
                     <td>{{ result.passwordExpirationTime }}</td>
                 </tr>
                 <tr>
-                    <td>Chef Hiérarchique</td>
+                    <td class="attribute-cell">Chef Hiérarchique</td>
                     <td>{{ result.ChefHierarchique }}</td>
                 </tr>
                 <tr>
-                    <td>Group Membership</td>
+                    <td class="attribute-cell">Group Membership</td>
                     <td>
                         {% if result.groupMembership %}
                         <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#groupMembershipModal">
@@ -106,7 +106,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>Assigned Roles</td>
+                    <td class="attribute-cell">Assigned Roles</td>
                     <td>
                         {% if result.nrfMemberOf %}
                         <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#rolesAssignedModal">
@@ -118,7 +118,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>DirXML-Associations</td>
+                    <td class="attribute-cell">DirXML-Associations</td>
                     <td>
                         {% if result.DirXMLAssociations %}
                         <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#DirXMLAssociationsModal">
@@ -258,6 +258,47 @@
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
 
+<style>
+    /* Custom styles for the search results table */
+    table.table-dark tbody tr td.attribute-cell {
+        background-color: #1a2533; /* Less dark background from the sidebar secondary-color */
+        color: #3498db !important; /* Light blue accent color from the theme with !important */
+        font-weight: 600 !important; /* Make font a bit bolder */
+        font-size: 1.05rem !important; /* Slightly larger font */
+        padding: 12px 15px; /* More padding for better readability */
+        border-right: 1px solid rgba(255, 255, 255, 0.05); /* Subtle border */
+    }
+    
+    /* Make sure the table uses the correct text colors even when Bootstrap might override them */
+    .table-dark {
+        --bs-table-color: #f8f9fa;
+        --bs-table-bg: #212529;
+        --bs-table-border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Add a subtle hover effect for the rows */
+    .table-dark tbody tr:hover {
+        background-color: rgba(52, 152, 219, 0.05); /* Very subtle blue highlight */
+    }
+    
+    /* Override the table-danger class for login disabled rows to keep our styling */
+    .table-dark tbody tr.table-danger td.attribute-cell {
+        background-color: #1a2533 !important; /* Keep our custom background */
+        color: #3498db !important; /* Keep our custom color */
+    }
+    
+    /* Make table headers stand out more */
+    .table-dark thead th {
+        background-color: #0f1926; /* Very dark blue from the theme */
+        color: #f8f9fa; /* Light text color */
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.9rem;
+        padding: 12px 15px;
+    }
+</style>
+
 <script>
     $(document).ready(function() {
     // Function to initialize autocomplete
@@ -309,6 +350,19 @@
     if ($('#search_type option:selected').val() === 'fullName') {
         initializeAutocomplete();
     }
+    
+    // Force apply our custom styles on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ensure our styles are applied after Bootstrap has initialized everything
+        setTimeout(function() {
+            document.querySelectorAll('.attribute-cell').forEach(function(cell) {
+                cell.style.color = '#3498db';
+                cell.style.fontWeight = '600';
+                cell.style.fontSize = '1.05rem';
+                cell.style.backgroundColor = '#1a2533';
+            });
+        }, 100);
+    });
 });
 </script>
 

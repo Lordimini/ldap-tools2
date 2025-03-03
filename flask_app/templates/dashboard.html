@@ -35,6 +35,15 @@
             <div class="col-md-4">
                 <div class="card shadow">
                     <div class="card-body">
+                        <h5 class="card-title">Create User</h5>
+                        <p class="card-text">Create a new in the META directory.</p>
+                        <a href="{{ url_for('usercreation.create_user') }}" class="btn btn-info">Go to Search</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow">
+                    <div class="card-body">
                         <h5 class="card-title">Search Group</h5>
                         <p class="card-text">Search Groups for list of users.</p>
                         <a href="{{ url_for('group.group_users') }}" class="btn btn-info">Go to Search</a>

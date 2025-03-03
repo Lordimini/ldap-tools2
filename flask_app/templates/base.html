@@ -10,10 +10,31 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!-- Custom CSS -->
     <style>
+        :root {
+            --primary-color: #0f1926;            /* Bleu très foncé */
+            --secondary-color: #1a2533;          /* Bleu foncé */
+            --accent-color: #3498db;             /* Bleu clair */
+            --dark-blue: #0f1926;                /* Bleu très foncé */
+            --darker-blue: #0a1017;              /* Bleu presque noir */
+            --medium-blue: #253545;              /* Bleu moyen */
+            --light-blue: #3498db;               /* Bleu clair */
+            --very-dark-gray: #111419;           /* Gris presque noir */
+            --dark-gray: #1a1d21;                /* Gris très foncé */
+            --medium-gray: #272b30;              /* Gris foncé */
+            --light-gray: #3d3d3d;               /* Gris moyen */
+            --text-white: #f8f9fa;               /* Blanc cassé */
+            --text-light-gray: #d0d0d0;          /* Gris clair */
+            --shadow-color: rgba(0, 0, 0, 0.5);  /* Ombre plus prononcée */
+            --nav-link-hover: rgba(52, 152, 219, 0.2); /* Couleur de survol */
+            --border-color: rgba(255, 255, 255, 0.05); /* Couleur de bordure subtile */
+        }
+        
         body {
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            background-color: var(--darker-blue);
+            color: var(--text-white);
         }
         
         .sidebar {
@@ -22,45 +43,62 @@
             position: fixed;
             z-index: 100;
             padding: 0;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px var(--shadow-color);
             transition: all 0.3s;
+            background-color: var(--very-dark-gray);
+            color: var(--text-white);
+            width: 250px;
         }
         
         .sidebar-header {
             padding: 15px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
+            background: var(--darker-blue);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-white);
+        }
+        
+        .sidebar-header h3 {
+            color: var(--text-white);
+            margin: 0;
+            font-size: 1.2rem;
         }
         
         .sidebar .nav-link {
             padding: 12px 15px;
-            color: #333;
+            color: var(--text-white);
             border-left: 3px solid transparent;
+            transition: all 0.2s;
         }
         
         .sidebar .nav-link:hover {
-            background: #f8f9fa;
-            border-left: 3px solid #0d6efd;
+            background: var(--nav-link-hover);
+            border-left: 3px solid var(--accent-color);
         }
         
         .sidebar .nav-link.active {
-            background: #e9ecef;
-            border-left: 3px solid #0d6efd;
+            background: var(--dark-blue);
+            border-left: 3px solid var(--accent-color);
+            color: var(--text-white);
         }
         
         .sidebar .nav-link i {
             margin-right: 10px;
             width: 20px;
             text-align: center;
+            color: var(--accent-color);
         }
         
         .sidebar-heading {
             font-size: 0.8rem;
             text-transform: uppercase;
             padding: 10px 15px;
-            color: #6c757d;
+            color: var(--accent-color);
             font-weight: bold;
             margin-top: 10px;
+            background-color: var(--dark-gray);
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            letter-spacing: 1px;
         }
         
         .main-content {
@@ -68,15 +106,19 @@
             padding: 20px;
             flex: 1;
             transition: all 0.3s;
+            background-color: var(--dark-blue);
+            color: var(--text-white);
         }
         
         .navbar {
             padding: 0.5rem 1rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px var(--shadow-color);
+            background: var(--darker-blue) !important;
         }
         
         .navbar-brand {
             font-weight: bold;
+            color: var(--text-light) !important;
         }
         
         .user-profile {
@@ -89,8 +131,8 @@
             height: 32px;
             border-radius: 50%;
             margin-right: 10px;
-            background-color: #0d6efd;
-            color: white;
+            background-color: var(--accent-color);
+            color: var(--text-light);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -100,10 +142,11 @@
         footer {
             margin-left: 250px;
             padding: 1rem;
-            background-color: #f8f9fa;
+            background-color: var(--darker-blue);
             text-align: center;
-            border-top: 1px solid #dee2e6;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
             transition: all 0.3s;
+            color: var(--text-light-gray);
         }
         
         /* Toggle sidebar button */
@@ -113,55 +156,7 @@
             font-size: 1.5rem;
             cursor: pointer;
             padding: 0 15px;
-        }
-        
-        /* Dark Mode Styles */
-        .dark-mode {
-            background-color: #222;
-            color: #e4e4e4;
-        }
-        
-        .dark-mode .sidebar {
-            background-color: #333;
-            border-right: 1px solid #444;
-        }
-        
-        .dark-mode .sidebar-header {
-            background-color: #444;
-            border-bottom: 1px solid #555;
-        }
-        
-        .dark-mode .nav-link {
-            color: #e4e4e4;
-        }
-        
-        .dark-mode .nav-link:hover {
-            background-color: #444;
-        }
-        
-        .dark-mode .nav-link.active {
-            background-color: #555;
-        }
-        
-        .dark-mode .sidebar-heading {
-            color: #adb5bd;
-        }
-        
-        .dark-mode .navbar {
-            background-color: #333 !important;
-            border-bottom: 1px solid #444;
-        }
-        
-        .dark-mode .card {
-            background-color: #333;
-            border: 1px solid #444;
-            color: #e4e4e4;
-        }
-        
-        .dark-mode footer {
-            background-color: #333;
-            border-top: 1px solid #444;
-            color: #e4e4e4;
+            color: var(--text-light);
         }
         
         /* When sidebar is collapsed */
@@ -180,12 +175,30 @@
             margin-left: 70px;
         }
         
+        /* Card styles */
+        .card {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            background-color: var(--medium-gray);
+            color: var(--text-white);
+        }
+        
+        .card-header {
+            background-color: var(--dark-gray);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+            color: var(--text-white);
+        }
+        
         /* Dashboard cards */
         .dashboard-card {
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px var(--shadow-color);
             transition: transform 0.3s;
             height: 100%;
+            background-color: var(--medium-gray);
+            color: var(--text-white);
         }
         
         .dashboard-card:hover {
@@ -195,48 +208,105 @@
         .dashboard-icon {
             font-size: 2rem;
             margin-bottom: 15px;
-            color: #0d6efd;
+            color: var(--accent-color);
         }
         
         /* Summary stats */
         .stats-card {
-            border-left: 4px solid #0d6efd;
+            border-left: 4px solid var(--accent-color);
             border-radius: 4px;
             padding: 15px;
             margin-bottom: 20px;
+            background-color: var(--medium-gray);
         }
         
         .stats-icon {
             float: right;
             font-size: 2rem;
-            opacity: 0.3;
+            opacity: 0.5;
+            color: var(--light-blue);
         }
         
-        /* For mobile responsiveness */
-        @media (max-width: 768px) {
-            .sidebar {
-                margin-left: -250px;
-            }
-            
-            .sidebar-collapsed .sidebar {
-                margin-left: 0;
-            }
-            
-            .main-content,
-            footer {
-                margin-left: 0;
-            }
-            
-            .sidebar-collapsed .main-content,
-            .sidebar-collapsed footer {
-                margin-left: 0;
-            }
+        /* Button styles */
+        .btn-primary {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        
+        .btn-outline-light {
+            color: var(--text-white);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-outline-light:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-white);
+        }
+        
+        /* Table styles */
+        .table {
+            border-radius: 8px;
+            overflow: hidden;
+            color: var(--text-white);
+        }
+        
+        .table thead th {
+            background-color: var(--dark-gray);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-white);
+        }
+        
+        .table tbody tr {
+            background-color: var(--medium-gray);
+        }
+        
+        .table tbody tr:hover {
+            background-color: var(--light-gray);
+        }
+        
+        /* Dropdown menu */
+        .dropdown-menu {
+            background-color: var(--dark-gray);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .dropdown-item {
+            color: var(--text-white);
+        }
+        
+        .dropdown-item:hover {
+            background-color: var(--medium-gray);
+            color: var(--text-white);
+        }
+        
+        .dropdown-divider {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* List group styling for dark theme */
+        .list-group-item {
+            background-color: var(--medium-gray);
+            color: var(--text-white);
+            border-color: rgba(255, 255, 255, 0.125);
+        }
+        
+        .list-group-item:hover {
+            background-color: var(--light-gray);
+            color: var(--text-white);
+        }
+        
+        .list-group-item small.text-muted {
+            color: var(--text-light-gray) !important;
         }
     </style>
 </head>
 <body>
-    <!-- Top Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container-fluid">
             <!-- Sidebar toggle button -->
             <button id="sidebarToggle" class="text-white">
@@ -246,11 +316,6 @@
             <a class="navbar-brand ms-2" href="/dashboard">LDAP Tools</a>
             
             <div class="d-flex align-items-center ms-auto">
-                <!-- Dark Mode Toggle -->
-                <button id="darkModeToggle" class="btn btn-outline-light btn-sm me-3">
-                    <i id="darkModeIcon" class="bi bi-moon"></i>
-                </button>
-                
                 <!-- User Profile -->
                 {% if session.logged_in %}
                 <div class="dropdown">
@@ -277,7 +342,7 @@
     <!-- Sidebar and Main Content -->
     <div class="d-flex">
         <!-- Sidebar -->
-        <div class="sidebar bg-light">
+        <div class="sidebar bg-dark">
             <div class="sidebar-header">
                 <h3 class="mb-0">Menu</h3>
             </div>
@@ -393,32 +458,6 @@
         // Sidebar Toggle
         document.getElementById('sidebarToggle').addEventListener('click', function() {
             document.body.classList.toggle('sidebar-collapsed');
-        });
-        
-        // Dark Mode Toggle
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        const darkModeIcon = document.getElementById('darkModeIcon');
-        const body = document.body;
-        
-        // Check if dark mode is enabled in localStorage
-        if (localStorage.getItem('darkMode') === 'enabled') {
-            body.classList.add('dark-mode');
-            darkModeIcon.classList.remove('bi-moon');
-            darkModeIcon.classList.add('bi-sun');
-        }
-        
-        // Toggle dark mode
-        darkModeToggle.addEventListener('click', function() {
-            body.classList.toggle('dark-mode');
-            if (body.classList.contains('dark-mode')) {
-                localStorage.setItem('darkMode', 'enabled');
-                darkModeIcon.classList.remove('bi-moon');
-                darkModeIcon.classList.add('bi-sun');
-            } else {
-                localStorage.setItem('darkMode', 'disabled');
-                darkModeIcon.classList.remove('bi-sun');
-                darkModeIcon.classList.add('bi-moon');
-            }
         });
         
         // Make table rows clickable if they have the 'clickable-row' class

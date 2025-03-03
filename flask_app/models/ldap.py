@@ -1,7 +1,6 @@
 from ldap3 import Server, Connection, ALL, MODIFY_ADD, SUBTREE
 from flask_app.config.ldap_config import ldap_login_config
-#from flask_app.models.ldap import LDAPModel
-from flask import Blueprint, redirect, url_for, flash, json, render_template
+from flask import redirect, url_for, flash, json, render_template
 import unicodedata
 
 class LDAPModel:

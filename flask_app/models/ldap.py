@@ -43,11 +43,9 @@ class LDAPModel:
 
     def search_user(self, search_term, search_type):
             
-            #ldap_model = LDAPModel()
-            #conn = ldap_model.authenticate(self.bind_dn, self.password)
+            
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True) 
-            #print(f"password: {session_password}")
-        # Construct the search filter based on the search type
+            
             if search_type == 'cn':
                 search_filter = f'(cn={search_term})'
             elif search_type == 'fullName':
@@ -418,29 +416,95 @@ class LDAPModel:
             raise e
 
     def autocomplete_fullName(self, search_term):
-        try:
-            conn = Connection(self.ldap_server, user=self.bind_dn, 
-                              password=self.password, auto_bind=True)
-            
-            fullName = []
-            for base_dn in ['o=FAVV', 'o=COPY']:
-                conn.search(base_dn, f'(fullName=*{search_term}*)', 
-                           search_scope='SUBTREE', attributes=['fullName', 'mail', 'ou'])
-                
-                for entry in conn.entries:
-                    if ('cn=UserApplication,cn=DS4,ou=SYSTEM,o=COPY' 
-                        not in entry.entry_dn):
-                        fullName.append({
-                            'label': f"{entry.fullName.value} - {entry.mail.value} - ({entry.ou.value}) - ({entry.entry_dn})",
-                            'value': entry.fullName.value
-                        })
-            
-            conn.unbind()
-            return fullName
-            
-        except Exception as e:
-            raise e
+        """
+        Méthode optimisée pour l'autocomplétion du champ fullName.
         
+        Args:
+            search_term (str): Le terme de recherche saisi par l'utilisateur
+            
+        Returns:
+            list: Liste des correspondances trouvées
+        """
+        # Ne pas effectuer de recherche si le terme est trop court
+        if len(search_term) < 3:
+            return []
+        
+        # Échapper les caractères spéciaux de LDAP dans le terme de recherche
+        search_term_escaped = self._escape_ldap_filter(search_term)
+        
+        # Construire un filtre LDAP optimisé
+        # Utiliser un filtre qui commence par pour être plus efficace
+        ldap_filter = f'(&(objectClass=Person)(fullName=*{search_term_escaped}*))'
+        
+        # Définir les attributs spécifiques à récupérer (au lieu de tous)
+        attributes = ['cn', 'fullName']
+        
+        # Établir la connexion LDAP
+        conn = self._get_connection()
+        
+        try:
+            # Effectuer la recherche avec une limite de taille pour éviter de récupérer trop de résultats
+            conn.search(
+                search_base='ou=users,ou=sync,o=copy',  # Base de recherche appropriée 
+                search_filter=ldap_filter,
+                search_scope='SUBTREE',
+                attributes=attributes,
+                size_limit=20,  # Limiter à 20 résultats
+                time_limit=5    # Limiter le temps de recherche à 5 secondes
+            )
+            
+            # Transformer les résultats pour l'autocomplétion
+            results = []
+            for entry in conn.entries:
+                if hasattr(entry, 'fullName') and entry.fullName.value:
+                    results.append({
+                        'label': entry.fullName.value,
+                        'value': entry.fullName.value
+                    })
+                    
+            # Limiter le nombre de résultats retournés
+            return results[:20]
+        
+        except Exception as e:
+            print(f"Erreur lors de l'autocomplétion: {str(e)}")
+            return []
+        finally:
+            # S'assurer que la connexion est fermée
+            conn.unbind()
+        
+    def _escape_ldap_filter(self, input_string):
+        """
+        Échapper les caractères spéciaux dans un filtre LDAP.
+        """
+        if not input_string:
+            return ""
+        
+        # Échapper les caractères spéciaux selon la RFC 2254
+        special_chars = {
+            '\\': r'\5c',
+            '*': r'\2a',
+            '(': r'\28',
+            ')': r'\29',
+            '\0': r'\00'
+        }
+        
+        result = input_string
+        for char, replacement in special_chars.items():
+            result = result.replace(char, replacement)
+        
+        return result
+
+    def _get_connection(self):
+        """
+        Obtenir une connexion LDAP déjà établie pour réutilisation.
+        """
+        # On pourrait implémenter un pool de connexions ici
+        return Connection(
+            self.ldap_server,
+            user=self.bind_dn,
+            password=self.password,
+            auto_bind=True
+        )   
     
     def autocomplete_role(self, search_term):
         try:

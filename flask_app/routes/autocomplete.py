@@ -19,11 +19,41 @@ def autocomplete_groups():
 @login_required
 def autocomplete_fullName():
     search_term = request.args.get('term', '')
+    
+    # Ne pas effectuer de recherche si moins de 3 caractères
+    if len(search_term) < 3:
+        return jsonify([])
+        
     try:
+        # Mise en cache simple en utilisant une variable globale ou Redis/Memcached
+        # Exemple simple avec les 10 dernières recherches
+        if not hasattr(autocomplete_fullName, 'cache'):
+            autocomplete_fullName.cache = {}
+        
+        # Vérifier si le résultat existe dans le cache
+        if search_term in autocomplete_fullName.cache:
+            return jsonify(autocomplete_fullName.cache[search_term])
+        
+        # Effectuer la requête LDAP
         ldap_model = LDAPModel()
         result = ldap_model.autocomplete_fullName(search_term)
-        return jsonify(result)
+        
+        # Limiter les résultats retournés
+        limited_result = result[:20]  # Limiter à 20 résultats maximum
+        
+        # Stocker dans le cache
+        autocomplete_fullName.cache[search_term] = limited_result
+        
+        # Nettoyer le cache s'il devient trop grand
+        if len(autocomplete_fullName.cache) > 100:
+            # Supprimer les premiers éléments ajoutés
+            keys = list(autocomplete_fullName.cache.keys())
+            for key in keys[:50]:
+                del autocomplete_fullName.cache[key]
+                
+        return jsonify(limited_result)
     except Exception as e:
+        print(f"Erreur d'autocomplétion: {str(e)}")
         return jsonify([]), 500
 
 @autocomplete_bp.route('/autocomplete_roles', methods=['GET'])

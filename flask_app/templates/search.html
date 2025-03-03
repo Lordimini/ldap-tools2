@@ -167,42 +167,56 @@
 
 <script>
     $(document).ready(function() {
-        // Function to initialize autocomplete
-        function initializeAutocomplete() {
-            $('#search_term').autocomplete({
-                source: function(request, response) {
-                    $.getJSON("{{ url_for('autocomplete.autocomplete_fullName') }}", {
-                        term: request.term
-                    }, function(data) {
-                        response(data);
-                    });
-                },
-                select: function(event, ui) {
-                    $('#search_term').val(ui.item.value);
-                    return false;
+    // Function to initialize autocomplete
+    function initializeAutocomplete() {
+        $('#search_term').autocomplete({
+            source: function(request, response) {
+                // Ne déclencher la recherche que si au moins 3 caractères sont saisis
+                if (request.term.length < 3) {
+                    response([]);
+                    return;
                 }
-            }).data('ui-autocomplete')._renderItem = function(ul, item) {
-                return $('<li>')
-                    .append(`<div>${item.label}</div>`)
-                    .appendTo(ul);
-            };
-        }
-
-        // Check the selected search type and initialize autocomplete if needed
-        $('#search_type').change(function() {
-            if ($(this).val() === 'fullName') {
-                initializeAutocomplete();
-            } else {
-                // Unbind existing autocomplete if any
-                $('#search_term').autocomplete('destroy');
+                
+                // Ajouter une variable pour stocker la requête AJAX en cours
+                if (this.xhr) {
+                    this.xhr.abort();
+                }
+                
+                // Effectuer la requête AJAX avec un délai
+                this.xhr = $.getJSON("{{ url_for('autocomplete.autocomplete_fullName') }}", {
+                    term: request.term
+                }, function(data) {
+                    response(data);
+                });
+            },
+            minLength: 3,  // Définir une longueur minimale avant de déclencher l'autocomplétion
+            delay: 300,    // Ajouter un délai de 300ms entre les frappes et la recherche
+            select: function(event, ui) {
+                $('#search_term').val(ui.item.value);
+                return false;
             }
-        });
+        }).data('ui-autocomplete')._renderItem = function(ul, item) {
+            return $('<li>')
+                .append(`<div>${item.label}</div>`)
+                .appendTo(ul);
+        };
+    }
 
-        // Initialize autocomplete on page load for the selected option
-        if ($('#search_type option:selected').val() === 'fullName') {
+    // Check the selected search type and initialize autocomplete if needed
+    $('#search_type').change(function() {
+        if ($(this).val() === 'fullName') {
             initializeAutocomplete();
+        } else {
+            // Unbind existing autocomplete if any
+            $('#search_term').autocomplete('destroy');
         }
     });
+
+    // Initialize autocomplete on page load for the selected option
+    if ($('#search_type option:selected').val() === 'fullName') {
+        initializeAutocomplete();
+    }
+});
 </script>
 
 {% endblock %}

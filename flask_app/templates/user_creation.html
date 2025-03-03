@@ -5,170 +5,658 @@
 {% endblock %}
 
 {% block content %}
-<div x-data="userCreationApp()" x-init="init()">
-    <div class="container mt-5">
-        <h1 class="text-center mb-4">Create User Account</h1>
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Create User Account</h1>
+    
+    <!-- Flash messages for any errors/warnings -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert-messages mb-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'success' %}success{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Form to create a new user -->
+    <form method="POST" class="card p-4 shadow" id="userCreationForm" onsubmit="return validateForm(event);">
+        {{ form.hidden_tag() }}
         
-        <!-- Flash messages for any errors/warnings -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="alert-messages mb-4">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'success' %}success{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+        <!-- Dropdown for User Type -->
+        <div class="mb-3">
+            <label for="user_type" class="form-label">User Type:</label>
+            <select id="user_type" name="user_type" class="form-select">
+                {% for choice in form.user_type.choices %}
+                    <option value="{{ choice[0] }}" {% if form_data and form_data.user_type == choice[0] %}selected{% endif %}>{{ choice[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <!-- Form to create a new user -->
-        <form method="POST" class="card p-4 shadow" id="userCreationForm" x-on:submit.prevent="validateForm">
-            {{ form.hidden_tag() }}
-            
-            <!-- Dropdown for User Type -->
-            <div class="mb-3">
-                <label for="user_type" class="form-label">User Type:</label>
-                <select id="user_type" name="user_type" class="form-select" x-model="formData.userType">
-                    {% for choice in form.user_type.choices %}
-                        <option value="{{ choice[0] }}">{{ choice[1] }}</option>
-                    {% endfor %}
-                </select>
+        <!-- Given Name -->
+        <div class="mb-3">
+            <label for="givenName" class="form-label">Given Name:</label>
+            <input type="text" id="givenName" name="givenName" class="form-control" value="{{ form_data.givenName if form_data else '' }}" required>
+        </div>
+
+        <!-- Surname -->
+        <div class="mb-3">
+            <label for="sn" class="form-label">Surname:</label>
+            <div class="input-group">
+                <input type="text" id="sn" name="sn" class="form-control" value="{{ form_data.sn if form_data else '' }}" required>
+                <button type="button" id="checkNameBtn" class="btn btn-outline-primary">
+                    <i class="fas fa-check"></i> Vérifier
+                </button>
             </div>
+            <div id="nameCheckResult" class="mt-2"></div>
+        </div>
 
-            <!-- Given Name -->
-            <div class="mb-3">
-                <label for="givenName" class="form-label">Given Name:</label>
-                <input type="text" id="givenName" name="givenName" class="form-control" x-model="formData.givenName" required>
+        <!-- Email (Now Required) -->
+        <div class="mb-3">
+            <label for="email" class="form-label">Email:</label>
+            <div class="input-group">
+                <input type="email" id="email" name="email" class="form-control" value="{{ form_data.email if form_data else '' }}" required>
+                <button type="button" id="emailOverrideBtn" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#emailWarningModal">
+                    <i class="fas fa-exclamation-triangle"></i> Override
+                </button>
             </div>
-
-            <!-- Surname -->
-            <div class="mb-3">
-                <label for="sn" class="form-label">Surname:</label>
-                <div class="input-group">
-                    <input type="text" id="sn" name="sn" class="form-control" x-model="formData.sn" required>
-                    <button type="button" id="checkNameBtn" class="btn btn-outline-primary" x-on:click="checkNameExists">
-                        <i class="fas fa-check"></i> Vérifier
-                    </button>
-                </div>
-                <div id="nameCheckResult" class="mt-2"></div>
+            <div id="emailOverrideIndicator" class="mt-1 mb-2 text-danger fw-bold" style="display: none;">
+                <i class="fas fa-exclamation-circle"></i> Ce champ est actuellement optionnel (override actif)
             </div>
-
-            <!-- Email (Now Required) -->
-            <div class="mb-3">
-                <label for="email" class="form-label">Email:</label>
-                <div class="input-group">
-                    <input type="email" id="email" name="email" class="form-control" x-model="formData.email" required>
-                    <button type="button" id="emailOverrideBtn" class="btn btn-warning" x-on:click="toggleEmailOverride">
-                        <i class="fas fa-exclamation-triangle"></i> Override
-                    </button>
-                </div>
-                <div id="emailOverrideIndicator" class="mt-1 mb-2 text-danger fw-bold" x-show="formData.emailOverride">
-                    <i class="fas fa-exclamation-circle"></i> Ce champ est actuellement optionnel (override actif)
-                </div>
-                <input type="hidden" id="email_override" name="email_override" value="false">
-            </div>
-            
-            <!-- Hierarchical Manager (for STAG users) -->
-            <div id="manager_container" class="mb-3" x-show="formData.userType === 'STAG'">
-                <label for="manager" class="form-label">Hierarchical Manager:</label>
-                <div class="input-group">
-                    <input type="text" id="manager" name="manager" class="form-control" x-model="formData.manager" placeholder="Start typing to search for managers..." x-on:input="debounceManagerSearch">
-                    <button type="button" id="managerOverrideBtn" class="btn btn-warning" x-on:click="toggleManagerOverride">
-                        <i class="fas fa-exclamation-triangle"></i> Override
-                    </button>
-                </div>
-                <div id="managerOverrideIndicator" class="mt-1 mb-2 text-danger fw-bold" x-show="formData.managerOverride">
-                    <i class="fas fa-exclamation-circle"></i> Ce champ est actuellement optionnel (override actif)
-                </div>
-                <small class="form-text text-muted">Only managers with FavvDienstHoofd=YES are valid.</small>
-                <input type="hidden" id="manager_override" name="manager_override" value="false">
-                
-                <!-- Manager suggestions dropdown -->
-                <div class="manager-suggestions" x-show="managerSuggestions.length > 0">
-                    <ul class="list-group">
-                        <template x-for="suggestion in managerSuggestions" :key="suggestion.value">
-                            <li class="list-group-item list-group-item-action" x-on:click="selectManager(suggestion)" x-text="suggestion.label"></li>
-                        </template>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- National Register Number (OCI Specific Field) -->
-            <div id="favvNatNr_container" class="mb-3" x-show="formData.userType === 'BOODOCI' || formData.userType === 'OCI'">
-                <label for="favvNatNr" class="form-label">National Register Number:</label>
-                <div class="input-group">
-                    <input type="text" id="favvNatNr" name="favvNatNr" class="form-control" placeholder="Enter National Register Number" x-model="formData.favvNatNr">
-                    <button type="button" id="favvNatNrOverrideBtn" class="btn btn-warning" x-on:click="toggleFavvNatNrOverride">
-                        <i class="fas fa-exclamation-triangle"></i> Override
-                    </button>
-                    <button type="button" id="checkFavvNatNrBtn" class="btn btn-outline-primary" x-on:click="checkFavvNatNrExists">
-                        <i class="fas fa-check"></i> Vérifier
-                    </button>
-                </div>
-                <div id="favvNatNrOverrideIndicator" class="mt-1 mb-2 text-danger fw-bold" x-show="formData.favvNatNrOverride">
-                    <i class="fas fa-exclamation-circle"></i> Ce champ est actuellement optionnel (override actif)
-                </div>
-                <small class="form-text text-muted">Format will be automatically normalized to remove spaces and hyphens.</small>
-                <div id="favvNatNrCheckResult" class="mt-2"></div>
-                <input type="hidden" id="favvNatNr_override" name="favvNatNr_override" value="false">
-            </div>
-
-            <!-- Submit button -->
-            <button type="submit" class="btn btn-primary">Preview & Create User</button>
-        </form>
-
-        <!-- Email, Manager, and FavvNatNr Warning Modals (inchangés) -->
-        <!-- ... -->
+            <input type="hidden" id="email_override" name="email_override" value="false">
+        </div>
         
-        <!-- Confirmation Modal -->
-        <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-info text-white">
-                        <h5 class="modal-title" id="confirmationModalLabel">Confirm User Creation</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <h6>Please review the user information before creating:</h6>
-                        <div id="userSummary" class="card p-3 mb-3">
-                            <!-- User info will be populated here via JavaScript -->
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="confirmCreate" x-on:click="submitFinalForm">Create User</button>
-                    </div>
+        <!-- Hierarchical Manager (for STAG users) -->
+        <div id="manager_container" class="mb-3" style="display: none;">
+            <label for="manager" class="form-label">Hierarchical Manager:</label>
+            <div class="input-group">
+                <input type="text" id="manager" name="manager" class="form-control" value="{{ form_data.manager if form_data else '' }}" placeholder="Start typing to search for managers...">
+                <button type="button" id="managerOverrideBtn" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#managerWarningModal">
+                    <i class="fas fa-exclamation-triangle"></i> Override
+                </button>
+            </div>
+            <div id="managerOverrideIndicator" class="mt-1 mb-2 text-danger fw-bold" style="display: none;">
+                <i class="fas fa-exclamation-circle"></i> Ce champ est actuellement optionnel (override actif)
+            </div>
+            <small class="form-text text-muted">Only managers with FavvDienstHoofd=YES are valid.</small>
+            <input type="hidden" id="manager_override" name="manager_override" value="false">
+        </div>
+
+        <!-- OCI Specific Field (shown conditionally) -->
+        <div id="favvNatNr_container" class="mb-3" style="display: none;">
+            <label for="favvNatNr" class="form-label">National Register Number:</label>
+            <div class="input-group">
+                <input type="text" id="favvNatNr" name="favvNatNr" class="form-control" placeholder="Enter National Register Number" value="{{ form_data.favvNatNr if form_data else '' }}">
+                <button type="button" id="favvNatNrOverrideBtn" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#favvNatNrWarningModal">
+                    <i class="fas fa-exclamation-triangle"></i> Override
+                </button>
+                <button type="button" id="checkFavvNatNrBtn" class="btn btn-outline-primary">
+                    <i class="fas fa-check"></i> Vérifier
+                </button>
+            </div>
+            <div id="favvNatNrOverrideIndicator" class="mt-1 mb-2 text-danger fw-bold" style="display: none;">
+                <i class="fas fa-exclamation-circle"></i> Ce champ est actuellement optionnel (override actif)
+            </div>
+            <small class="form-text text-muted">Format will be automatically normalized to remove spaces and hyphens.</small>
+            <div id="favvNatNrCheckResult" class="mt-2"></div>
+            <input type="hidden" id="favvNatNr_override" name="favvNatNr_override" value="false">
+        </div>
+
+        <!-- Submit button -->
+        <button type="submit" class="btn btn-primary">Preview & Create User</button>
+    </form>
+
+    <!-- Email Warning Modal -->
+    <div class="modal fade" id="emailWarningModal" tabindex="-1" aria-labelledby="emailWarningModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title" id="emailWarningModalLabel">Warning!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="emailModalBody">
+                    <!-- Le contenu sera modifié dynamiquement par JS -->
+                </div>
+                <div class="modal-footer" id="emailModalFooter">
+                    <!-- Les boutons seront modifiés dynamiquement par JS -->
                 </div>
             </div>
         </div>
-        
-        <!-- Hidden form for actual submission -->
-        <form id="actualSubmitForm" method="POST" style="display: none;">
-            <input type="hidden" name="user_type" id="hidden_user_type">
-            <input type="hidden" name="givenName" id="hidden_givenName">
-            <input type="hidden" name="sn" id="hidden_sn">
-            <input type="hidden" name="email" id="hidden_email">
-            <input type="hidden" name="email_override" id="hidden_email_override">
-            <input type="hidden" name="favvNatNr" id="hidden_favvNatNr">
-            <input type="hidden" name="favvNatNr_override" id="hidden_favvNatNr_override">
-            <input type="hidden" name="manager" id="hidden_manager">
-            <input type="hidden" name="manager_override" id="hidden_manager_override">
-        </form>
     </div>
+    <!-- Manager Warning Modal -->
+    <div class="modal fade" id="managerWarningModal" tabindex="-1" aria-labelledby="managerWarningModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title" id="managerWarningModalLabel">Warning!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="managerModalBody">
+                    <!-- Le contenu sera modifié dynamiquement par JS -->
+                </div>
+                <div class="modal-footer" id="managerModalFooter">
+                    <!-- Les boutons seront modifiés dynamiquement par JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FavvNatNr Warning Modal -->
+    <div class="modal fade" id="favvNatNrWarningModal" tabindex="-1" aria-labelledby="favvNatNrWarningModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title" id="favvNatNrWarningModalLabel">Warning!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="favvNatNrModalBody">
+                    <!-- Le contenu sera modifié dynamiquement par JS -->
+                </div>
+                <div class="modal-footer" id="favvNatNrModalFooter">
+                    <!-- Les boutons seront modifiés dynamiquement par JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="confirmationModalLabel">Confirm User Creation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Please review the user information before creating:</h6>
+                    
+                    <div id="userSummary" class="card p-3 mb-3">
+                        <!-- User info will be populated here via JavaScript -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmCreate">Create User</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hidden form for actual submission -->
+    <form id="actualSubmitForm" method="POST" style="display: none;">
+        <input type="hidden" name="user_type" id="hidden_user_type">
+        <input type="hidden" name="givenName" id="hidden_givenName">
+        <input type="hidden" name="sn" id="hidden_sn">
+        <input type="hidden" name="email" id="hidden_email">
+        <input type="hidden" name="email_override" id="hidden_email_override">
+        <input type="hidden" name="favvNatNr" id="hidden_favvNatNr">
+        <input type="hidden" name="favvNatNr_override" id="hidden_favvNatNr_override">
+        <input type="hidden" name="manager" id="hidden_manager">
+        <input type="hidden" name="manager_override" id="hidden_manager_override">
+    </form>
+
+    <!-- Include Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+    // Show/hide FavvNatNr field based on user type selection
+    const userTypeSelect = document.getElementById('user_type');
+    const favvNatNrContainer = document.getElementById('favvNatNr_container');
+    const managerContainer = document.getElementById('manager_container');
+    
+    // Fonctions pour gérer l'état des overrides
+    function updateOverrideUI(fieldId, overrideActive) {
+        const field = document.getElementById(fieldId);
+        const overrideBtn = document.getElementById(fieldId + 'OverrideBtn');
+        const overrideIndicator = document.getElementById(fieldId + 'OverrideIndicator');
+        const overrideInput = document.getElementById(fieldId + '_override');
+        
+        // Mettre à jour l'indicateur d'override
+        if (overrideActive) {
+            field.required = false;
+            overrideIndicator.style.display = 'block';
+            overrideBtn.classList.remove('btn-warning');
+            overrideBtn.classList.add('btn-danger');
+            overrideBtn.innerHTML = '<i class="fas fa-times-circle"></i> Annuler Override';
+            overrideInput.value = 'true';
+        } else {
+            field.required = true;
+            overrideIndicator.style.display = 'none';
+            overrideBtn.classList.remove('btn-danger');
+            overrideBtn.classList.add('btn-warning');
+            overrideBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Override';
+            overrideInput.value = 'false';
+        }
+    }
+    
+    // Fonction pour préparer les modales selon l'état d'override
+    function prepareOverrideModal(fieldId, modalId) {
+        const modal = document.getElementById(modalId);
+        const modalBody = document.getElementById(fieldId + 'ModalBody');
+        const modalFooter = document.getElementById(fieldId + 'ModalFooter');
+        const overrideActive = document.getElementById(fieldId + '_override').value === 'true';
+        
+        if (overrideActive) {
+            // Si l'override est actif, montrer option pour le désactiver
+            modalBody.innerHTML = `
+                <p><strong>Override Actif</strong></p>
+                <p>Le champ '${fieldId}' est actuellement optionnel. Voulez-vous le rendre à nouveau obligatoire?</p>
+            `;
+            modalFooter.innerHTML = `
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" id="disable${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)}Override">Rendre obligatoire</button>
+            `;
+            
+            // Ajouter event listener pour désactiver l'override
+            document.getElementById(`disable${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)}Override`).addEventListener('click', function() {
+                updateOverrideUI(fieldId, false);
+                bootstrap.Modal.getInstance(modal).hide();
+            });
+        } else {
+            // Si l'override n'est pas actif, montrer avertissement normal
+            modalBody.innerHTML = `
+                <p><strong>Attention, à vos risques et périls!</strong></p>
+                <p>Rendre ce champ optionnel n'est pas recommandé. Êtes-vous sûr de vouloir continuer?</p>
+            `;
+            modalFooter.innerHTML = `
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirm${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)}Override">Confirmer</button>
+            `;
+            
+            // Ajouter event listener pour activer l'override
+            document.getElementById(`confirm${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)}Override`).addEventListener('click', function() {
+                updateOverrideUI(fieldId, true);
+                bootstrap.Modal.getInstance(modal).hide();
+            });
+        }
+    }
+    
+    // Gestionnaires d'événements pour les boutons d'override
+    document.getElementById('emailOverrideBtn').addEventListener('click', function() {
+        prepareOverrideModal('email', 'emailWarningModal');
+    });
+    
+    document.getElementById('favvNatNrOverrideBtn').addEventListener('click', function() {
+        prepareOverrideModal('favvNatNr', 'favvNatNrWarningModal');
+    });
+    
+    document.getElementById('managerOverrideBtn').addEventListener('click', function() {
+        prepareOverrideModal('manager', 'managerWarningModal');
+    });
+    
+    // Initialiser l'UI basée sur les valeurs stockées (utile pour préserver l'état après erreur de formulaire)
+    const fields = ['email', 'favvNatNr', 'manager'];
+    fields.forEach(field => {
+        const override = document.getElementById(field + '_override').value === 'true';
+        if (override) {
+            updateOverrideUI(field, true);
+        }
+    });
+    
+    // Function to toggle visibility of fields based on user type
+    function toggleFields() {
+        // OCI types
+        if (userTypeSelect.value === 'BOODOCI' || userTypeSelect.value === 'OCI') {
+            favvNatNrContainer.style.display = 'block';
+        } else {
+            favvNatNrContainer.style.display = 'none';
+        }
+        
+        // STAG type (trainee)
+        if (userTypeSelect.value === 'STAG') {
+            managerContainer.style.display = 'block';
+        } else {
+            managerContainer.style.display = 'none';
+        }
+    }
+    
+    // Initial check
+    toggleFields();
+    
+    // Listen for changes
+    userTypeSelect.addEventListener('change', toggleFields);
+    
+    // FavvNatNr normalization
+    const favvNatNrInput = document.getElementById('favvNatNr');
+    favvNatNrInput.addEventListener('input', function(e) {
+        // Remove all non-digit characters
+        const normalized = e.target.value.replace(/[^0-9]/g, '');
+        
+        // Update input value with normalized string
+        e.target.value = normalized;
+        
+        // Clear check result when input changes
+        document.getElementById('favvNatNrCheckResult').innerHTML = '';
+    });
+    
+    // Manager Autocomplete
+    $('#manager').autocomplete({
+        source: function(request, response) {
+            $.getJSON("{{ url_for('autocomplete.autocomplete_managers') }}", {
+                term: request.term
+            }, function(data) {
+                response(data);
+            });
+        },
+        select: function(event, ui) {
+            $('#manager').val(ui.item.value);
+            return false;
+        },
+        minLength: 2
+    }).data('ui-autocomplete')._renderItem = function(ul, item) {
+        return $('<li>')
+            .append(`<div>${item.label}</div>`)
+            .appendTo(ul);
+    };
+    
+    // Handle confirmation button
+    document.getElementById('confirmCreate').addEventListener('click', function() {
+        document.getElementById('actualSubmitForm').submit();
+    });
+    
+    // Gestionnaire pour le bouton de vérification du nom
+    document.getElementById('checkNameBtn').addEventListener('click', function() {
+        const givenName = document.getElementById('givenName').value.trim();
+        const sn = document.getElementById('sn').value.trim();
+        const resultDiv = document.getElementById('nameCheckResult');
+        
+        if (!givenName || !sn) {
+            resultDiv.innerHTML = '<div class="alert alert-warning">Veuillez saisir le prénom et le nom.</div>';
+            return;
+        }
+        
+        // Afficher un indicateur de chargement
+        resultDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Vérification en cours...</div>';
+        
+        // Envoyer la requête AJAX
+        fetch('{{ url_for("usercreation.check_name_exists") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                givenName: givenName,
+                sn: sn
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'exists') {
+                // Afficher sn + givenName (au lieu de givenName + sn) pour être cohérent avec le format LDAP
+                resultDiv.innerHTML = `<div class="alert alert-danger">Un utilisateur avec le nom '${sn} ${givenName}' existe déjà dans l'annuaire (${data.message}).</div>`;
+            } else if (data.status === 'ok') {
+                // Même modification ici
+                resultDiv.innerHTML = `<div class="alert alert-success">Aucun utilisateur existant avec le nom '${sn} ${givenName}'.</div>`;
+            } else {
+                resultDiv.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            resultDiv.innerHTML = '<div class="alert alert-danger">Erreur lors de la vérification. Veuillez réessayer.</div>';
+        });
+    });
+    
+    // Gestionnaire pour le bouton de vérification du FavvNatNr
+    const checkFavvNatNrBtn = document.getElementById('checkFavvNatNrBtn');
+    if (checkFavvNatNrBtn) {
+        checkFavvNatNrBtn.addEventListener('click', function() {
+            const favvNatNr = document.getElementById('favvNatNr').value.trim();
+            const resultDiv = document.getElementById('favvNatNrCheckResult');
+            
+            if (!favvNatNr) {
+                resultDiv.innerHTML = '<div class="alert alert-warning">Veuillez saisir un numéro de registre national.</div>';
+                return;
+            }
+            
+            // Afficher un indicateur de chargement
+            resultDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Vérification en cours...</div>';
+            
+            // Envoyer la requête AJAX
+            fetch('{{ url_for("usercreation.check_favvnatnr_exists") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    favvNatNr: favvNatNr
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'exists') {
+                    resultDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                } else if (data.status === 'ok') {
+                    resultDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.innerHTML = '<div class="alert alert-danger">Erreur lors de la vérification. Veuillez réessayer.</div>';
+            });
+        });
+    }
+    
+    // Effacer les résultats de vérification lorsque les champs sont modifiés
+    document.getElementById('givenName').addEventListener('input', function() {
+        document.getElementById('nameCheckResult').innerHTML = '';
+    });
+    
+    document.getElementById('sn').addEventListener('input', function() {
+        document.getElementById('nameCheckResult').innerHTML = '';
+    });
+});
+
+// Fonction de validation du formulaire
+function validateForm(event) {
+    event.preventDefault();
+    
+    // Check form validity
+    const form = document.getElementById('userCreationForm');
+    if (!form.checkValidity()) {
+        // Activer la validation native du navigateur
+        form.reportValidity();
+        return false;
+    }
+    
+    // Check required fields with overrides
+    const emailField = document.getElementById('email');
+    const emailOverride = document.getElementById('email_override').value === 'true';
+    if (!emailField.value && !emailOverride) {
+        alert('Email address is required. Use the override button if you want to proceed without an email.');
+        return false;
+    }
+    
+    // Check FavvNatNr if needed
+    const favvNatNrContainer = document.getElementById('favvNatNr_container');
+    if (favvNatNrContainer.style.display !== 'none') {
+        const favvNatNrField = document.getElementById('favvNatNr');
+        const favvNatNrOverride = document.getElementById('favvNatNr_override').value === 'true';
+        if (!favvNatNrField.value && !favvNatNrOverride) {
+            alert('National Register Number is required for this user type. Use the override button if you want to proceed without it.');
+            return false;
+        }
+    }
+    
+    // Check Manager if needed
+    const managerContainer = document.getElementById('manager_container');
+    if (managerContainer.style.display !== 'none') {
+        const managerField = document.getElementById('manager');
+        const managerOverride = document.getElementById('manager_override').value === 'true';
+        if (!managerField.value && !managerOverride) {
+            alert('Hierarchical Manager is required for trainees. Use the override button if you want to proceed without it.');
+            return false;
+        }
+    }
+    
+    // Récupérer le CN et le mot de passe avant d'afficher la modal
+    fetch('{{ url_for("usercreation.preview_user_details") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            givenName: document.getElementById('givenName').value,
+            sn: document.getElementById('sn').value,
+            user_type: document.getElementById('user_type').value
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Erreur lors de la prévisualisation: ' + data.error);
+            return;
+        }
+        
+        // Remplir la modal avec les données
+        populateConfirmationModal(data.cn, data.password, data.template_details);
+        
+        // Afficher la modal de confirmation
+        const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+        confirmationModal.show();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Une erreur est survenue lors de la prévisualisation des détails utilisateur.');
+    });
+    
+    return false; // Empêcher la soumission normale du formulaire
+}
+
+// Populate the confirmation modal with user info
+function populateConfirmationModal(cn, password, template_details) {
+    const userType = document.getElementById('user_type');
+    const userTypeText = userType.options[userType.selectedIndex].text;
+    const givenName = document.getElementById('givenName').value;
+    const sn = document.getElementById('sn').value;
+    const email = document.getElementById('email').value || 'No email specified (Override)';
+    const favvNatNr = document.getElementById('favvNatNr').value || 'No National Register Number (Override)';
+    const manager = document.getElementById('manager').value || 'No manager specified (Override)';
+    
+    // Créer le HTML pour le résumé
+    let html = `
+        <table class="table table-striped">
+            <tr>
+                <th>User Type:</th>
+                <td>${userTypeText} (${userType.value})</td>
+            </tr>
+            <tr>
+                <th>Full Name:</th>
+                <td>${sn} ${givenName}</td>
+            </tr>
+            <tr class="table-primary">
+                <th>Common Name (CN):</th>
+                <td><strong>${cn}</strong></td>
+            </tr>
+            <tr class="table-primary">
+                <th>Generated Password:</th>
+                <td><code>${password}</code></td>
+            </tr>
+            <tr>
+                <th>Email:</th>
+                <td>${email}</td>
+            </tr>`;
+    
+    // Add conditional fields
+    if (document.getElementById('favvNatNr_container').style.display !== 'none') {
+        html += `
+            <tr>
+                <th>National Register Number:</th>
+                <td>${favvNatNr}</td>
+            </tr>`;
+    }
+    
+    if (document.getElementById('manager_container').style.display !== 'none') {
+        html += `
+            <tr>
+                <th>Hierarchical Manager:</th>
+                <td>${manager}</td>
+            </tr>`;
+    }
+    
+    // Add template details if available
+    if (template_details) {
+        html += `<tr><th colspan="2" class="table-secondary">Template Attributes</th></tr>`;
+        
+        if (template_details.description) {
+            html += `
+                <tr>
+                    <th>Description:</th>
+                    <td>${template_details.description}</td>
+                </tr>`;
+        }
+        
+        if (template_details.title) {
+            html += `
+                <tr>
+                    <th>Title:</th>
+                    <td>${template_details.title}</td>
+                </tr>`;
+        }
+        
+        if (template_details.ou) {
+            html += `
+                <tr>
+                    <th>Service/OU:</th>
+                    <td>${template_details.ou}</td>
+                </tr>`;
+        }
+        
+        if (template_details.FavvEmployeeType) {
+            html += `
+                <tr>
+                    <th>Employee Type:</th>
+                    <td>${template_details.FavvEmployeeType}</td>
+                </tr>`;
+        }
+        
+        if (template_details.FavvEmployeeSubType) {
+            html += `
+                <tr>
+                    <th>Employee SubType:</th>
+                    <td>${template_details.FavvEmployeeSubType}</td>
+                </tr>`;
+        }
+        
+        if (template_details.FavvExtDienstMgrDn) {
+            html += `
+                <tr>
+                    <th>Service Manager:</th>
+                    <td>${template_details.ServiceManagerName || 'Non disponible'} <span class="text-muted small">(${template_details.FavvExtDienstMgrDn})</span></td>
+                </tr>`;
+        }
+    }
+    
+    html += `</table>
+        <div class="alert alert-info">
+            <strong>Note:</strong> Le CN et le mot de passe sont générés automatiquement en fonction du nom.
+            ${template_details ? 'Les attributs du template seront automatiquement appliqués lors de la création.' : ''}
+        </div>`;
+    
+    // Set the HTML in the modal
+    document.getElementById('userSummary').innerHTML = html;
+    
+    // Peupler également le formulaire caché pour la soumission
+    document.getElementById('hidden_user_type').value = userType.value;
+    document.getElementById('hidden_givenName').value = givenName;
+    document.getElementById('hidden_sn').value = sn;
+    document.getElementById('hidden_email').value = document.getElementById('email').value;
+    document.getElementById('hidden_email_override').value = document.getElementById('email_override').value;
+    document.getElementById('hidden_favvNatNr').value = document.getElementById('favvNatNr').value;
+    document.getElementById('hidden_favvNatNr_override').value = document.getElementById('favvNatNr_override').value;
+    document.getElementById('hidden_manager').value = document.getElementById('manager').value;
+    document.getElementById('hidden_manager_override').value = document.getElementById('manager_override').value;
+}
+    </script>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<!-- Inclure Font Awesome pour les icônes -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-<!-- Inclure jQuery et jQuery UI pour l'autocomplétion -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
-<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
-
-<!-- Inclure le script Alpine.js spécifique à la création d'utilisateur -->
-<script src="{{ url_for('static', filename='js/user_creation.js') }}"></script>
 {% endblock %}

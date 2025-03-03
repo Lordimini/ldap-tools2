@@ -97,58 +97,33 @@
                     <td>Group Membership</td>
                     <td>
                         {% if result.groupMembership %}
-                        <button class="btn btn-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#groupMembershipList">
-                            Show Group Memberships
+                        <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#groupMembershipModal">
+                            <i class="bi bi-people"></i> View Group Memberships ({{ result.groupMembership|length }})
                         </button>
-                        <div class="collapse" id="groupMembershipList">
-                            <ul class="list-group mt-2">
-                                {% for group in result.groupMembership %}
-                                <li class="list-group-item list-group-item-action" onclick="window.location.href='{{ url_for('group.group_users') }}?group_name={{ group.cn }}'" style="cursor: pointer;">{{ group.cn }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
                         {% else %}
                         No group memberships found.
                         {% endif %}
                     </td>
                 </tr>
-
-                
                 <tr>
                     <td>Assigned Roles</td>
                     <td>
                         {% if result.nrfMemberOf %}
-                        <button class="btn btn-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#rolesAssignedList">
-                            Show assigned roles
+                        <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#rolesAssignedModal">
+                            <i class="bi bi-person-badge"></i> View Assigned Roles ({{ result.nrfMemberOf|length }})
                         </button>
-                        <div class="collapse" id="rolesAssignedList">
-                            <ul class="list-group mt-2">
-                                {% for role in result.nrfMemberOf %}
-                                <li class="list-group-item list-group-item-action" onclick="window.location.href='{{ url_for('role.role_users') }}?role_cn={{ role.cn }}'" style="cursor: pointer;">    
-                                    {{ role.cn }} (category:{{ role.category }})</li>
-                            {% endfor %}
-                            </ul>
-                        </div>
                         {% else %}
                         No assigned role found.
                         {% endif %}
                     </td>
                 </tr>
-
                 <tr>
                     <td>DirXML-Associations</td>
                     <td>
                         {% if result.DirXMLAssociations %}
-                        <button class="btn btn-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#DirXMLAssociationsList">
-                            Show DirXML Associations
+                        <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#DirXMLAssociationsModal">
+                            <i class="bi bi-link"></i> View DirXML Associations ({{ result.DirXMLAssociations|length }})
                         </button>
-                        <div class="collapse" id="DirXMLAssociationsList">
-                            <ul class="list-group mt-2">
-                                {% for association in result.DirXMLAssociations %}
-                                <li class="list-group-item list-group-item-action">{{ association }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
                         {% else %}
                         No DirXML-Associations found.
                         {% endif %}
@@ -157,6 +132,124 @@
             </tbody>
         </table>
     </div>
+    
+    <!-- Group Membership Modal -->
+    {% if result.groupMembership %}
+    <div class="modal fade" id="groupMembershipModal" tabindex="-1" aria-labelledby="groupMembershipModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="groupMembershipModalLabel">Group Memberships for {{ result.fullName }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-dark table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Group CN</th>
+                                <th>Group DN</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for group in result.groupMembership %}
+                            <tr>
+                                <td>{{ group.cn }}</td>
+                                <td class="text-truncate" style="max-width: 300px;" title="{{ group.dn }}">{{ group.dn }}</td>
+                                <td>
+                                    <a href="{{ url_for('group.group_users') }}?group_name={{ group.cn }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> View Group
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Roles Assigned Modal -->
+    {% if result.nrfMemberOf %}
+    <div class="modal fade" id="rolesAssignedModal" tabindex="-1" aria-labelledby="rolesAssignedModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rolesAssignedModalLabel">Assigned Roles for {{ result.fullName }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-dark table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Role CN</th>
+                                <th>Category</th>
+                                <th>Role DN</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for role in result.nrfMemberOf %}
+                            <tr>
+                                <td>{{ role.cn }}</td>
+                                <td>{{ role.category }}</td>
+                                <td class="text-truncate" style="max-width: 250px;" title="{{ role.dn }}">{{ role.dn }}</td>
+                                <td>
+                                    <a href="{{ url_for('role.role_users') }}?role_cn={{ role.cn }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> View Role
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- DirXML Associations Modal -->
+    {% if result.DirXMLAssociations %}
+    <div class="modal fade" id="DirXMLAssociationsModal" tabindex="-1" aria-labelledby="DirXMLAssociationsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="DirXMLAssociationsModalLabel">DirXML Associations for {{ result.fullName }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-dark table-striped">
+                        <thead>
+                            <tr>
+                                <th>Association</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for association in result.DirXMLAssociations %}
+                            <tr>
+                                <td class="text-break">{{ association }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
     {% endif %}
 </div>
 <!-- jQuery (required for autocomplete) -->

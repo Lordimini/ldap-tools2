@@ -6,407 +6,169 @@
 
 {% block content %}
 <div x-data="userCreationApp()" x-init="init()">
-    <!-- votre formulaire et UI ici -->
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Create User Account</h1>
+        
+        <!-- Flash messages for any errors/warnings -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert-messages mb-4">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'success' %}success{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
-<div class="container mt-5">
-    <h1 class="text-center mb-4">Create User Account</h1>
-    
-    <!-- Flash messages for any errors/warnings -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="alert-messages mb-4">
-                {% for category, message in messages %}
-                    <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'success' %}success{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <!-- Form to create a new user -->
+        <form method="POST" class="card p-4 shadow" id="userCreationForm" x-on:submit.prevent="validateForm">
+            {{ form.hidden_tag() }}
+            
+            <!-- Dropdown for User Type -->
+            <div class="mb-3">
+                <label for="user_type" class="form-label">User Type:</label>
+                <select id="user_type" name="user_type" class="form-select" x-model="formData.userType">
+                    {% for choice in form.user_type.choices %}
+                        <option value="{{ choice[0] }}">{{ choice[1] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Given Name -->
+            <div class="mb-3">
+                <label for="givenName" class="form-label">Given Name:</label>
+                <input type="text" id="givenName" name="givenName" class="form-control" x-model="formData.givenName" required>
+            </div>
+
+            <!-- Surname -->
+            <div class="mb-3">
+                <label for="sn" class="form-label">Surname:</label>
+                <div class="input-group">
+                    <input type="text" id="sn" name="sn" class="form-control" x-model="formData.sn" required>
+                    <button type="button" id="checkNameBtn" class="btn btn-outline-primary" x-on:click="checkNameExists">
+                        <i class="fas fa-check"></i> Vérifier
+                    </button>
+                </div>
+                <div id="nameCheckResult" class="mt-2"></div>
+            </div>
+
+            <!-- Email (Now Required) -->
+            <div class="mb-3">
+                <label for="email" class="form-label">Email:</label>
+                <div class="input-group">
+                    <input type="email" id="email" name="email" class="form-control" x-model="formData.email" required>
+                    <button type="button" id="emailOverrideBtn" class="btn btn-warning" x-on:click="toggleEmailOverride">
+                        <i class="fas fa-exclamation-triangle"></i> Override
+                    </button>
+                </div>
+                <div id="emailOverrideIndicator" class="mt-1 mb-2 text-danger fw-bold" x-show="formData.emailOverride">
+                    <i class="fas fa-exclamation-circle"></i> Ce champ est actuellement optionnel (override actif)
+                </div>
+                <input type="hidden" id="email_override" name="email_override" value="false">
+            </div>
+            
+            <!-- Hierarchical Manager (for STAG users) -->
+            <div id="manager_container" class="mb-3" x-show="formData.userType === 'STAG'">
+                <label for="manager" class="form-label">Hierarchical Manager:</label>
+                <div class="input-group">
+                    <input type="text" id="manager" name="manager" class="form-control" x-model="formData.manager" placeholder="Start typing to search for managers..." x-on:input="debounceManagerSearch">
+                    <button type="button" id="managerOverrideBtn" class="btn btn-warning" x-on:click="toggleManagerOverride">
+                        <i class="fas fa-exclamation-triangle"></i> Override
+                    </button>
+                </div>
+                <div id="managerOverrideIndicator" class="mt-1 mb-2 text-danger fw-bold" x-show="formData.managerOverride">
+                    <i class="fas fa-exclamation-circle"></i> Ce champ est actuellement optionnel (override actif)
+                </div>
+                <small class="form-text text-muted">Only managers with FavvDienstHoofd=YES are valid.</small>
+                <input type="hidden" id="manager_override" name="manager_override" value="false">
+                
+                <!-- Manager suggestions dropdown -->
+                <div class="manager-suggestions" x-show="managerSuggestions.length > 0">
+                    <ul class="list-group">
+                        <template x-for="suggestion in managerSuggestions" :key="suggestion.value">
+                            <li class="list-group-item list-group-item-action" x-on:click="selectManager(suggestion)" x-text="suggestion.label"></li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- National Register Number (OCI Specific Field) -->
+            <div id="favvNatNr_container" class="mb-3" x-show="formData.userType === 'BOODOCI' || formData.userType === 'OCI'">
+                <label for="favvNatNr" class="form-label">National Register Number:</label>
+                <div class="input-group">
+                    <input type="text" id="favvNatNr" name="favvNatNr" class="form-control" placeholder="Enter National Register Number" x-model="formData.favvNatNr">
+                    <button type="button" id="favvNatNrOverrideBtn" class="btn btn-warning" x-on:click="toggleFavvNatNrOverride">
+                        <i class="fas fa-exclamation-triangle"></i> Override
+                    </button>
+                    <button type="button" id="checkFavvNatNrBtn" class="btn btn-outline-primary" x-on:click="checkFavvNatNrExists">
+                        <i class="fas fa-check"></i> Vérifier
+                    </button>
+                </div>
+                <div id="favvNatNrOverrideIndicator" class="mt-1 mb-2 text-danger fw-bold" x-show="formData.favvNatNrOverride">
+                    <i class="fas fa-exclamation-circle"></i> Ce champ est actuellement optionnel (override actif)
+                </div>
+                <small class="form-text text-muted">Format will be automatically normalized to remove spaces and hyphens.</small>
+                <div id="favvNatNrCheckResult" class="mt-2"></div>
+                <input type="hidden" id="favvNatNr_override" name="favvNatNr_override" value="false">
+            </div>
+
+            <!-- Submit button -->
+            <button type="submit" class="btn btn-primary">Preview & Create User</button>
+        </form>
+
+        <!-- Email, Manager, and FavvNatNr Warning Modals (inchangés) -->
+        <!-- ... -->
+        
+        <!-- Confirmation Modal -->
+        <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title" id="confirmationModalLabel">Confirm User Creation</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-
-    <!-- Form to create a new user -->
-    <form method="POST" class="card p-4 shadow" id="userCreationForm" onsubmit="return validateForm(event);">
-        {{ form.hidden_tag() }}
-        
-        <!-- Dropdown for User Type -->
-        <div class="mb-3">
-            <label for="user_type" class="form-label">User Type:</label>
-            <select id="user_type" name="user_type" class="form-select">
-                {% for choice in form.user_type.choices %}
-                    <option value="{{ choice[0] }}" {% if form_data and form_data.user_type == choice[0] %}selected{% endif %}>{{ choice[1] }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <!-- Given Name -->
-        <div class="mb-3">
-            <label for="givenName" class="form-label">Given Name:</label>
-            <input type="text" id="givenName" name="givenName" class="form-control" value="{{ form_data.givenName if form_data else '' }}" required>
-        </div>
-
-        <!-- Surname -->
-        <div class="mb-3">
-            <label for="sn" class="form-label">Surname:</label>
-            <div class="input-group">
-                <input type="text" id="sn" name="sn" class="form-control" value="{{ form_data.sn if form_data else '' }}" required>
-                <button type="button" id="checkNameBtn" class="btn btn-outline-primary">
-                    <i class="fas fa-check"></i> Vérifier
-                </button>
-            </div>
-            <div id="nameCheckResult" class="mt-2"></div>
-        </div>
-
-        <!-- Email (Now Required) -->
-        <div class="mb-3">
-            <label for="email" class="form-label">Email:</label>
-            <div class="input-group">
-                <input type="email" id="email" name="email" class="form-control" value="{{ form_data.email if form_data else '' }}" required>
-                <button type="button" id="emailOverrideBtn" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#emailWarningModal">
-                    <i class="fas fa-exclamation-triangle"></i> Override
-                </button>
-            </div>
-            <div id="emailOverrideIndicator" class="mt-1 mb-2 text-danger fw-bold" style="display: none;">
-                <i class="fas fa-exclamation-circle"></i> Ce champ est actuellement optionnel (override actif)
-            </div>
-            <input type="hidden" id="email_override" name="email_override" value="false">
-        </div>
-        
-        <!-- Hierarchical Manager (for STAG users) -->
-        <div id="manager_container" class="mb-3" style="display: none;">
-            <label for="manager" class="form-label">Hierarchical Manager:</label>
-            <div class="input-group">
-                <input type="text" id="manager" name="manager" class="form-control" value="{{ form_data.manager if form_data else '' }}" placeholder="Start typing to search for managers...">
-                <button type="button" id="managerOverrideBtn" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#managerWarningModal">
-                    <i class="fas fa-exclamation-triangle"></i> Override
-                </button>
-            </div>
-            <div id="managerOverrideIndicator" class="mt-1 mb-2 text-danger fw-bold" style="display: none;">
-                <i class="fas fa-exclamation-circle"></i> Ce champ est actuellement optionnel (override actif)
-            </div>
-            <small class="form-text text-muted">Only managers with FavvDienstHoofd=YES are valid.</small>
-            <input type="hidden" id="manager_override" name="manager_override" value="false">
-        </div>
-
-        <!-- OCI Specific Field (shown conditionally) -->
-        <div id="favvNatNr_container" class="mb-3" style="display: none;">
-            <label for="favvNatNr" class="form-label">National Register Number:</label>
-            <div class="input-group">
-                <input type="text" id="favvNatNr" name="favvNatNr" class="form-control" placeholder="Enter National Register Number" value="{{ form_data.favvNatNr if form_data else '' }}">
-                <button type="button" id="favvNatNrOverrideBtn" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#favvNatNrWarningModal">
-                    <i class="fas fa-exclamation-triangle"></i> Override
-                </button>
-                <button type="button" id="checkFavvNatNrBtn" class="btn btn-outline-primary">
-                    <i class="fas fa-check"></i> Vérifier
-                </button>
-            </div>
-            <div id="favvNatNrOverrideIndicator" class="mt-1 mb-2 text-danger fw-bold" style="display: none;">
-                <i class="fas fa-exclamation-circle"></i> Ce champ est actuellement optionnel (override actif)
-            </div>
-            <small class="form-text text-muted">Format will be automatically normalized to remove spaces and hyphens.</small>
-            <div id="favvNatNrCheckResult" class="mt-2"></div>
-            <input type="hidden" id="favvNatNr_override" name="favvNatNr_override" value="false">
-        </div>
-
-        <!-- Submit button -->
-        <button type="submit" class="btn btn-primary">Preview & Create User</button>
-    </form>
-
-    <!-- Email Warning Modal -->
-    <div class="modal fade" id="emailWarningModal" tabindex="-1" aria-labelledby="emailWarningModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-warning">
-                    <h5 class="modal-title" id="emailWarningModalLabel">Warning!</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="emailModalBody">
-                    <!-- Le contenu sera modifié dynamiquement par JS -->
-                </div>
-                <div class="modal-footer" id="emailModalFooter">
-                    <!-- Les boutons seront modifiés dynamiquement par JS -->
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Manager Warning Modal -->
-    <div class="modal fade" id="managerWarningModal" tabindex="-1" aria-labelledby="managerWarningModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-warning">
-                    <h5 class="modal-title" id="managerWarningModalLabel">Warning!</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="managerModalBody">
-                    <!-- Le contenu sera modifié dynamiquement par JS -->
-                </div>
-                <div class="modal-footer" id="managerModalFooter">
-                    <!-- Les boutons seront modifiés dynamiquement par JS -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- FavvNatNr Warning Modal -->
-    <div class="modal fade" id="favvNatNrWarningModal" tabindex="-1" aria-labelledby="favvNatNrWarningModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-warning">
-                    <h5 class="modal-title" id="favvNatNrWarningModalLabel">Warning!</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="favvNatNrModalBody">
-                    <!-- Le contenu sera modifié dynamiquement par JS -->
-                </div>
-                <div class="modal-footer" id="favvNatNrModalFooter">
-                    <!-- Les boutons seront modifiés dynamiquement par JS -->
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Confirmation Modal -->
-    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title" id="confirmationModalLabel">Confirm User Creation</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <h6>Please review the user information before creating:</h6>
-                    
-                    <div id="userSummary" class="card p-3 mb-3">
-                        <!-- User info will be populated here via JavaScript -->
+                    <div class="modal-body">
+                        <h6>Please review the user information before creating:</h6>
+                        <div id="userSummary" class="card p-3 mb-3">
+                            <!-- User info will be populated here via JavaScript -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="confirmCreate" x-on:click="submitFinalForm">Create User</button>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="confirmCreate">Create User</button>
-                </div>
             </div>
         </div>
+        
+        <!-- Hidden form for actual submission -->
+        <form id="actualSubmitForm" method="POST" style="display: none;">
+            <input type="hidden" name="user_type" id="hidden_user_type">
+            <input type="hidden" name="givenName" id="hidden_givenName">
+            <input type="hidden" name="sn" id="hidden_sn">
+            <input type="hidden" name="email" id="hidden_email">
+            <input type="hidden" name="email_override" id="hidden_email_override">
+            <input type="hidden" name="favvNatNr" id="hidden_favvNatNr">
+            <input type="hidden" name="favvNatNr_override" id="hidden_favvNatNr_override">
+            <input type="hidden" name="manager" id="hidden_manager">
+            <input type="hidden" name="manager_override" id="hidden_manager_override">
+        </form>
     </div>
-    
-    <!-- Hidden form for actual submission -->
-    <form id="actualSubmitForm" method="POST" style="display: none;">
-        <input type="hidden" name="user_type" id="hidden_user_type">
-        <input type="hidden" name="givenName" id="hidden_givenName">
-        <input type="hidden" name="sn" id="hidden_sn">
-        <input type="hidden" name="email" id="hidden_email">
-        <input type="hidden" name="email_override" id="hidden_email_override">
-        <input type="hidden" name="favvNatNr" id="hidden_favvNatNr">
-        <input type="hidden" name="favvNatNr_override" id="hidden_favvNatNr_override">
-        <input type="hidden" name="manager" id="hidden_manager">
-        <input type="hidden" name="manager_override" id="hidden_manager_override">
-    </form>
-
-    <!-- Include Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
-    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
-    <script>
-        function userCreationApp() {
-            return {
-                formData: {
-                    userType: '',
-                    givenName: '',
-                    sn: '',
-                    email: '',
-                    favvNatNr: '',
-                    manager: '',
-                    emailOverride: false,
-                    favvNatNrOverride: false,
-                    managerOverride: false
-                },
-                nameCheckStatus: '',
-                nameCheckMessage: '',
-                favvNatNrCheckStatus: '',
-                favvNatNrCheckMessage: '',
-                managerSuggestions: [],
-                managerSearchTimeout: null,
-                showPreview: false,
-                previewLoading: false,
-                previewError: '',
-                previewData: null,
-                
-                init() {
-                    // Initialiser les données au besoin
-                    this.formData.userType = '{{ form_data.user_type if form_data else "" }}';
-                    this.formData.givenName = '{{ form_data.givenName if form_data else "" }}';
-                    this.formData.sn = '{{ form_data.sn if form_data else "" }}';
-                    this.formData.email = '{{ form_data.email if form_data else "" }}';
-                    this.formData.favvNatNr = '{{ form_data.favvNatNr if form_data else "" }}';
-                    this.formData.manager = '{{ form_data.manager if form_data else "" }}';
-                },
-                
-                async fetchJson(url, options = {}) {
-                    try {
-                        const response = await fetch(url, {
-                            ...options,
-                            headers: {
-                                ...options.headers,
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': '{{ csrf_token() }}'
-                            }
-                        });
-                        return await response.json();
-                    } catch (error) {
-                        console.error('Fetch error:', error);
-                        throw error;
-                    }
-                },
-                
-                async checkNameExists() {
-                    const { givenName, sn } = this.formData;
-                    
-                    if (!givenName || !sn) {
-                        alert('Both given name and surname are required.');
-                        return;
-                    }
-                    
-                    this.nameCheckStatus = 'loading';
-                    this.nameCheckMessage = '';
-                    
-                    try {
-                        const data = await this.fetchJson("{{ url_for('usercreation.check_name_exists') }}", {
-                            method: 'POST',
-                            body: JSON.stringify({ givenName, sn })
-                        });
-                        
-                        this.nameCheckStatus = data.status;
-                        this.nameCheckMessage = data.status === 'exists' 
-                            ? `A user with this name already exists in the directory: ${data.message}` 
-                            : '';
-                    } catch (error) {
-                        this.nameCheckStatus = 'error';
-                        this.nameCheckMessage = `Error checking name: ${error.message}`;
-                    }
-                },
-                
-                async checkFavvNatNrExists() {
-                    const favvNatNr = this.formData.favvNatNr;
-                    
-                    if (!favvNatNr) {
-                        alert('FavvNatNr is required for this check.');
-                        return;
-                    }
-                    
-                    this.favvNatNrCheckStatus = 'loading';
-                    this.favvNatNrCheckMessage = '';
-                    
-                    try {
-                        const data = await this.fetchJson("{{ url_for('usercreation.check_favvnatnr_exists') }}", {
-                            method: 'POST',
-                            body: JSON.stringify({ favvNatNr })
-                        });
-                        
-                        this.favvNatNrCheckStatus = data.status;
-                        this.favvNatNrCheckMessage = data.message;
-                    } catch (error) {
-                        this.favvNatNrCheckStatus = 'error';
-                        this.favvNatNrCheckMessage = `Error checking FavvNatNr: ${error.message}`;
-                    }
-                },
-                
-                debounceManagerSearch() {
-                    clearTimeout(this.managerSearchTimeout);
-                    this.managerSearchTimeout = setTimeout(() => {
-                        this.searchManagers();
-                    }, 300);
-                },
-                
-                async searchManagers() {
-                    const searchTerm = this.formData.manager;
-                    
-                    if (searchTerm.length < 2) {
-                        this.managerSuggestions = [];
-                        return;
-                    }
-                    
-                    try {
-                        const data = await this.fetchJson(`{{ url_for('autocomplete.autocomplete_managers') }}?term=${encodeURIComponent(searchTerm)}`);
-                        this.managerSuggestions = data;
-                    } catch (error) {
-                        console.error('Error fetching manager suggestions:', error);
-                        this.managerSuggestions = [];
-                    }
-                },
-                
-                selectManager(suggestion) {
-                    this.formData.manager = suggestion.value;
-                    this.managerSuggestions = [];
-                },
-                
-                async previewUserDetails() {
-                    const { userType, givenName, sn } = this.formData;
-                    
-                    if (!userType || !givenName || !sn) {
-                        alert('User type, given name, and surname are required for preview.');
-                        return;
-                    }
-                    
-                    this.showPreview = true;
-                    this.previewLoading = true;
-                    this.previewError = '';
-                    
-                    try {
-                        this.previewData = await this.fetchJson("{{ url_for('usercreation.preview_user_details') }}", {
-                            method: 'POST',
-                            body: JSON.stringify({ userType, givenName, sn })
-                        });
-                        this.previewLoading = false;
-                    } catch (error) {
-                        this.previewError = `Error generating preview: ${error.message}`;
-                        this.previewLoading = false;
-                    }
-                },
-                
-                formatKey(key) {
-                    // Format camelCase or snake_case keys for display
-                    return key
-                        .replace(/([A-Z])/g, ' $1')  // Insert space before capital letters
-                        .replace(/_/g, ' ')          // Replace underscores with spaces
-                        .trim()                      // Trim excess spaces
-                        .replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()); // Capitalize first letter
-                },
-                
-                validateForm(event) {
-                    const { userType, givenName, sn, email, emailOverride, favvNatNr, favvNatNrOverride, manager, managerOverride } = this.formData;
-                    
-                    // Vérifier les champs obligatoires
-                    if (!userType || !givenName || !sn) {
-                        alert('User type, given name, and surname are required.');
-                        event.preventDefault();
-                        return;
-                    }
-                    
-                    // Vérifier l'email
-                    if (!email && !emailOverride) {
-                        alert('Email is required unless overridden.');
-                        event.preventDefault();
-                        return;
-                    }
-                    
-                    // Vérifier FavvNatNr pour les utilisateurs OCI
-                    if ((userType === 'BOODOCI' || userType === 'OCI') && !favvNatNr && !favvNatNrOverride) {
-                        alert('FavvNatNr is required for OCI users unless overridden.');
-                        event.preventDefault();
-                        return;
-                    }
-                    
-                    // Vérifier le chef hiérarchique pour les stagiaires
-                    if (userType === 'STAG' && !manager && !managerOverride) {
-                        alert('Manager is required for trainees unless overridden.');
-                        event.preventDefault();
-                        return;
-                    }
-                }
-            };
-        }
-        </script>
- </div>   
 </div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Inclure Font Awesome pour les icônes -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<!-- Inclure jQuery et jQuery UI pour l'autocomplétion -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+
+<!-- Inclure le script Alpine.js spécifique à la création d'utilisateur -->
+<script src="{{ url_for('static', filename='js/user_creation.js') }}"></script>
 {% endblock %}

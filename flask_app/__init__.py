@@ -14,7 +14,10 @@ from flask_app.routes.autocomplete import autocomplete_bp
 from flask_app.routes.usercreation import usercreation_bp
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='static')
+    @app.route('/static/<path:filename>')
+    def static_files(filename):
+        return app.send_static_file(filename)
     app.secret_key = 'eyqscmnc'
     csrf = CSRFProtect(app)
 

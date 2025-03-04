@@ -1183,6 +1183,109 @@ class LDAPModel:
             print(f"Erreur lors du comptage des comptes désactivés: {str(e)}")
             return 0
 
+    def get_inactive_users_count(self, months=3):
+        """
+        Récupère le nombre d'utilisateurs actifs (loginDisabled=FALSE) qui ne se sont pas 
+        connectés depuis plus de X mois
+        
+        Args:
+            months (int): Nombre de mois d'inactivité
+            
+        Returns:
+            int: Nombre d'utilisateurs inactifs
+        """
+        try:
+            #import time
+            from datetime import datetime, timedelta
+            
+            # Calculer la date limite (timestamp en format GeneralizedTime)
+            limit_date = datetime.now() - timedelta(days=30*months)
+            limit_timestamp = limit_date.strftime("%Y%m%d%H%M%SZ")
+            
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            
+            # Rechercher les utilisateurs actifs mais avec une ancienne date de connexion
+            search_base = 'ou=users,ou=sync,o=COPY'
+            search_filter = f'(&(objectClass=Person)(loginDisabled=FALSE)(loginTime<={limit_timestamp}))'
+            
+            conn.search(search_base=search_base,
+                        search_filter=search_filter,
+                        search_scope='SUBTREE',
+                        attributes=['cn', 'loginTime'])
+            
+            inactive_users = len(conn.entries)
+            
+            conn.unbind()
+            return inactive_users
+            
+        except Exception as e:
+            print(f"Erreur lors du comptage des utilisateurs inactifs: {str(e)}")
+            return 0
+    
+    def get_expired_password_users_count(self):
+        """
+        Récupère le nombre d'utilisateurs actifs (loginDisabled=FALSE) dont le mot de passe est expiré
+        
+        Returns:
+            int: Nombre d'utilisateurs avec mot de passe expiré
+        """
+        try:
+            import time
+            from datetime import datetime
+            
+            # Obtenir la date actuelle au format LDAP GeneralizedTime
+            current_date = datetime.now().strftime("%Y%m%d%H%M%SZ")
+            
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            
+            # Rechercher les utilisateurs actifs avec un mot de passe expiré
+            search_base = 'ou=users,ou=sync,o=COPY'
+            search_filter = f'(&(objectClass=Person)(loginDisabled=FALSE)(passwordExpirationTime<={current_date}))'
+            
+            conn.search(search_base=search_base,
+                        search_filter=search_filter,
+                        search_scope='SUBTREE',
+                        attributes=['cn', 'passwordExpirationTime'])
+            
+            expired_password_users = len(conn.entries)
+            
+            conn.unbind()
+            return expired_password_users
+            
+        except Exception as e:
+            print(f"Erreur lors du comptage des utilisateurs avec mot de passe expiré: {str(e)}")
+            return 0
+    
+    def get_never_logged_in_users_count(self):
+        """
+        Récupère le nombre d'utilisateurs actifs (loginDisabled=FALSE) qui n'ont jamais effectué de connexion
+        (absence de l'attribut loginTime ou valeur vide)
+        
+        Returns:
+            int: Nombre d'utilisateurs qui ne se sont jamais connectés
+        """
+        try:
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            
+            # Rechercher les utilisateurs actifs sans attribut loginTime
+            search_base = 'ou=users,ou=sync,o=COPY'
+            search_filter = '(&(objectClass=Person)(loginDisabled=FALSE)(!(loginTime=*)))'
+            
+            conn.search(search_base=search_base,
+                        search_filter=search_filter,
+                        search_scope='SUBTREE',
+                        attributes=['cn'])
+            
+            never_logged_in = len(conn.entries)
+            
+            conn.unbind()
+            return never_logged_in
+            
+        except Exception as e:
+            print(f"Erreur lors du comptage des utilisateurs n'ayant jamais effectué de connexion: {str(e)}")
+            return 0
+    
+    
     def get_dashboard_stats(self):
         """
         Récupère toutes les statistiques nécessaires pour le tableau de bord

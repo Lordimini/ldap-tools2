@@ -12,11 +12,11 @@
                 <div class="card stats-card mb-4" style="background: linear-gradient(to right, #0a1017, #1a2533); color: white;">
                     <div class="card-body">
                         <div class="stats-icon">
-                            <i class="bi bi-people"></i>
+                            <i class="bi bi-person-x"></i>
                         </div>
-                        <h5>Total Users</h5>
-                        <h2 class="display-4">1,254</h2>
-                        <p class="mb-0">Active users in directory</p>
+                        <h5>Disabled Users</h5>
+                        <h2 class="display-4">{{ disabled_accounts }}</h2>
+                        <p class="mb-0">Inactive accounts in directory</p>
                     </div>
                 </div>
             </div>
@@ -24,11 +24,11 @@
                 <div class="card stats-card mb-4" style="background: linear-gradient(to right, #0f1926, #253545); color: white;">
                     <div class="card-body">
                         <div class="stats-icon">
-                            <i class="bi bi-diagram-3"></i>
+                            <i class="bi bi-hourglass-split"></i>
                         </div>
-                        <h5>Total Groups</h5>
-                        <h2 class="display-4">86</h2>
-                        <p class="mb-0">Active groups</p>
+                        <h5>Inactive Users</h5>
+                        <h2 class="display-4">{{ inactive_users }}</h2>
+                        <p class="mb-0">No login for 3+ months</p>
                     </div>
                 </div>
             </div>
@@ -36,11 +36,11 @@
                 <div class="card stats-card mb-4" style="background: linear-gradient(to right, #121212, #1e1e1e); color: white;">
                     <div class="card-body">
                         <div class="stats-icon">
-                            <i class="bi bi-person-badge"></i>
+                            <i class="bi bi-key"></i>
                         </div>
-                        <h5>Total Roles</h5>
-                        <h2 class="display-4">32</h2>
-                        <p class="mb-0">Active roles</p>
+                        <h5>Expired Passwords</h5>
+                        <h2 class="display-4">{{ expired_password_users }}</h2>
+                        <p class="mb-0">Active users with expired passwords</p>
                     </div>
                 </div>
             </div>
@@ -48,11 +48,11 @@
                 <div class="card stats-card mb-4" style="background: linear-gradient(to right, #0a1017, #0f1926); color: white;">
                     <div class="card-body">
                         <div class="stats-icon">
-                            <i class="bi bi-gear"></i>
+                            <i class="bi bi-person-dash"></i>
                         </div>
-                        <h5>Services</h5>
-                        <h2 class="display-4">18</h2>
-                        <p class="mb-0">Active services</p>
+                        <h5>Never Logged In</h5>
+                        <h2 class="display-4">{{ never_logged_in_users }}</h2>
+                        <p class="mb-0">Active users with no login history</p>
                     </div>
                 </div>
             </div>

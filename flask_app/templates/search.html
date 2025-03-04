@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h1 class="text-center mb-4 text-white">Search User</h1>
+    <h1 class="text-center mb-4 text-white">User lookup</h1>
     <form method="POST" action="{{ url_for('search.search_user') }}" class="card p-4 shadow mb-4">
         <div class="mb-3">
             <label for="search_type" class="form-label">Search By:</label>
@@ -262,7 +262,7 @@
     /* Custom styles for the search results table */
     table.table-dark tbody tr td.attribute-cell {
         background-color: #1a2533; /* Less dark background from the sidebar secondary-color */
-        color: #3498db !important; /* Light blue accent color from the theme with !important */
+        color: #23c7bf !important; /* Light blue accent color from the theme with !important */
         font-weight: 600 !important; /* Make font a bit bolder */
         font-size: 1.05rem !important; /* Slightly larger font */
         padding: 12px 15px; /* More padding for better readability */

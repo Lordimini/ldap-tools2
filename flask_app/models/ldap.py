@@ -444,7 +444,7 @@ class LDAPModel:
         try:
             # Effectuer la recherche avec une limite de taille pour éviter de récupérer trop de résultats
             conn.search(
-                search_base='ou=users,ou=sync,o=copy',  # Base de recherche appropriée 
+                search_base='ou=sync,o=copy',  # Base de recherche appropriée 
                 search_filter=ldap_filter,
                 search_scope='SUBTREE',
                 attributes=attributes,

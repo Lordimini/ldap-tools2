@@ -60,7 +60,7 @@ class LDAPModel:
         # Search for the user in the entire subtree of o=FAVV and o=COPY
             user_dn = None
            
-            for base_dn in ['ou=users,ou=sync,o=COPY']:
+            for base_dn in ['ou=sync,o=COPY']:
                 conn.search(base_dn, search_filter, search_scope='SUBTREE', attributes=['cn', 'favvEmployeeType', 'sn', 'givenName', 'FavvNatNr', 'fullName', 'mail', 'workforceID', 'groupMembership', 'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 'nrfMemberOf', 'loginDisabled', 'loginTime', 'passwordExpirationTime'])
 
                 if conn.entries:
@@ -772,7 +772,7 @@ class LDAPModel:
             search_filter = f'(&(givenName={given_name})(sn={sn}))'
             
             # Search in the users container
-            search_base = "ou=users,ou=sync,o=COPY"
+            search_base = "ou=sync,o=COPY"
             
             conn.search(search_base=search_base,
                        search_filter=search_filter,
@@ -886,7 +886,7 @@ class LDAPModel:
             search_filter = f'(FavvNatNr={normalized_favvnatnr})'
         
             # Rechercher dans le conteneur d'utilisateurs
-            search_base = "ou=users,ou=sync,o=COPY"
+            search_base = "ou=sync,o=COPY"
         
             conn.search(search_base=search_base,
                     search_filter=search_filter,

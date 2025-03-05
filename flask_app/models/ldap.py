@@ -16,9 +16,12 @@ class LDAPModel:
         self.usercreation_dn = ldap_login_config['usercreation_dn']
         self.admin_group_dn = ldap_login_config['admin_group_dn']
         self.reader_group_dn = ldap_login_config['reader_group_dn']
+        self.role_base_dn = ldap_login_config['role_base_dn']
+        self.resource_base_dn = ldap_login_config['resource_base_dn']
+        self.app_base_dn = ldap_login_config['app_base_dn']
         
     def authenticate(self, username, password):
-        user_dn = f'cn={username},ou=users,ou=sync,o=COPY'
+        user_dn = f'cn={username},{self.actif_users_dn}'
         try:
             server = Server(self.ldap_server, get_info=ALL)
             conn = Connection(server, user=user_dn, password=password, auto_bind=True)
@@ -63,7 +66,7 @@ class LDAPModel:
         # Search for the user in the entire subtree of o=FAVV and o=COPY
             user_dn = None
            
-            for base_dn in ['ou=users,ou=sync,o=COPY', 'ou=OUT,ou=sync,o=COPY']:
+            for base_dn in [self.actif_users_dn, self.out_users_dn]:
                 conn.search(base_dn, search_filter, search_scope='SUBTREE', attributes=['cn', 'favvEmployeeType', 'sn', 'givenName', 'FavvNatNr', 'fullName', 'mail', 'workforceID', 'groupMembership', 'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 'nrfMemberOf', 'loginDisabled', 'loginTime', 'passwordExpirationTime'])
 
                 if conn.entries:
@@ -92,7 +95,7 @@ class LDAPModel:
                     'loginDisabled': 'YES' if user_attributes.loginDisabled.value else 'NO',  # Convert boolean to YES/NO
                     'loginTime': user_attributes.loginTime.value,
                     'passwordExpirationTime': user_attributes.passwordExpirationTime.value,
-                    'is_inactive': 'ou=OUT' in user_container
+                    'is_inactive': user_container == self.out_users_dn
                 }
                 # Fetch the manager's full name
                 if result['FavvHierarMgrDN']:
@@ -148,7 +151,7 @@ class LDAPModel:
     def get_group_users(self, group_name):
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True) 
             group_dn = None
-            for base_dn in ['ou=Groups,ou=IAM-Security,o=COPY', 'o=FAVV', 'ou=GROUPS,ou=SYNC,o=COPY']:
+            for base_dn in ['ou=Groups,ou=IAM-Security,o=COPY', self.app_base_dn, 'ou=GROUPS,ou=SYNC,o=COPY']:
                 conn.search(base_dn, f'(cn={group_name})', search_scope='SUBTREE', attributes=['cn'])
                 if conn.entries:
                     group_dn = conn.entries[0].entry_dn
@@ -200,7 +203,7 @@ class LDAPModel:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True) 
             # Search for the role in the entire subtree of o=FAVV and o=COPY
             role_dn = None
-            for base_dn in ['cn=RoleDefs,cn=RoleConfig,cn=AppConfig,cn=UserApplication,cn=DS4,ou=SYSTEM,o=COPY']:
+            for base_dn in self.role_base_dn:
                 conn.search(base_dn, f'(cn={role_cn})', search_scope='SUBTREE', attributes=['equivalentToMe'])
                 
                 if conn.entries:
@@ -263,7 +266,7 @@ class LDAPModel:
                 # Connect to the LDAP server
                 conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
                 # Step 1: Search for the role in the RoleDefs container to get its DN
-                role_base_dn = 'cn=RoleDefs,cn=RoleConfig,cn=AppConfig,cn=UserApplication,cn=DS4,ou=SYSTEM,o=COPY'
+                role_base_dn = self.role_base_dn
                 conn.search(role_base_dn, f'(cn={role_cn})', search_scope='SUBTREE', attributes=['entryDN'])
 
                 if not conn.entries:
@@ -274,7 +277,7 @@ class LDAPModel:
                 print(f"Role DN: {role_dn}")
 
                 # Step 2: Search for nrfResourceAssociation objects in the ResourceAssociations container
-                resource_base_dn = 'cn=ResourceAssociations,cn=RoleConfig,cn=AppConfig,cn=UserApplication,cn=DS4,ou=SYSTEM,o=COPY'
+                resource_base_dn = self.resource_base_dn
                 conn.search(resource_base_dn, f'(nrfRole={role_dn})', search_scope='SUBTREE', attributes=['nrfRole', 'nrfResource'])
 
                 # Step 3: Extract the cn of the nrfResource values
@@ -372,7 +375,7 @@ class LDAPModel:
     def get_service_users(self, service_name):
             users = []
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True) 
-            for base_dn in ['ou=users,ou=sync,o=COPY']:
+            for base_dn in self.actif_users_dn:
                 conn.search(base_dn, f'(ou={service_name})', search_scope='SUBTREE', attributes=['cn', 'fullName', 'title', 'mail'])
                 for entry in conn.entries:
                     users.append({
@@ -402,7 +405,7 @@ class LDAPModel:
                               password=self.password, auto_bind=True)
             
             groups = []
-            for base_dn in ['o=FAVV', 'o=COPY']:
+            for base_dn in [self.base_dn, self.app_base_dn]:
                 conn.search(base_dn, f'(cn=*{search_term}*)', 
                            search_scope='SUBTREE', attributes=['cn'])
                 
@@ -450,7 +453,7 @@ class LDAPModel:
         try:
             # Effectuer la recherche avec une limite de taille pour éviter de récupérer trop de résultats
             conn.search(
-                search_base='ou=sync,o=copy',  # Base de recherche appropriée 
+                search_base= self.all_users_dn,  # Base de recherche appropriée 
                 search_filter=ldap_filter,
                 search_scope='SUBTREE',
                 attributes=attributes,
@@ -517,7 +520,7 @@ class LDAPModel:
                               password=self.password, auto_bind=True)
             
             roles = []
-            for base_dn in ['cn=RoleDefs,cn=RoleConfig,cn=AppConfig,cn=UserApplication,cn=DS4,ou=SYSTEM,o=COPY']:
+            for base_dn in self.role_base_dn:
                 conn.search(base_dn, f'(cn=*{search_term}*)', search_scope='SUBTREE', attributes=['cn'])
             for entry in conn.entries:
                 roles.append({
@@ -538,7 +541,7 @@ class LDAPModel:
                               password=self.password, auto_bind=True)
             # Search for services (OUs) in the entire subtree of o=FAVV and o=COPY
             services = []
-            for base_dn in ['o=FAVV', 'o=COPY']:
+            for base_dn in [self.app_base_dn, self.base_dn]:
                 conn.search(base_dn, f'(ou=*{search_term}*)', search_scope='SUBTREE', attributes=['ou'])
             for entry in conn.entries:
                 services.append({
@@ -596,7 +599,7 @@ class LDAPModel:
                 })
 
         # Determine the parent DN
-        if current_dn == 'cn=RoleDefs,cn=RoleConfig,cn=AppConfig,cn=UserApplication,cn=DS4,ou=SYSTEM,o=COPY':
+        if current_dn == self.role_base_dn:
             parent_dn = None  # Already at the root container
         else:
             parent_dn = ','.join(current_dn.split(',')[1:])  # Remove the first RDN to get the parent DN
@@ -661,7 +664,7 @@ class LDAPModel:
         while True:
             # Check if CN already exists
             search_result = conn.search(
-                search_base="ou=users,ou=sync,o=copy",
+                search_base=self.all_users_dn,
                 search_filter=f'(cn={cn})',
                 search_scope=SUBTREE
             )
@@ -791,7 +794,7 @@ class LDAPModel:
             search_filter = f'(&(givenName={given_name})(sn={sn}))'
             
             # Search in the users container
-            search_base = "ou=sync,o=COPY"
+            search_base = self.all_users_dn
             
             conn.search(search_base=search_base,
                        search_filter=search_filter,
@@ -825,7 +828,7 @@ class LDAPModel:
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
         
-            search_base = "ou=tpl,ou=sync,o=copy"  # Base DN for templates
+            search_base = self.template_dn  # Base DN for templates
             search_filter = f'(cn={template_cn})'
         
             conn.search(
@@ -907,7 +910,7 @@ class LDAPModel:
             search_filter = f'(FavvNatNr={normalized_favvnatnr})'
         
             # Rechercher dans le conteneur d'utilisateurs
-            search_base = "ou=sync,o=COPY"
+            search_base = self.all_users_dn
         
             conn.search(search_base=search_base,
                     search_filter=search_filter,
@@ -940,7 +943,7 @@ class LDAPModel:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
         
             # Rechercher les utilisateurs avec FavvDienstHoofd=YES
-            search_base = "ou=users,ou=sync,o=COPY"
+            search_base = self.actif_users_dn
             search_filter = '(FavvDienstHoofd=YES)'
         
             conn.search(search_base=search_base,
@@ -978,7 +981,7 @@ class LDAPModel:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
         
             managers = []
-            search_base = "ou=users,ou=sync,o=COPY"
+            search_base = self.actif_users_dn
             search_filter = f'(&(FavvDienstHoofd=YES)(fullName=*{search_term}*))'
         
             conn.search(search_base=search_base,
@@ -1010,7 +1013,7 @@ class LDAPModel:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Recherche tous les utilisateurs dans la base spécifiée
-            search_base = "ou=users,ou=sync,o=COPY"
+            search_base = self.actif_users_dn
             search_filter = '(objectClass=Person)'
             
             # Effectuer la recherche avec l'option paged_size pour gérer un grand nombre d'utilisateurs
@@ -1042,101 +1045,101 @@ class LDAPModel:
             print(f"Erreur lors du comptage des utilisateurs: {str(e)}")
             return 0
 
-    def get_total_groups_count(self):
-        """
-        Récupère le nombre total de groupes
+    # def get_total_groups_count(self):
+    #     """
+    #     Récupère le nombre total de groupes
         
-        Returns:
-            int: Nombre total de groupes
-        """
-        try:
-            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+    #     Returns:
+    #         int: Nombre total de groupes
+    #     """
+    #     try:
+    #         conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
-            # Compter les groupes dans différentes branches
-            total_groups = 0
+    #         # Compter les groupes dans différentes branches
+    #         total_groups = 0
             
-            # Liste des bases de recherche où se trouvent les groupes
-            search_bases = ['ou=Groups,ou=IAM-Security,o=COPY', 'o=FAVV', 'ou=GROUPS,ou=SYNC,o=COPY']
+    #         # Liste des bases de recherche où se trouvent les groupes
+    #         search_bases = ['ou=Groups,ou=IAM-Security,o=COPY', 'o=FAVV', 'ou=GROUPS,ou=SYNC,o=COPY']
             
-            for search_base in search_bases:
-                conn.search(search_base=search_base,
-                            search_filter='(objectClass=groupOfNames)',
-                            search_scope='SUBTREE',
-                            attributes=['cn'])
+    #         for search_base in search_bases:
+    #             conn.search(search_base=search_base,
+    #                         search_filter='(objectClass=groupOfNames)',
+    #                         search_scope='SUBTREE',
+    #                         attributes=['cn'])
                 
-                total_groups += len(conn.entries)
+    #             total_groups += len(conn.entries)
             
-            conn.unbind()
-            return total_groups
+    #         conn.unbind()
+    #         return total_groups
             
-        except Exception as e:
-            print(f"Erreur lors du comptage des groupes: {str(e)}")
-            return 0
+    #     except Exception as e:
+    #         print(f"Erreur lors du comptage des groupes: {str(e)}")
+    #         return 0
 
-    def get_total_roles_count(self):
-        """
-        Récupère le nombre total de rôles
+    # def get_total_roles_count(self):
+    #     """
+    #     Récupère le nombre total de rôles
         
-        Returns:
-            int: Nombre total de rôles
-        """
-        try:
-            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+    #     Returns:
+    #         int: Nombre total de rôles
+    #     """
+    #     try:
+    #         conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
-            # Rechercher les rôles
-            search_base = 'cn=RoleDefs,cn=RoleConfig,cn=AppConfig,cn=UserApplication,cn=DS4,ou=SYSTEM,o=COPY'
-            conn.search(search_base=search_base,
-                        search_filter='(objectClass=nrfRole)',
-                        search_scope='SUBTREE',
-                        attributes=['cn'])
+    #         # Rechercher les rôles
+    #         search_base = 'cn=RoleDefs,cn=RoleConfig,cn=AppConfig,cn=UserApplication,cn=DS4,ou=SYSTEM,o=COPY'
+    #         conn.search(search_base=search_base,
+    #                     search_filter='(objectClass=nrfRole)',
+    #                     search_scope='SUBTREE',
+    #                     attributes=['cn'])
             
-            total_roles = len(conn.entries)
+    #         total_roles = len(conn.entries)
             
-            conn.unbind()
-            return total_roles
+    #         conn.unbind()
+    #         return total_roles
             
-        except Exception as e:
-            print(f"Erreur lors du comptage des rôles: {str(e)}")
-            return 0
+    #     except Exception as e:
+    #         print(f"Erreur lors du comptage des rôles: {str(e)}")
+    #         return 0
 
-    def get_services_count(self):
-        """
-        Récupère le nombre total de services uniques (attribut 'ou')
+    # def get_services_count(self):
+    #     """
+    #     Récupère le nombre total de services uniques (attribut 'ou')
         
-        Returns:
-            int: Nombre de services uniques
-        """
-        try:
-            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+    #     Returns:
+    #         int: Nombre de services uniques
+    #     """
+    #     try:
+    #         conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
-            search_base = 'ou=users,ou=sync,o=COPY'
-            conn.search(search_base=search_base,
-                        search_filter='(ou=*)',
-                        search_scope='SUBTREE',
-                        attributes=['ou'])
+    #         search_base = 'ou=users,ou=sync,o=COPY'
+    #         conn.search(search_base=search_base,
+    #                     search_filter='(ou=*)',
+    #                     search_scope='SUBTREE',
+    #                     attributes=['ou'])
             
-            # Créer un ensemble pour stocker les valeurs uniques de ou
-            unique_services = set()
+    #         # Créer un ensemble pour stocker les valeurs uniques de ou
+    #         unique_services = set()
             
-            for entry in conn.entries:
-                if hasattr(entry, 'ou'):
-                    # Vérifier si c'est une liste ou une valeur unique
-                    if isinstance(entry.ou.value, list):
-                        # Ajouter chaque élément de la liste séparément
-                        for ou_value in entry.ou.value:
-                            if ou_value:
-                                unique_services.add(ou_value)
-                    else:
-                        # Ajouter la valeur unique
-                        if entry.ou.value:
-                            unique_services.add(entry.ou.value)
+    #         for entry in conn.entries:
+    #             if hasattr(entry, 'ou'):
+    #                 # Vérifier si c'est une liste ou une valeur unique
+    #                 if isinstance(entry.ou.value, list):
+    #                     # Ajouter chaque élément de la liste séparément
+    #                     for ou_value in entry.ou.value:
+    #                         if ou_value:
+    #                             unique_services.add(ou_value)
+    #                 else:
+    #                     # Ajouter la valeur unique
+    #                     if entry.ou.value:
+    #                         unique_services.add(entry.ou.value)
             
-            conn.unbind()
-            return len(unique_services)
+    #         conn.unbind()
+    #         return len(unique_services)
             
-        except Exception as e:
-            print(f"Erreur lors du comptage des services: {str(e)}")
-            return 0
+    #     except Exception as e:
+    #         print(f"Erreur lors du comptage des services: {str(e)}")
+    #         return 0
 
     def get_recent_logins_count(self, days=7):
         """
@@ -1159,7 +1162,7 @@ class LDAPModel:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Rechercher les utilisateurs avec une date de connexion récente
-            search_base = 'ou=users,ou=sync,o=COPY'
+            search_base = self.actif_users_dn
             search_filter = f'(&(objectClass=Person)(loginTime>={limit_timestamp}))'
             
             conn.search(search_base=search_base,
@@ -1187,7 +1190,7 @@ class LDAPModel:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Rechercher les utilisateurs avec loginDisabled=TRUE
-            search_base = 'ou=users,ou=sync,o=COPY'
+            search_base = self.actif_users_dn
             search_filter = '(&(objectClass=Person)(loginDisabled=TRUE))'
             
             conn.search(search_base=search_base,
@@ -1226,7 +1229,7 @@ class LDAPModel:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Rechercher les utilisateurs actifs mais avec une ancienne date de connexion
-            search_base = 'ou=users,ou=sync,o=COPY'
+            search_base = self.actif_users_dn
             search_filter = f'(&(objectClass=Person)(loginDisabled=FALSE)(loginTime<={limit_timestamp}))'
             
             conn.search(search_base=search_base,
@@ -1260,7 +1263,7 @@ class LDAPModel:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Rechercher les utilisateurs actifs avec un mot de passe expiré
-            search_base = 'ou=users,ou=sync,o=COPY'
+            search_base = self.actif_users_dn
             search_filter = f'(&(objectClass=Person)(loginDisabled=FALSE)(passwordExpirationTime<={current_date}))'
             
             conn.search(search_base=search_base,
@@ -1289,7 +1292,7 @@ class LDAPModel:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Rechercher les utilisateurs actifs sans attribut loginTime
-            search_base = 'ou=users,ou=sync,o=COPY'
+            search_base = self.actif_users_dn
             search_filter = '(&(objectClass=Person)(loginDisabled=FALSE)(!(loginTime=*)))'
             
             conn.search(search_base=search_base,
@@ -1368,9 +1371,9 @@ class LDAPModel:
         """
         return {
             'total_users': self.get_total_users_count(),
-            'total_groups': self.get_total_groups_count(),
-            'total_roles': self.get_total_roles_count(),
-            'services_count': self.get_services_count(),
+            # 'total_groups': self.get_total_groups_count(),
+            # 'total_roles': self.get_total_roles_count(),
+            # 'services_count': self.get_services_count(),
             'recent_logins': self.get_recent_logins_count(),
             'disabled_accounts': self.get_disabled_accounts_count()
         }

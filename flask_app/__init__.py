@@ -11,6 +11,7 @@ from flask_app.routes.token import token_bp
 from flask_app.routes.upload import upload_bp
 from flask_app.routes.autocomplete import autocomplete_bp
 from flask_app.routes.usercreation import usercreation_bp
+from flask_app.routes.postcreation import postcreation_bp
 
 def create_app():
     app = Flask(__name__,)
@@ -30,5 +31,6 @@ def create_app():
     app.register_blueprint(upload_bp)
     app.register_blueprint(autocomplete_bp)
     app.register_blueprint(usercreation_bp)
+    app.register_blueprint(postcreation_bp)
 
     return app

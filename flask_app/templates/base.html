@@ -368,6 +368,13 @@
                         <span>Create User</span>
                     </a>
                 </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if '/post_creation' in request.path %}active{% endif %}" href="{{ url_for('postcreation.post_creation') }}">
+                        <i class="bi bi-pencil-square"></i>
+                        <span>Complete User Creation</span>
+                    </a>
+                </li>
                 
                 <div class="sidebar-heading">Role Management</div>
                 

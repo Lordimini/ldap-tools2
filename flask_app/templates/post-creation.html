@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+
+{% block title %}Complete User Creation - LDAP Manager{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Complete User Creation</h1>
+    
+    <!-- Flash messages for any errors/warnings -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert-messages mb-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'success' %}success{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- User Selection Card -->
+    <div class="card p-4 shadow mb-4">
+        <h4 class="mb-3">Select User to Process</h4>
+        <form id="userSelectionForm" method="POST" action="{{ url_for('postcreation.select_user') }}">
+            <div class="mb-3">
+                <label for="user_dn" class="form-label">User:</label>
+                <select id="user_dn" name="user_dn" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Select a user --</option>
+                    {% for user in pending_users %}
+                    <option value="{{ user.dn }}" {% if selected_user and selected_user.dn == user.dn %}selected{% endif %}>
+                        {{ user.cn }} - {{ user.fullName }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <!-- User Details and Modification Form (only displayed if a user is selected) -->
+    {% if selected_user %}
+    <form id="userCompletionForm" method="POST" action="{{ url_for('postcreation.complete_user') }}" class="card p-4 shadow">
+        <input type="hidden" name="user_dn" value="{{ selected_user.dn }}">
+        
+        <div class="row">
+            <!-- Left Column: User Information Summary -->
+            <div class="col-md-6">
+                <h4 class="mb-3">User Information</h4>
+                <table class="table table-dark">
+                    <tbody>
+                        <tr>
+                            <td class="attribute-cell">CN</td>
+                            <td>{{ selected_user.cn }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Full Name</td>
+                            <td>{{ selected_user.fullName }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Given Name</td>
+                            <td>{{ selected_user.givenName }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Surname</td>
+                            <td>{{ selected_user.sn }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Email</td>
+                            <td>{{ selected_user.mail }}</td>
+                        </tr>
+                        {% if selected_user.FavvNatNr %}
+                        <tr>
+                            <td class="attribute-cell">National Register Number</td>
+                            <td>{{ selected_user.FavvNatNr }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if selected_user.title %}
+                        <tr>
+                            <td class="attribute-cell">Title</td>
+                            <td>{{ selected_user.title }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if selected_user.ou %}
+                        <tr>
+                            <td class="attribute-cell">Service</td>
+                            <td>{{ selected_user.ou }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if selected_user.FavvEmployeeType %}
+                        <tr>
+                            <td class="attribute-cell">Employee Type</td>
+                            <td>{{ selected_user.FavvEmployeeType }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if selected_user.workforceID %}
+                        <tr>
+                            <td class="attribute-cell">Workforce ID</td>
+                            <td>{{ selected_user.workforceID }}</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+                
+                {% if selected_user.group_memberships %}
+                <h5 class="mt-4">Group Memberships</h5>
+                <ul class="list-group mb-3">
+                    {% for group in selected_user.group_memberships %}
+                    <li class="list-group-item">{{ group.cn }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            
+            <!-- Right Column: Editable Fields -->
+            <div class="col-md-6">
+                <h4 class="mb-3">Complete User Configuration</h4>
+                
+                <!-- Target Container Selection -->
+                <div class="mb-3">
+                    <label for="target_container" class="form-label">Target Container:</label>
+                    <select id="target_container" name="target_container" class="form-select" required>
+                        <option value="ou=users,ou=sync,o=COPY">Active Users</option>
+                        <option value="ou=out,ou=sync,o=COPY">Inactive Users</option>
+                    </select>
+                </div>
+                
+                <!-- Workforce ID -->
+                <div class="mb-3">
+                    <label for="workforceID" class="form-label">Workforce ID:</label>
+                    <input type="text" id="workforceID" name="workforceID" class="form-control" 
+                           value="{{ selected_user.workforceID|default('') }}" 
+                           placeholder="Enter workforce ID">
+                </div>
+                
+                <!-- Additional Attributes -->
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title:</label>
+                    <input type="text" id="title" name="title" class="form-control" 
+                           value="{{ selected_user.title|default('') }}" 
+                           placeholder="Enter job title">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="ou" class="form-label">Service (OU):</label>
+                    <input type="text" id="ou" name="ou" class="form-control" 
+                           value="{{ selected_user.ou|default('') }}" 
+                           placeholder="Enter organizational unit">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="FavvEmployeeType" class="form-label">Employee Type:</label>
+                    <select id="FavvEmployeeType" name="FavvEmployeeType" class="form-select">
+                        <option value="">-- Select an employee type --</option>
+                        <option value="EXT" {% if selected_user.FavvEmployeeType == 'EXT' %}selected{% endif %}>External</option>
+                        <option value="INT" {% if selected_user.FavvEmployeeType == 'INT' %}selected{% endif %}>Internal</option>
+                        <option value="TMP" {% if selected_user.FavvEmployeeType == 'TMP' %}selected{% endif %}>Temporary</option>
+                        <option value="STAG" {% if selected_user.FavvEmployeeType == 'STAG' %}selected{% endif %}>Trainee</option>
+                    </select>
+                </div>
+                
+                <!-- Hierarchical Manager Section -->
+                <div class="mb-3">
+                    <label for="hierarchical_manager" class="form-label">Hierarchical Manager:</label>
+                    <input type="text" id="hierarchical_manager" name="hierarchical_manager" class="form-control" 
+                           value="{{ selected_user.manager_name|default('') }}" 
+                           placeholder="Start typing to search for managers...">
+                    <input type="hidden" id="manager_dn" name="manager_dn" value="{{ selected_user.manager_dn|default('') }}">
+                </div>
+                
+                <!-- Add Group Section -->
+                <div class="mb-4">
+                    <label class="form-label">Add to Groups:</label>
+                    <div class="input-group mb-2">
+                        <input type="text" id="group_name" class="form-control" placeholder="Start typing a group name...">
+                        <button type="button" id="add_group_btn" class="btn btn-outline-primary">Add</button>
+                    </div>
+                    <div id="selected_groups" class="mt-2">
+                        <!-- Selected groups will be displayed here -->
+                        <input type="hidden" id="selected_groups_data" name="selected_groups" value="">
+                    </div>
+                </div>
+                
+                <!-- Additional Options -->
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="loginDisabled" name="loginDisabled" value="true" 
+                           {% if selected_user.loginDisabled %}checked{% endif %}>
+                    <label class="form-check-label" for="loginDisabled">
+                        Disable Login
+                    </label>
+                </div>
+                
+                <div class="form-check mb-4">
+                    <input class="form-check-input" type="checkbox" id="set_password" name="set_password" value="true">
+                    <label class="form-check-label" for="set_password">
+                        Set Default Password
+                    </label>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="mt-4 d-flex justify-content-between">
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="bi bi-trash"></i> Delete User
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Complete User Creation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+    
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this user?</p>
+                    <p class="text-danger">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form action="{{ url_for('postcreation.delete_user') }}" method="POST" style="display: inline;">
+                        <input type="hidden" name="user_dn" value="{{ selected_user.dn }}">
+                        <button type="submit" class="btn btn-danger">Delete User</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Include jQuery for ajax calls -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- jQuery UI for autocomplete -->
+<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+
+<script>
+    $(document).ready(function() {
+        // Manager Autocomplete
+        $('#hierarchical_manager').autocomplete({
+            source: function(request, response) {
+                $.getJSON("{{ url_for('autocomplete.autocomplete_managers') }}", {
+                    term: request.term
+                }, function(data) {
+                    response(data);
+                });
+            },
+            select: function(event, ui) {
+                $('#hierarchical_manager').val(ui.item.value);
+                // Extract DN from label (format is "fullName - email - title (DN)")
+                const dnMatch = ui.item.label.match(/\((.*?)\)$/);
+                if (dnMatch && dnMatch[1]) {
+                    $('#manager_dn').val(dnMatch[1]);
+                }
+                return false;
+            },
+            minLength: 2
+        });
+        
+        // Group Autocomplete
+        $('#group_name').autocomplete({
+            source: function(request, response) {
+                $.getJSON("{{ url_for('autocomplete.autocomplete_groups') }}", {
+                    term: request.term
+                }, function(data) {
+                    response(data);
+                });
+            },
+            select: function(event, ui) {
+                $('#group_name').val(ui.item.value);
+                return false;
+            },
+            minLength: 2
+        });
+        
+        // Selected Groups Management
+        let selectedGroups = [];
+        
+        // Initialize with existing groups if any
+        {% if selected_user and selected_user.group_memberships %}
+            {% for group in selected_user.group_memberships %}
+                selectedGroups.push({
+                    name: "{{ group.cn }}",
+                    dn: "{{ group.dn }}"
+                });
+            {% endfor %}
+            updateSelectedGroupsDisplay();
+        {% endif %}
+        
+        $('#add_group_btn').click(function() {
+            const groupName = $('#group_name').val().trim();
+            if (groupName) {
+                // Check if group already exists in the selection
+                if (!selectedGroups.some(g => g.name === groupName)) {
+                    // In a real app, you might want to validate the group exists in LDAP
+                    selectedGroups.push({
+                        name: groupName,
+                        dn: "" // In a real app, you'd get the DN from LDAP
+                    });
+                    updateSelectedGroupsDisplay();
+                    $('#group_name').val('');
+                }
+            }
+        });
+        
+        function updateSelectedGroupsDisplay() {
+            const container = $('#selected_groups');
+            container.empty();
+            
+            selectedGroups.forEach((group, index) => {
+                container.append(`
+                    <div class="badge bg-primary me-2 mb-2 p-2">
+                        ${group.name}
+                        <button type="button" class="btn-close btn-close-white ms-2" 
+                                style="font-size: 0.5rem;" 
+                                onclick="removeGroup(${index})"></button>
+                    </div>
+                `);
+            });
+            
+            // Update hidden field with JSON data
+            $('#selected_groups_data').val(JSON.stringify(selectedGroups));
+        }
+        
+        // Expose removeGroup function to global scope for the onclick handlers
+        window.removeGroup = function(index) {
+            selectedGroups.splice(index, 1);
+            updateSelectedGroupsDisplay();
+        };
+        
+        // Service (OU) Autocomplete
+        $('#ou').autocomplete({
+            source: function(request, response) {
+                $.getJSON("{{ url_for('autocomplete.autocomplete_services') }}", {
+                    term: request.term
+                }, function(data) {
+                    response(data);
+                });
+            },
+            select: function(event, ui) {
+                $('#ou').val(ui.item.value);
+                return false;
+            },
+            minLength: 2
+        });
+    });
+</script>
+
+<style>
+    /* Custom styles for attributes */
+    table.table-dark tbody tr td.attribute-cell {
+        background-color: #1a2533;
+        color: #23c7bf !important;
+        font-weight: 600 !important;
+        font-size: 1.05rem !important;
+        padding: 12px 15px;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Darker background for the card headers */
+    .card-header {
+        background-color: #0f1926;
+    }
+    
+    /* Style for group badges */
+    .badge {
+        font-size: 0.9rem;
+        font-weight: normal;
+    }
+    
+    /* Make buttons in the form more prominent */
+    .btn-primary {
+        background-color: #3498db;
+        border-color: #3498db;
+    }
+    
+    .btn-primary:hover {
+        background-color: #2980b9;
+        border-color: #2980b9;
+    }
+    
+    .btn-danger {
+        background-color: #e74c3c;
+        border-color: #e74c3c;
+    }
+    
+    .btn-danger:hover {
+        background-color: #c0392b;
+        border-color: #c0392b;
+    }
+</style>
+{% endblock %}

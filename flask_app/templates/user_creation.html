@@ -635,6 +635,19 @@ function populateConfirmationModal(cn, password, template_details) {
                     <td>${template_details.ServiceManagerName || 'Non disponible'} <span class="text-muted small">(${template_details.FavvExtDienstMgrDn})</span></td>
                 </tr>`;
         }
+
+        if (template_details && template_details.groups_info && template_details.groups_info.length > 0) {
+        html += `<tr><th colspan="2" class="table-secondary">Groupes associés</th></tr>`;
+        
+        template_details.groups_info.forEach(function(group) {
+            html += `
+                <tr>
+                    <th>Groupe:</th>
+                    <td>${group.cn} <span class="text-muted small">(${group.dn})</span></td>
+                </tr>`;
+        });
+        }
+
     }
     
     html += `</table>

@@ -60,11 +60,13 @@ class LDAPModel:
         # Search for the user in the entire subtree of o=FAVV and o=COPY
             user_dn = None
            
-            for base_dn in ['ou=sync,o=COPY']:
+            for base_dn in ['ou=users,ou=sync,o=COPY', 'ou=OUT,ou=sync,o=COPY']:
                 conn.search(base_dn, search_filter, search_scope='SUBTREE', attributes=['cn', 'favvEmployeeType', 'sn', 'givenName', 'FavvNatNr', 'fullName', 'mail', 'workforceID', 'groupMembership', 'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 'nrfMemberOf', 'loginDisabled', 'loginTime', 'passwordExpirationTime'])
 
                 if conn.entries:
                     user_dn = conn.entries[0].entry_dn
+                    # Store which base DN the user was found in
+                    user_container = base_dn
                     break    
             if user_dn:
                 # Extract the attributes
@@ -86,7 +88,8 @@ class LDAPModel:
                     'nrfMemberOf': [],
                     'loginDisabled': 'YES' if user_attributes.loginDisabled.value else 'NO',  # Convert boolean to YES/NO
                     'loginTime': user_attributes.loginTime.value,
-                    'passwordExpirationTime': user_attributes.passwordExpirationTime.value
+                    'passwordExpirationTime': user_attributes.passwordExpirationTime.value,
+                    'is_inactive': 'ou=OUT' in user_container
                 }
                 # Fetch the manager's full name
                 if result['FavvHierarMgrDN']:
@@ -687,7 +690,7 @@ class LDAPModel:
     
         return cn
     
-    def create_user(self, cn, ldap_attributes):
+    def create_user(self, cn, ldap_attributes, template_details=None):
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             # Bind to the server
@@ -698,7 +701,7 @@ class LDAPModel:
 
             # Generate password from CN
             password = self.generate_password_from_cn(cn)
-    
+        
             # Add userPassword attribute
             ldap_attributes['userPassword'] = [password]
 
@@ -715,15 +718,28 @@ class LDAPModel:
 
             if result:
                 print(f"User created successfully with password {password}! {conn.result}", 'success')
-                return True, password
+                
+                # Si le template contient des groupes, ajouter l'utilisateur à ces groupes
+                groups_added = 0
+                groups_failed = 0
+                
+                if template_details and 'groupMembership' in template_details and template_details['groupMembership']:
+                    for group_dn in template_details['groupMembership']:
+                        group_result = self.add_user_to_group(user_dn, group_dn)
+                        if group_result:
+                            groups_added += 1
+                        else:
+                            groups_failed += 1
+                
+                return True, password, groups_added, groups_failed
             else:
                 print(f"Failed to create user: {conn.result}", 'error')
-                return False, None
+                return False, None, 0, 0
 
         except Exception as e:
             print(f"An error occurred: {str(e)}", 'error')
-            return False, None
-    
+            return False, None, 0, 0
+        
     
         
     def get_user_types_from_ldap(self, dn):
@@ -795,28 +811,29 @@ class LDAPModel:
     
     def get_template_details(self, template_cn):
         """
-        Get details of a specific template by its CN
-    
+        Get details of a specific template by its CN including associated groups
+        
         Parameters:
         template_cn (str): The CN of the template to retrieve
-    
+        
         Returns:
         dict: Template attributes or None if not found
         """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
-    
+        
             search_base = "ou=tpl,ou=sync,o=copy"  # Base DN for templates
             search_filter = f'(cn={template_cn})'
-    
+        
             conn.search(
                 search_base=search_base,
                 search_filter=search_filter,
                 search_scope=SUBTREE,
                 attributes=['cn', 'description', 'title', 'objectClass', 'ou', 
-                            'FavvExtDienstMgrDn', 'FavvEmployeeType', 'FavvEmployeeSubType']
+                            'FavvExtDienstMgrDn', 'FavvEmployeeType', 'FavvEmployeeSubType',
+                            'groupMembership']  # Ajout de l'attribut groupMembership
             )
-    
+        
             if conn.entries:
                 entry = conn.entries[0]
                 template_data = {
@@ -827,18 +844,19 @@ class LDAPModel:
                     'ou': entry.ou.value if hasattr(entry, 'ou') and entry.ou else None,
                     'FavvExtDienstMgrDn': entry.FavvExtDienstMgrDn.value if hasattr(entry, 'FavvExtDienstMgrDn') and entry.FavvExtDienstMgrDn else None,
                     'FavvEmployeeType': entry.FavvEmployeeType.value if hasattr(entry, 'FavvEmployeeType') and entry.FavvEmployeeType else None,
-                    'FavvEmployeeSubType': entry.FavvEmployeeSubType.value if hasattr(entry, 'FavvEmployeeSubType') and entry.FavvEmployeeSubType else None
+                    'FavvEmployeeSubType': entry.FavvEmployeeSubType.value if hasattr(entry, 'FavvEmployeeSubType') and entry.FavvEmployeeSubType else None,
+                    'groupMembership': entry.groupMembership.values if hasattr(entry, 'groupMembership') and entry.groupMembership else []
                 }
                 conn.unbind()
                 return template_data
-    
+        
             conn.unbind()
             return None
-    
+        
         except Exception as e:
             print(f"Error retrieving template details: {str(e)}")
             return None
-    
+        
 
     def generate_password_from_cn(self, cn):
         """
@@ -1284,6 +1302,59 @@ class LDAPModel:
         except Exception as e:
             print(f"Erreur lors du comptage des utilisateurs n'ayant jamais effectué de connexion: {str(e)}")
             return 0
+    
+    def add_user_to_group(self, user_dn, group_dn):
+        """
+        Ajoute un utilisateur à un groupe et met à jour les attributs correspondants
+        
+        Parameters:
+        user_dn (str): DN de l'utilisateur à ajouter
+        group_dn (str): DN du groupe auquel ajouter l'utilisateur
+        
+        Returns:
+        bool: True si l'opération a réussi, False sinon
+        """
+        try:
+            # Établir une connexion au serveur LDAP
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            
+            # 1. Ajouter le DN du groupe à l'attribut groupMembership de l'utilisateur
+            user_modify = conn.modify(
+                user_dn, 
+                {'groupMembership': [(MODIFY_ADD, [group_dn])]}
+            )
+            
+            # 2. Ajouter le DN de l'utilisateur à l'attribut member du groupe
+            group_modify = conn.modify(
+                group_dn, 
+                {'member': [(MODIFY_ADD, [user_dn])]}
+            )
+            
+            # 3. Ajouter le DN de l'utilisateur à l'attribut equivalentToMe du groupe (si c'est un groupe de type rôle)
+            # Vérifions d'abord si c'est un groupe de type rôle
+            conn.search(group_dn, '(objectClass=nrfRole)', search_scope='BASE')
+            if conn.entries:
+                # C'est un groupe de type rôle, mettons à jour equivalentToMe
+                equiv_modify = conn.modify(
+                    group_dn, 
+                    {'equivalentToMe': [(MODIFY_ADD, [user_dn])]}
+                )
+            else:
+                # Pas un groupe de type rôle, pas besoin de mettre à jour equivalentToMe
+                equiv_modify = True
+            
+            # Vérifier si toutes les opérations ont réussi
+            success = user_modify and group_modify and equiv_modify
+            
+            # Fermer la connexion
+            conn.unbind()
+            
+            return success
+        
+        except Exception as e:
+            print(f"Erreur lors de l'ajout de l'utilisateur au groupe: {str(e)}")
+            return False
+        
     
     def get_dashboard_stats(self):
         """

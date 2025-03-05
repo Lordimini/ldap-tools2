@@ -49,7 +49,7 @@ def create_user():
         user_type = request.form.get('user_type') or request.form.get('hidden_user_type')
         given_name = request.form.get('givenName') or request.form.get('hidden_givenName')
         sn = request.form.get('sn') or request.form.get('hidden_sn')
-        email = request.form.get('email') or request.form.get('hidden_email')
+        email = request.form.get('email') or request.form.get('hidden_email', '')
         favvnatnr = request.form.get('favvNatNr') or request.form.get('hidden_favvNatNr', '')
         manager = request.form.get('manager') or request.form.get('hidden_manager', '')
         
@@ -83,9 +83,6 @@ def create_user():
         if is_stag and not manager and not manager_override:
             flash("Un chef hiérarchique est obligatoire pour les stagiaires.", 'error')
             return render_template('user_creation.html', form=form, form_data=form_data)
-        
-        # Nous ne vérifions plus automatiquement l'unicité du nom complet et du FavvNatNr ici
-        # Ces vérifications seront faites via les boutons de vérification spécifiques
         
         # Vérifier si le FavvNatNr est requis pour certains types d'utilisateurs
         if (user_type == "BOODOCI" or user_type == "OCI") and not favvnatnr and not favvnatnr_override:
@@ -156,10 +153,19 @@ def create_user():
                     ldap_attributes['FavvHierarMgrDN'] = [manager_dn]
 
         try:
-            result, generated_password = ldap_model.create_user(cn, ldap_attributes)
+            # Passer les détails du template à la méthode create_user
+            result, generated_password, groups_added, groups_failed = ldap_model.create_user(cn, ldap_attributes, template_details)
             if result:
                 # Afficher un message de succès avec le mot de passe généré
-                flash(f"Utilisateur {sn} {given_name} (CN: {cn}) créé avec succès! Mot de passe: {generated_password}", 'success')
+                message = f"Utilisateur {sn} {given_name} (CN: {cn}) créé avec succès! Mot de passe: {generated_password}"
+                
+                # Ajouter des informations sur les groupes
+                if groups_added > 0:
+                    message += f" L'utilisateur a été ajouté à {groups_added} groupe(s)."
+                if groups_failed > 0:
+                    message += f" Attention: échec d'ajout à {groups_failed} groupe(s)."
+                
+                flash(message, 'success')
                 # Rediriger vers une nouvelle page vide pour éviter la resoumission du formulaire en cas de rafraîchissement
                 return redirect(url_for('usercreation.create_user'))
             else:
@@ -171,7 +177,6 @@ def create_user():
 
     # Pour les requêtes GET, toujours retourner un formulaire vide
     return render_template('user_creation.html', form=form, form_data=form_data)
-
 
 @usercreation_bp.route('/preview_user_details', methods=['POST'])
 @login_required
@@ -196,16 +201,7 @@ def preview_user_details():
         cn = ldap_model.generate_unique_cn(given_name, sn)
         
         # Generate password
-        if len(cn) < 5:
-            password = cn.lower() + '*987'
-        elif len(cn) == 5:
-            first_part = cn[:3]
-            second_part = cn[3:]
-            password = (second_part + first_part).lower() + '*987'
-        else:
-            first_part = cn[:3]
-            second_part = cn[3:6]
-            password = (second_part + first_part).lower() + '*987'
+        password = ldap_model.generate_password_from_cn(cn)
         
         # Get template details
         template_details = ldap_model.get_template_details(user_type)
@@ -226,6 +222,25 @@ def preview_user_details():
                 print(f"Erreur lors de la récupération du nom du manager: {str(e)}")
                 template_details['ServiceManagerName'] = "Erreur de recherche"
         
+        # Get group names for template groups
+        if template_details and 'groupMembership' in template_details and template_details['groupMembership']:
+            groups_info = []
+            try:
+                conn = Connection(ldap_model.ldap_server, user=ldap_model.bind_dn, password=ldap_model.password, auto_bind=True)
+                
+                for group_dn in template_details['groupMembership']:
+                    conn.search(group_dn, '(objectClass=*)', attributes=['cn'])
+                    if conn.entries:
+                        groups_info.append({
+                            'dn': group_dn,
+                            'cn': conn.entries[0].cn.value
+                        })
+                
+                conn.unbind()
+                template_details['groups_info'] = groups_info
+            except Exception as e:
+                print(f"Erreur lors de la récupération des informations de groupe: {str(e)}")
+        
         # Return the generated CN, password, and template details
         return jsonify({
             'cn': cn,
@@ -234,8 +249,7 @@ def preview_user_details():
         })
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    
+        return jsonify({'error': str(e)}), 500    
     
     
 @usercreation_bp.route('/check_name_exists', methods=['POST'])

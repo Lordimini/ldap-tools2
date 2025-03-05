@@ -1285,7 +1285,6 @@ class LDAPModel:
             print(f"Erreur lors du comptage des utilisateurs n'ayant jamais effectué de connexion: {str(e)}")
             return 0
     
-    
     def get_dashboard_stats(self):
         """
         Récupère toutes les statistiques nécessaires pour le tableau de bord

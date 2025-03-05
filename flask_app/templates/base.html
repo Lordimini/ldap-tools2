@@ -343,9 +343,7 @@
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar bg-dark">
-            <div class="sidebar-header">
-                <h3 class="mb-0">Menu</h3>
-            </div>
+            
             
             <ul class="nav flex-column">
                 <li class="nav-item">
@@ -371,14 +369,7 @@
                     </a>
                 </li>
                 
-                <div class="sidebar-heading">Group Management</div>
-                
-                <li class="nav-item">
-                    <a class="nav-link {% if '/group' in request.path %}active{% endif %}" href="{{ url_for('group.group_users') }}">
-                        <i class="bi bi-people"></i>
-                        <span>Search Group</span>
-                    </a>
-                </li>
+                <div class="sidebar-heading">Role Management</div>
                 
                 <li class="nav-item">
                     <a class="nav-link {% if '/role/users' in request.path %}active{% endif %}" href="{{ url_for('role.role_users') }}">
@@ -394,13 +385,7 @@
                     </a>
                 </li>
                 
-                <li class="nav-item">
-                    <a class="nav-link {% if '/service' in request.path %}active{% endif %}" href="{{ url_for('service.service_users') }}">
-                        <i class="bi bi-gear"></i>
-                        <span>Search Services</span>
-                    </a>
-                </li>
-                
+                                
                 <li class="nav-item">
                     <a class="nav-link {% if '/ldap' in request.path %}active{% endif %}" href="{{ url_for('ldap.ldap_browser') }}">
                         <i class="bi bi-folder2-open"></i>
@@ -408,6 +393,22 @@
                     </a>
                 </li>
                 
+                <div class="sidebar-heading">Group Management</div>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if '/group' in request.path %}active{% endif %}" href="{{ url_for('group.group_users') }}">
+                        <i class="bi bi-people"></i>
+                        <span>Search Group</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if '/service' in request.path %}active{% endif %}" href="{{ url_for('service.service_users') }}">
+                        <i class="bi bi-gear"></i>
+                        <span>Search Services</span>
+                    </a>
+                </li>
+
                 <div class="sidebar-heading">Tools</div>
                 
                 <li class="nav-item">

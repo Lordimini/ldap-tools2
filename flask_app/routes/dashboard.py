@@ -22,3 +22,4 @@ def dashboard():
                           inactive_users=inactive_users,
                           expired_password_users=expired_password_users,
                           never_logged_in_users=never_logged_in_users)
+    

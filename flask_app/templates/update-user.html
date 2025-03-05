@@ -1,0 +1,648 @@
+{% extends "base.html" %}
+
+{% block title %}Update User - LDAP Manager{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Update User</h1>
+    
+    <!-- Flash messages for any errors/warnings -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert-messages mb-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'success' %}success{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- User Search Card -->
+    <div class="card p-4 shadow mb-4">
+        <h4 class="mb-3">Search Active User</h4>
+        <form method="POST" action="{{ url_for('userupdate.search_user') }}" class="mb-3">
+            <div class="mb-3">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="search_type" class="form-label">Search By:</label>
+                        <select class="form-select" id="search_type" name="search_type" required>
+                            <option value="fullName" {% if search_type == 'fullName' %}selected{% endif %}>Full Name</option>
+                            <option value="cn" {% if search_type == 'cn' %}selected{% endif %}>CN (Common Name)</option>
+                            <option value="workforceID" {% if search_type == 'workforceID' %}selected{% endif %}>Workforce ID</option>
+                            <option value="mail" {% if search_type == 'mail' %}selected{% endif %}>Email</option>
+                        </select>
+                    </div>
+                    <div class="col-md-7">
+                        <label for="search_term" class="form-label">Search Term:</label>
+                        <input type="text" class="form-control" id="search_term" name="search_term" value="{{ search_term|default('') }}" required>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        {% if search_results %}
+            <h5 class="mb-3">Search Results</h5>
+            <div class="table-responsive">
+                <table class="table table-hover table-dark">
+                    <thead>
+                        <tr>
+                            <th>CN</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in search_results %}
+                        <tr>
+                            <td>{{ user.cn }}</td>
+                            <td>{{ user.fullName }}</td>
+                            <td>{{ user.mail }}</td>
+                            <td>
+                                <a href="{{ url_for('userupdate.select_user', user_dn=user.dn) }}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-pencil"></i> Select
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- User Details and Modification Form (only displayed if a user is selected) -->
+    {% if selected_user %}
+    <form id="userUpdateForm" method="POST" action="{{ url_for('userupdate.update_user') }}" class="card p-4 shadow">
+        <input type="hidden" name="user_dn" value="{{ selected_user.dn }}">
+        
+        <div class="row">
+            <!-- Left Column: User Information Summary -->
+            <div class="col-md-6">
+                <h4 class="mb-3">User Information</h4>
+                <table class="table table-dark">
+                    <tbody>
+                        <tr>
+                            <td class="attribute-cell">CN</td>
+                            <td>{{ selected_user.CN }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Full Name</td>
+                            <td>{{ selected_user.fullName }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Given Name</td>
+                            <td>{{ selected_user.givenName }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Surname</td>
+                            <td>{{ selected_user.sn }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Email</td>
+                            <td>{{ selected_user.mail }}</td>
+                        </tr>
+                        {% if selected_user.FavvNatNr %}
+                        <tr>
+                            <td class="attribute-cell">National Register Number</td>
+                            <td>{{ selected_user.FavvNatNr }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if selected_user.workforceID %}
+                        <tr>
+                            <td class="attribute-cell">Workforce ID</td>
+                            <td>{{ selected_user.workforceID }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td class="attribute-cell">Service</td>
+                            <td>{{ selected_user.service }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Title</td>
+                            <td>{{ selected_user.title }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Employee Type</td>
+                            <td>{{ selected_user.favvEmployeeType }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Hierarchical Manager</td>
+                            <td>{{ selected_user.ChefHierarchique }}</td>
+                        </tr>
+                        <tr {% if selected_user.loginDisabled == 'YES' %}class="table-danger"{% endif %}>
+                            <td class="attribute-cell">Login Disabled</td>
+                            <td>{{ selected_user.loginDisabled }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Last Login</td>
+                            <td>{{ selected_user.loginTime }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Password Expiration</td>
+                            <td>{{ selected_user.passwordExpirationTime }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h5 class="mt-4">Current Group Memberships</h5>
+                <div class="card p-3 bg-dark">
+                    <div id="current_groups">
+                        {% if selected_user.groupMembership %}
+                            {% for group in selected_user.groupMembership %}
+                                <div class="badge bg-info me-2 mb-2 p-2">
+                                    {{ group.cn }}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-muted">No group memberships</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <h5 class="mt-4">Current Role Memberships</h5>
+                <div class="card p-3 bg-dark">
+                    <div id="current_roles">
+                        {% if selected_user.nrfMemberOf %}
+                            {% for role in selected_user.nrfMemberOf %}
+                                <div class="badge bg-secondary me-2 mb-2 p-2">
+                                    {{ role.cn }} ({{ role.category }})
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-muted">No role memberships</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Editable Fields -->
+            <div class="col-md-6">
+                <h4 class="mb-3">Update User Properties</h4>
+                
+                <!-- Basic Information Updates -->
+                <div class="card p-3 mb-4">
+                    <h5>Basic Information</h5>
+                    
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label for="mail" class="form-label">Email:</label>
+                        <input type="email" id="mail" name="mail" class="form-control" 
+                               value="{{ selected_user.mail }}" 
+                               placeholder="Enter email address">
+                    </div>
+                    
+                    <!-- Workforce ID -->
+                    <div class="mb-3">
+                        <label for="workforceID" class="form-label">Workforce ID:</label>
+                        <input type="text" id="workforceID" name="workforceID" class="form-control" 
+                               value="{{ selected_user.workforceID }}" 
+                               placeholder="Enter workforce ID">
+                    </div>
+                    
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title:</label>
+                        <input type="text" id="title" name="title" class="form-control" 
+                               value="{{ selected_user.title }}" 
+                               placeholder="Enter job title">
+                    </div>
+                    
+                    <!-- Service (OU) -->
+                    <div class="mb-3">
+                        <label for="ou" class="form-label">Service (OU):</label>
+                        <input type="text" id="ou" name="ou" class="form-control" 
+                               value="{{ selected_user.service }}" 
+                               placeholder="Enter organizational unit">
+                    </div>
+                </div>
+                
+                <!-- Group Management -->
+                <div class="card p-3 mb-4">
+                    <h5>Group Management</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Add to Group:</label>
+                        <div class="input-group mb-2">
+                            <input type="text" id="group_name" class="form-control" placeholder="Start typing a group name...">
+                            <button type="button" id="add_group_btn" class="btn btn-outline-primary">Add</button>
+                        </div>
+                        <div id="groups_to_add" class="mt-2">
+                            <!-- Groups to add will be displayed here -->
+                        </div>
+                        <input type="hidden" id="groups_to_add_data" name="groups_to_add" value="[]">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Remove from Group:</label>
+                        <div class="input-group mb-2">
+                            <input type="text" id="group_remove" class="form-control" placeholder="Start typing a group name...">
+                            <button type="button" id="remove_group_btn" class="btn btn-outline-danger">Remove</button>
+                        </div>
+                        <div id="groups_to_remove" class="mt-2">
+                            <!-- Groups to remove will be displayed here -->
+                        </div>
+                        <input type="hidden" id="groups_to_remove_data" name="groups_to_remove" value="[]">
+                    </div>
+                </div>
+                
+                <!-- Account Settings -->
+                <div class="card p-3 mb-4">
+                    <h5>Account Settings</h5>
+                    
+                    <!-- Hierarchical Manager -->
+                    <div class="mb-3">
+                        <label for="hierarchical_manager" class="form-label">Hierarchical Manager:</label>
+                        <input type="text" id="hierarchical_manager" name="hierarchical_manager" class="form-control" 
+                               value="{{ selected_user.ChefHierarchique }}" 
+                               placeholder="Start typing to search for managers...">
+                        <input type="hidden" id="manager_dn" name="manager_dn" value="{{ selected_user.FavvHierarMgrDN }}">
+                    </div>
+                    
+                    <!-- Employee Type -->
+                    <div class="mb-3">
+                        <label for="FavvEmployeeType" class="form-label">Employee Type:</label>
+                        <select id="FavvEmployeeType" name="FavvEmployeeType" class="form-select">
+                            <option value="">-- Select an employee type --</option>
+                            <option value="EXT" {% if selected_user.favvEmployeeType == 'EXT' %}selected{% endif %}>External</option>
+                            <option value="INT" {% if selected_user.favvEmployeeType == 'INT' %}selected{% endif %}>Internal</option>
+                            <option value="TMP" {% if selected_user.favvEmployeeType == 'TMP' %}selected{% endif %}>Temporary</option>
+                            <option value="STAG" {% if selected_user.favvEmployeeType == 'STAG' %}selected{% endif %}>Trainee</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Account Status -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="loginDisabled" name="loginDisabled" value="true" 
+                               {% if selected_user.loginDisabled == 'YES' %}checked{% endif %}>
+                        <label class="form-check-label" for="loginDisabled">
+                            Disable Login
+                        </label>
+                    </div>
+                    
+                    <!-- Password Options -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="reset_password" name="reset_password" value="true">
+                        <label class="form-check-label" for="reset_password">
+                            Reset Password to Default
+                        </label>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="expire_password" name="expire_password" value="true">
+                        <label class="form-check-label" for="expire_password">
+                            Force Password Change at Next Login
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Container Management -->
+                <div class="card p-3 mb-4">
+                    <h5>Container Management</h5>
+                    <div class="mb-3">
+                        <label for="target_container" class="form-label">Move to Container:</label>
+                        <select id="target_container" name="target_container" class="form-select">
+                            <option value="">-- Don't move user --</option>
+                            <option value="ou=users,ou=sync,o=COPY">Active Users</option>
+                            <option value="ou=out,ou=sync,o=COPY">Inactive Users (Archive)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Audit Information -->
+                <div class="card p-3 mb-4 bg-dark">
+                    <h5>Audit Information</h5>
+                    <div class="mb-3">
+                        <label for="change_reason" class="form-label">Reason for Changes:</label>
+                        <textarea id="change_reason" name="change_reason" class="form-control" rows="2" 
+                                 placeholder="Describe why these changes are being made"></textarea>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="mt-4 d-flex justify-content-between">
+                    <a href="{{ url_for('search.search_user') }}?cn={{ selected_user.CN }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Search
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+</div>
+
+<!-- Include jQuery for ajax calls -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- jQuery UI for autocomplete -->
+<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+
+<script>
+    $(document).ready(function() {
+        // Handle search type dropdown
+        function initializeAutocomplete() {
+            if ($('#search_type').val() === 'fullName') {
+                $('#search_term').autocomplete({
+                    source: function(request, response) {
+                        if (request.term.length < 3) {
+                            response([]);
+                            return;
+                        }
+                        
+                        $.getJSON("{{ url_for('autocomplete.autocomplete_fullName') }}", {
+                            term: request.term
+                        }, function(data) {
+                            response(data);
+                        });
+                    },
+                    minLength: 3,
+                    delay: 300,
+                    select: function(event, ui) {
+                        $('#search_term').val(ui.item.value);
+                        return false;
+                    }
+                }).data('ui-autocomplete')._renderItem = function(ul, item) {
+                    return $('<li>')
+                        .append(`<div>${item.label}</div>`)
+                        .appendTo(ul);
+                };
+            } else {
+                // Unbind existing autocomplete if any
+                $('#search_term').autocomplete('destroy');
+            }
+        }
+
+        // Initialize autocomplete on page load
+        initializeAutocomplete();
+        
+        // Re-initialize when search type changes
+        $('#search_type').change(function() {
+            initializeAutocomplete();
+        });
+        
+        // Manager Autocomplete
+        $('#hierarchical_manager').autocomplete({
+            source: function(request, response) {
+                $.getJSON("{{ url_for('autocomplete.autocomplete_managers') }}", {
+                    term: request.term
+                }, function(data) {
+                    response(data);
+                });
+            },
+            select: function(event, ui) {
+                $('#hierarchical_manager').val(ui.item.value);
+                // Extract DN from label
+                const dnMatch = ui.item.label.match(/\((.*?)\)$/);
+                if (dnMatch && dnMatch[1]) {
+                    $('#manager_dn').val(dnMatch[1]);
+                }
+                return false;
+            },
+            minLength: 2
+        });
+        
+        // Service (OU) Autocomplete
+        $('#ou').autocomplete({
+            source: function(request, response) {
+                $.getJSON("{{ url_for('autocomplete.autocomplete_services') }}", {
+                    term: request.term
+                }, function(data) {
+                    response(data);
+                });
+            },
+            select: function(event, ui) {
+                $('#ou').val(ui.item.value);
+                return false;
+            },
+            minLength: 2
+        });
+        
+        // Group Add Autocomplete
+        $('#group_name').autocomplete({
+            source: function(request, response) {
+                $.getJSON("{{ url_for('autocomplete.autocomplete_groups') }}", {
+                    term: request.term
+                }, function(data) {
+                    response(data);
+                });
+            },
+            select: function(event, ui) {
+                $('#group_name').val(ui.item.value);
+                return false;
+            },
+            minLength: 2
+        });
+        
+        // Group Remove Autocomplete - Only show groups the user is a member of
+        $('#group_remove').autocomplete({
+            source: function(request, response) {
+                const term = request.term.toLowerCase();
+                
+                // Filter current groups based on input
+                {% if selected_user and selected_user.groupMembership %}
+                const groups = [
+                    {% for group in selected_user.groupMembership %}
+                    {
+                        label: "{{ group.cn }}",
+                        value: "{{ group.cn }}",
+                        dn: "{{ group.dn }}"
+                    },
+                    {% endfor %}
+                ];
+                
+                const filteredGroups = groups.filter(group => 
+                    group.label.toLowerCase().includes(term)
+                );
+                
+                response(filteredGroups);
+                {% else %}
+                response([]);
+                {% endif %}
+            },
+            minLength: 1
+        });
+        
+        // Groups to Add Management
+        let groupsToAdd = [];
+        
+        $('#add_group_btn').click(function() {
+            const groupName = $('#group_name').val().trim();
+            if (groupName) {
+                // Check if group already exists in the selection
+                if (!groupsToAdd.some(g => g.name === groupName)) {
+                    groupsToAdd.push({
+                        name: groupName,
+                        dn: ""
+                    });
+                    updateGroupsToAddDisplay();
+                    $('#group_name').val('');
+                }
+            }
+        });
+        
+        function updateGroupsToAddDisplay() {
+            const container = $('#groups_to_add');
+            container.empty();
+            
+            if (groupsToAdd.length === 0) {
+                container.append('<div class="text-muted">No groups selected to add</div>');
+            } else {
+                groupsToAdd.forEach((group, index) => {
+                    container.append(`
+                        <div class="badge bg-success me-2 mb-2 p-2">
+                            ${group.name}
+                            <button type="button" class="btn-close btn-close-white ms-2" 
+                                    style="font-size: 0.5rem;" 
+                                    onclick="removeAddGroup(${index})"></button>
+                        </div>
+                    `);
+                });
+            }
+            
+            // Update hidden field with JSON data
+            $('#groups_to_add_data').val(JSON.stringify(groupsToAdd));
+        }
+        
+        // Groups to Remove Management
+        let groupsToRemove = [];
+        
+        $('#remove_group_btn').click(function() {
+            const groupName = $('#group_remove').val().trim();
+            if (groupName) {
+                // Check if group already exists in the selection
+                if (!groupsToRemove.some(g => g.name === groupName)) {
+                    // Find the group DN if it exists in current groups
+                    let groupDn = "";
+                    {% if selected_user and selected_user.groupMembership %}
+                    {% for group in selected_user.groupMembership %}
+                    if ("{{ group.cn }}" === groupName) {
+                        groupDn = "{{ group.dn }}";
+                    }
+                    {% endfor %}
+                    {% endif %}
+                    
+                    groupsToRemove.push({
+                        name: groupName,
+                        dn: groupDn
+                    });
+                    updateGroupsToRemoveDisplay();
+                    $('#group_remove').val('');
+                }
+            }
+        });
+        
+        function updateGroupsToRemoveDisplay() {
+            const container = $('#groups_to_remove');
+            container.empty();
+            
+            if (groupsToRemove.length === 0) {
+                container.append('<div class="text-muted">No groups selected to remove</div>');
+            } else {
+                groupsToRemove.forEach((group, index) => {
+                    container.append(`
+                        <div class="badge bg-danger me-2 mb-2 p-2">
+                            ${group.name}
+                            <button type="button" class="btn-close btn-close-white ms-2" 
+                                    style="font-size: 0.5rem;" 
+                                    onclick="removeRemoveGroup(${index})"></button>
+                        </div>
+                    `);
+                });
+            }
+            
+            // Update hidden field with JSON data
+            $('#groups_to_remove_data').val(JSON.stringify(groupsToRemove));
+        }
+        
+        // Initialize displays
+        updateGroupsToAddDisplay();
+        updateGroupsToRemoveDisplay();
+        
+        // Expose remove functions to global scope for the onclick handlers
+        window.removeAddGroup = function(index) {
+            groupsToAdd.splice(index, 1);
+            updateGroupsToAddDisplay();
+        };
+        
+        window.removeRemoveGroup = function(index) {
+            groupsToRemove.splice(index, 1);
+            updateGroupsToRemoveDisplay();
+        };
+    });
+</script>
+
+<style>
+    /* Custom styles for attributes */
+    table.table-dark tbody tr td.attribute-cell {
+        background-color: #1a2533;
+        color: #23c7bf !important;
+        font-weight: 600 !important;
+        font-size: 1.05rem !important;
+        padding: 12px 15px;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Darker background for the card headers */
+    .card-header {
+        background-color: #0f1926;
+    }
+    
+    /* Style for badges */
+    .badge {
+        font-size: 0.9rem;
+        font-weight: normal;
+    }
+    
+    /* Style badges by type */
+    .badge.bg-info {
+        background-color: #3498db !important;
+    }
+    
+    .badge.bg-success {
+        background-color: #2ecc71 !important;
+    }
+    
+    .badge.bg-danger {
+        background-color: #e74c3c !important;
+    }
+    
+    .badge.bg-secondary {
+        background-color: #7f8c8d !important;
+    }
+    
+    /* Make buttons in the form more prominent */
+    .btn-primary {
+        background-color: #3498db;
+        border-color: #3498db;
+    }
+    
+    .btn-primary:hover {
+        background-color: #2980b9;
+        border-color: #2980b9;
+    }
+    
+    /* Style for section cards */
+    .card {
+        margin-bottom: 1rem;
+        border: none;
+        border-radius: 8px;
+    }
+    
+    /* Style for the form sections */
+    .card h5 {
+        margin-bottom: 1rem;
+        color: #f8f9fa;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}

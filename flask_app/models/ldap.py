@@ -1046,102 +1046,6 @@ class LDAPModel:
             print(f"Erreur lors du comptage des utilisateurs: {str(e)}")
             return 0
 
-    # def get_total_groups_count(self):
-    #     """
-    #     Récupère le nombre total de groupes
-        
-    #     Returns:
-    #         int: Nombre total de groupes
-    #     """
-    #     try:
-    #         conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
-            
-    #         # Compter les groupes dans différentes branches
-    #         total_groups = 0
-            
-    #         # Liste des bases de recherche où se trouvent les groupes
-    #         search_bases = ['ou=Groups,ou=IAM-Security,o=COPY', 'o=FAVV', 'ou=GROUPS,ou=SYNC,o=COPY']
-            
-    #         for search_base in search_bases:
-    #             conn.search(search_base=search_base,
-    #                         search_filter='(objectClass=groupOfNames)',
-    #                         search_scope='SUBTREE',
-    #                         attributes=['cn'])
-                
-    #             total_groups += len(conn.entries)
-            
-    #         conn.unbind()
-    #         return total_groups
-            
-    #     except Exception as e:
-    #         print(f"Erreur lors du comptage des groupes: {str(e)}")
-    #         return 0
-
-    # def get_total_roles_count(self):
-    #     """
-    #     Récupère le nombre total de rôles
-        
-    #     Returns:
-    #         int: Nombre total de rôles
-    #     """
-    #     try:
-    #         conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
-            
-    #         # Rechercher les rôles
-    #         search_base = 'cn=RoleDefs,cn=RoleConfig,cn=AppConfig,cn=UserApplication,cn=DS4,ou=SYSTEM,o=COPY'
-    #         conn.search(search_base=search_base,
-    #                     search_filter='(objectClass=nrfRole)',
-    #                     search_scope='SUBTREE',
-    #                     attributes=['cn'])
-            
-    #         total_roles = len(conn.entries)
-            
-    #         conn.unbind()
-    #         return total_roles
-            
-    #     except Exception as e:
-    #         print(f"Erreur lors du comptage des rôles: {str(e)}")
-    #         return 0
-
-    # def get_services_count(self):
-    #     """
-    #     Récupère le nombre total de services uniques (attribut 'ou')
-        
-    #     Returns:
-    #         int: Nombre de services uniques
-    #     """
-    #     try:
-    #         conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
-            
-    #         search_base = 'ou=users,ou=sync,o=COPY'
-    #         conn.search(search_base=search_base,
-    #                     search_filter='(ou=*)',
-    #                     search_scope='SUBTREE',
-    #                     attributes=['ou'])
-            
-    #         # Créer un ensemble pour stocker les valeurs uniques de ou
-    #         unique_services = set()
-            
-    #         for entry in conn.entries:
-    #             if hasattr(entry, 'ou'):
-    #                 # Vérifier si c'est une liste ou une valeur unique
-    #                 if isinstance(entry.ou.value, list):
-    #                     # Ajouter chaque élément de la liste séparément
-    #                     for ou_value in entry.ou.value:
-    #                         if ou_value:
-    #                             unique_services.add(ou_value)
-    #                 else:
-    #                     # Ajouter la valeur unique
-    #                     if entry.ou.value:
-    #                         unique_services.add(entry.ou.value)
-            
-    #         conn.unbind()
-    #         return len(unique_services)
-            
-    #     except Exception as e:
-    #         print(f"Erreur lors du comptage des services: {str(e)}")
-    #         return 0
-
     def get_recent_logins_count(self, days=7):
         """
         Récupère le nombre d'utilisateurs qui se sont connectés récemment
@@ -1584,6 +1488,320 @@ class LDAPModel:
             print(f"Erreur lors de la suppression de l'utilisateur: {str(e)}")
             return False, f"Erreur: {str(e)}"
     
+    # Ces méthodes doivent être ajoutées à la classe LDAPModel dans flask_app/models/ldap.py
+
+    def search_active_users(self, search_term, search_type):
+        """
+        Recherche d'utilisateurs actifs dans le répertoire LDAP en fonction du terme et du type de recherche.
+        
+        Args:
+            search_term (str): Le terme à rechercher
+            search_type (str): Le type de recherche (cn, fullName, mail, workforceID)
+            
+        Returns:
+            list: Liste des utilisateurs correspondants avec informations de base
+        """
+        try:
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            
+            # Construction du filtre de recherche en fonction du type
+            if search_type == 'cn':
+                search_filter = f'(cn={search_term})'
+            elif search_type == 'fullName':
+                search_filter = f'(fullName=*{search_term}*)'
+            elif search_type == 'mail':
+                search_filter = f'(mail=*{search_term}*)'
+            elif search_type == 'workforceID':
+                search_filter = f'(workforceID={search_term})'
+            else:
+                # Type de recherche non valide
+                conn.unbind()
+                return []
+            
+            # Recherche dans le container des utilisateurs actifs
+            search_base = self.actif_users_dn
+            conn.search(search_base, 
+                    search_filter, 
+                    search_scope='SUBTREE',
+                    attributes=['cn', 'fullName', 'mail', 'ou', 'title'])
+            
+            # Formater les résultats
+            users = []
+            for entry in conn.entries:
+                users.append({
+                    'dn': entry.entry_dn,
+                    'cn': entry.cn.value if hasattr(entry, 'cn') else '',
+                    'fullName': entry.fullName.value if hasattr(entry, 'fullName') else '',
+                    'mail': entry.mail.value if hasattr(entry, 'mail') else '',
+                    'ou': entry.ou.value if hasattr(entry, 'ou') else '',
+                    'title': entry.title.value if hasattr(entry, 'title') else ''
+                })
+            
+            conn.unbind()
+            return users
+            
+        except Exception as e:
+            print(f"Erreur lors de la recherche d'utilisateurs actifs: {str(e)}")
+            return []
+
+    def search_user_by_dn(self, user_dn):
+        """
+        Recherche un utilisateur par son DN et retourne ses informations détaillées.
+        Similaire à search_user mais accepte un DN directement.
+        
+        Args:
+            user_dn (str): DN de l'utilisateur à rechercher
+            
+        Returns:
+            dict: Informations de l'utilisateur ou None si non trouvé
+        """
+        try:
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            
+            # Vérifier si l'utilisateur existe
+            conn.search(user_dn, 
+                    '(objectClass=*)', 
+                    search_scope='BASE',
+                    attributes=['cn', 'favvEmployeeType', 'sn', 'givenName', 'FavvNatNr', 
+                                'fullName', 'mail', 'workforceID', 'groupMembership', 
+                                'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 
+                                'nrfMemberOf', 'loginDisabled', 'loginTime', 'passwordExpirationTime'])
+            
+            if not conn.entries:
+                conn.unbind()
+                return None
+            
+            # Extraire les attributs
+            user_attributes = conn.entries[0]
+            result = {
+                'dn': user_dn,
+                'CN': user_attributes.cn.value,
+                'favvEmployeeType': user_attributes.favvEmployeeType.value if hasattr(user_attributes, 'favvEmployeeType') else '',
+                'fullName': user_attributes.fullName.value if hasattr(user_attributes, 'fullName') else '',
+                'mail': user_attributes.mail.value if hasattr(user_attributes, 'mail') else '',
+                'sn': user_attributes.sn.value if hasattr(user_attributes, 'sn') else '',
+                'givenName': user_attributes.givenName.value if hasattr(user_attributes, 'givenName') else '',
+                'workforceID': user_attributes.workforceID.value if hasattr(user_attributes, 'workforceID') else '',
+                'title': user_attributes.title.value if hasattr(user_attributes, 'title') else '',
+                'service': user_attributes.ou.value if hasattr(user_attributes, 'ou') else '',
+                'FavvNatNr': user_attributes.FavvNatNr.value if hasattr(user_attributes, 'FavvNatNr') else '',
+                'groupMembership': [],
+                'DirXMLAssociations': user_attributes['DirXML-Associations'].values if hasattr(user_attributes, 'DirXML-Associations') else [],
+                'FavvHierarMgrDN': user_attributes['FavvHierarMgrDN'].value if hasattr(user_attributes, 'FavvHierarMgrDN') else None,
+                'nrfMemberOf': [],
+                'loginDisabled': 'YES' if hasattr(user_attributes, 'loginDisabled') and user_attributes.loginDisabled.value else 'NO',
+                'loginTime': user_attributes.loginTime.value if hasattr(user_attributes, 'loginTime') else '',
+                'passwordExpirationTime': user_attributes.passwordExpirationTime.value if hasattr(user_attributes, 'passwordExpirationTime') else ''
+            }
+            
+            # Rechercher le nom du manager
+            if result['FavvHierarMgrDN']:
+                try:
+                    conn.search(result['FavvHierarMgrDN'], '(objectClass=*)', attributes=['fullName'])
+                    if conn.entries:
+                        result['ChefHierarchique'] = conn.entries[0].fullName.value
+                    else:
+                        result['ChefHierarchique'] = 'Manager not found'
+                except Exception as e:
+                    result['ChefHierarchique'] = f'Error fetching manager: {str(e)}'
+            else:
+                result['ChefHierarchique'] = 'No manager specified'
+            
+            # Récupérer les adhésions aux groupes
+            if hasattr(user_attributes, 'groupMembership') and user_attributes.groupMembership:
+                for group_dn in user_attributes.groupMembership.values:
+                    conn.search(group_dn, '(objectClass=groupOfNames)', attributes=['cn'])
+                    if conn.entries:
+                        group_cn = conn.entries[0].cn.value
+                        result['groupMembership'].append({
+                            'dn': group_dn,
+                            'cn': group_cn,
+                        })
+            
+            # Récupérer les adhésions aux rôles
+            if hasattr(user_attributes, 'nrfMemberOf') and user_attributes.nrfMemberOf:
+                for role_dn in user_attributes.nrfMemberOf.values:
+                    conn.search(role_dn, '(objectClass=nrfRole)', attributes=['cn', 'nrfRoleCategoryKey'])
+                    if conn.entries:
+                        role_cn = conn.entries[0].cn.value
+                        role_catKey = conn.entries[0].nrfRoleCategoryKey.value if hasattr(conn.entries[0], 'nrfRoleCategoryKey') else 'N/A'
+                        result['nrfMemberOf'].append({
+                            'dn': role_dn,
+                            'cn': role_cn,
+                            'category': role_catKey
+                        })
+            
+            conn.unbind()
+            return result
+            
+        except Exception as e:
+            print(f"Erreur lors de la recherche de l'utilisateur par DN: {str(e)}")
+            return None
+
+    def update_user(self, user_dn, attributes, groups_to_add=None, groups_to_remove=None, reset_password=False, expire_password=False, target_container=None, change_reason=None):
+        """
+        Met à jour les attributs d'un utilisateur, ses groupes, et peut déplacer l'utilisateur vers un autre container.
+        
+        Args:
+            user_dn (str): DN de l'utilisateur à mettre à jour
+            attributes (dict): Dictionnaire des attributs à mettre à jour
+            groups_to_add (list): Liste des groupes à ajouter (dicts avec 'name' et 'dn')
+            groups_to_remove (list): Liste des groupes à supprimer (dicts avec 'name' et 'dn')
+            reset_password (bool): Si True, réinitialise le mot de passe de l'utilisateur
+            expire_password (bool): Si True, expire le mot de passe pour forcer le changement
+            target_container (str): Si spécifié, déplace l'utilisateur vers ce container
+            change_reason (str): Raison des changements (pour journalisation)
+            
+        Returns:
+            tuple: (success, message)
+        """
+        try:
+            # Messages de journalisation pour le suivi des modifications
+            log_messages = []
+            if change_reason:
+                log_messages.append(f"Reason for changes: {change_reason}")
+            
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            
+            # Vérifier que l'utilisateur existe
+            conn.search(user_dn, 
+                    '(objectClass=*)', 
+                    search_scope='BASE',
+                    attributes=['cn'])
+            
+            if not conn.entries:
+                conn.unbind()
+                return False, "User not found"
+            
+            # Récupérer le CN de l'utilisateur
+            user_cn = conn.entries[0].cn.value
+            
+            # Définir les attributs à modifier
+            changes = {}
+            for attr_name, attr_value in attributes.items():
+                changes[attr_name] = [(MODIFY_REPLACE, [attr_value])]
+                log_messages.append(f"Updated attribute {attr_name} to {attr_value}")
+            
+            # Appliquer les changements d'attributs
+            if changes:
+                conn.modify(user_dn, changes)
+            
+            # Gérer la réinitialisation du mot de passe
+            if reset_password:
+                # Générer un mot de passe à partir du CN
+                password = self.generate_password_from_cn(user_cn)
+                conn.modify(user_dn, {'userPassword': [(MODIFY_REPLACE, [password])]})
+                log_messages.append(f"Reset password to default")
+            
+            # Gérer l'expiration du mot de passe
+            if expire_password:
+                # Dans certains systèmes LDAP, il peut être nécessaire de supprimer l'attribut passwordExpirationTime
+                # ou de le définir à une date dans le passé pour forcer le changement
+                conn.modify(user_dn, {'passwordExpirationTime': [(MODIFY_DELETE, [])]})
+                log_messages.append(f"Forced password change at next login")
+            
+            # Ajouter l'utilisateur aux nouveaux groupes
+            if groups_to_add:
+                for group_data in groups_to_add:
+                    group_name = group_data.get('name')
+                    if group_name:
+                        # Rechercher le DN du groupe si non fourni
+                        group_dn = group_data.get('dn')
+                        if not group_dn:
+                            # Rechercher le groupe dans les différents containers
+                            search_bases = ['ou=Groups,ou=IAM-Security,o=COPY', self.app_base_dn, 'ou=GROUPS,ou=SYNC,o=COPY']
+                            for base_dn in search_bases:
+                                conn.search(base_dn, 
+                                        f'(cn={group_name})', 
+                                        search_scope='SUBTREE',
+                                        attributes=['cn'])
+                                if conn.entries:
+                                    group_dn = conn.entries[0].entry_dn
+                                    break
+                        
+                        if group_dn:
+                            # Ajouter l'utilisateur au groupe
+                            self.add_user_to_group(user_dn, group_dn)
+                            log_messages.append(f"Added to group {group_name}")
+            
+            # Supprimer l'utilisateur des groupes
+            if groups_to_remove:
+                for group_data in groups_to_remove:
+                    group_name = group_data.get('name')
+                    group_dn = group_data.get('dn')
+                    
+                    if group_dn:
+                        # Supprimer l'utilisateur du groupe
+                        self.remove_user_from_group(user_dn, group_dn)
+                        log_messages.append(f"Removed from group {group_name}")
+            
+            # Déplacer l'utilisateur vers un autre container si spécifié
+            new_dn = user_dn
+            if target_container:
+                # Construire le nouveau DN
+                new_dn = f"cn={user_cn},{target_container}"
+                
+                # Déplacer l'utilisateur
+                conn.modify_dn(user_dn, f"cn={user_cn}", new_superior=target_container)
+                log_messages.append(f"Moved user to container {target_container}")
+            
+            conn.unbind()
+            
+            # Construire le message de succès
+            if len(log_messages) > 0:
+                success_message = f"User {user_cn} updated successfully: " + "; ".join(log_messages)
+            else:
+                success_message = f"User {user_cn} updated successfully (no changes made)"
+            
+            return True, success_message
+            
+        except Exception as e:
+            print(f"Erreur lors de la mise à jour de l'utilisateur: {str(e)}")
+            return False, f"Error updating user: {str(e)}"
+
+    def remove_user_from_group(self, user_dn, group_dn):
+        """
+        Supprime un utilisateur d'un groupe.
+        
+        Args:
+            user_dn (str): DN de l'utilisateur à supprimer
+            group_dn (str): DN du groupe duquel supprimer l'utilisateur
+            
+        Returns:
+            bool: True si l'opération a réussi, False sinon
+        """
+        try:
+            # Établir une connexion au serveur LDAP
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            
+            # 1. Supprimer le DN du groupe de l'attribut groupMembership de l'utilisateur
+            conn.modify(
+                user_dn, 
+                {'groupMembership': [(MODIFY_DELETE, [group_dn])]}
+            )
+            
+            # 2. Supprimer le DN de l'utilisateur de l'attribut member du groupe
+            conn.modify(
+                group_dn, 
+                {'member': [(MODIFY_DELETE, [user_dn])]}
+            )
+            
+            # 3. Supprimer le DN de l'utilisateur de l'attribut equivalentToMe du groupe (si c'est un groupe de type rôle)
+            conn.search(group_dn, '(objectClass=nrfRole)', search_scope='BASE')
+            if conn.entries:
+                conn.modify(
+                    group_dn, 
+                    {'equivalentToMe': [(MODIFY_DELETE, [user_dn])]}
+                )
+            
+            # Fermer la connexion
+            conn.unbind()
+            return True
+            
+        except Exception as e:
+            print(f"Erreur lors de la suppression de l'utilisateur du groupe: {str(e)}")
+            return False
+
     def get_dashboard_stats(self):
         """
         Récupère toutes les statistiques nécessaires pour le tableau de bord

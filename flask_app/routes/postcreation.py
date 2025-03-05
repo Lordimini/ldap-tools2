@@ -15,8 +15,16 @@ def post_creation():
     pending_users = ldap_model.get_pending_users()
     
     selected_user = None
+    
+    # Vérifier si un user_dn est fourni dans le formulaire POST
     if request.method == 'POST' and 'user_dn' in request.form:
         user_dn = request.form['user_dn']
+        if user_dn:
+            selected_user = ldap_model.get_user_details(user_dn)
+    
+    # Vérifier si un user_dn est fourni dans l'URL (après redirection)
+    elif request.method == 'GET' and 'user_dn' in request.args:
+        user_dn = request.args.get('user_dn')
         if user_dn:
             selected_user = ldap_model.get_user_details(user_dn)
     

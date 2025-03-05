@@ -370,6 +370,13 @@
                 </li>
 
                 <li class="nav-item">
+                    <a class="nav-link {% if '/update_user' in request.path %}active{% endif %}" href="{{ url_for('userupdate.update_user_page') }}">
+                        <i class="bi bi-pencil"></i>
+                        <span>Update User</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a class="nav-link {% if '/post_creation' in request.path %}active{% endif %}" href="{{ url_for('postcreation.post_creation') }}">
                         <i class="bi bi-pencil-square"></i>
                         <span>Complete User Creation</span>

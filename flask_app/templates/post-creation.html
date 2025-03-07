@@ -268,13 +268,13 @@
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
 
 <script>
-    // Updated JavaScript code for the post-creation page
+// Updated JavaScript code for the post-creation page
 
 $(document).ready(function() {
     // Manager Autocomplete
     $('#hierarchical_manager').autocomplete({
         source: function(request, response) {
-            $.getJSON("/autocomplete/managers", {
+            $.getJSON("{{ url_for('autocomplete.autocomplete_managers') }}", {
                 term: request.term
             }, function(data) {
                 response(data);
@@ -295,7 +295,7 @@ $(document).ready(function() {
     // Group Autocomplete
     $('#group_name').autocomplete({
         source: function(request, response) {
-            $.getJSON("/autocomplete/groups", {
+            $.getJSON("{{ url_for('autocomplete.autocomplete_groups') }}", {
                 term: request.term
             }, function(data) {
                 response(data);
@@ -370,7 +370,7 @@ $(document).ready(function() {
     // Service (OU) Autocomplete
     $('#ou').autocomplete({
         source: function(request, response) {
-            $.getJSON("/autocomplete/services", {
+            $.getJSON("{{ url_for('autocomplete.autocomplete_services') }}", {
                 term: request.term
             }, function(data) {
                 response(data);

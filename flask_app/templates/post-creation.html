@@ -268,115 +268,121 @@
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
 
 <script>
-    $(document).ready(function() {
-        // Manager Autocomplete
-        $('#hierarchical_manager').autocomplete({
-            source: function(request, response) {
-                $.getJSON("{{ url_for('autocomplete.autocomplete_managers') }}", {
-                    term: request.term
-                }, function(data) {
-                    response(data);
-                });
-            },
-            select: function(event, ui) {
-                $('#hierarchical_manager').val(ui.item.value);
-                // Extract DN from label (format is "fullName - email - title (DN)")
-                const dnMatch = ui.item.label.match(/\((.*?)\)$/);
-                if (dnMatch && dnMatch[1]) {
-                    $('#manager_dn').val(dnMatch[1]);
-                }
-                return false;
-            },
-            minLength: 2
-        });
-        
-        // Group Autocomplete
-        $('#group_name').autocomplete({
-            source: function(request, response) {
-                $.getJSON("{{ url_for('autocomplete.autocomplete_groups') }}", {
-                    term: request.term
-                }, function(data) {
-                    response(data);
-                });
-            },
-            select: function(event, ui) {
-                $('#group_name').val(ui.item.value);
-                return false;
-            },
-            minLength: 2
-        });
-        
-        // Selected Groups Management
-        let selectedGroups = [];
-        
-        // Initialize with existing groups if any
-        {% if selected_user and selected_user.group_memberships %}
-            {% for group in selected_user.group_memberships %}
-                selectedGroups.push({
-                    name: "{{ group.cn }}",
-                    dn: "{{ group.dn }}"
-                });
-            {% endfor %}
-            updateSelectedGroupsDisplay();
-        {% endif %}
-        
-        $('#add_group_btn').click(function() {
-            const groupName = $('#group_name').val().trim();
-            if (groupName) {
-                // Check if group already exists in the selection
-                if (!selectedGroups.some(g => g.name === groupName)) {
-                    // In a real app, you might want to validate the group exists in LDAP
-                    selectedGroups.push({
-                        name: groupName,
-                        dn: "" // In a real app, you'd get the DN from LDAP
-                    });
-                    updateSelectedGroupsDisplay();
-                    $('#group_name').val('');
-                }
+    // Updated JavaScript code for the post-creation page
+
+$(document).ready(function() {
+    // Manager Autocomplete
+    $('#hierarchical_manager').autocomplete({
+        source: function(request, response) {
+            $.getJSON("/autocomplete/managers", {
+                term: request.term
+            }, function(data) {
+                response(data);
+            });
+        },
+        select: function(event, ui) {
+            $('#hierarchical_manager').val(ui.item.value);
+            // Extract DN from label (format is "fullName - email - title (DN)")
+            const dnMatch = ui.item.label.match(/\((.*?)\)$/);
+            if (dnMatch && dnMatch[1]) {
+                $('#manager_dn').val(dnMatch[1]);
             }
-        });
-        
-        function updateSelectedGroupsDisplay() {
-            const container = $('#selected_groups');
-            container.empty();
-            
-            selectedGroups.forEach((group, index) => {
-                container.append(`
-                    <div class="badge bg-primary me-2 mb-2 p-2">
-                        ${group.name}
-                        <button type="button" class="btn-close btn-close-white ms-2" 
-                                style="font-size: 0.5rem;" 
-                                onclick="removeGroup(${index})"></button>
-                    </div>
-                `);
+            return false;
+        },
+        minLength: 2
+    });
+    
+    // Group Autocomplete
+    $('#group_name').autocomplete({
+        source: function(request, response) {
+            $.getJSON("/autocomplete/groups", {
+                term: request.term
+            }, function(data) {
+                response(data);
+            });
+        },
+        select: function(event, ui) {
+            $('#group_name').val(ui.item.value);
+            return false;
+        },
+        minLength: 2
+    });
+    
+    // Selected Groups Management
+    let selectedGroups = [];
+    // We no longer initialize with existing groups
+    // This ensures the "Add to Groups" section only contains newly added groups
+    
+    $('#add_group_btn').click(function() {
+        const groupName = $('#group_name').val().trim();
+        if (groupName) {
+            // Check if group already exists in the user's current memberships
+            // Get all current group names from the left column
+            const currentGroups = [];
+            $('#current_groups .badge').each(function() {
+                currentGroups.push($(this).text().trim());
             });
             
-            // Update hidden field with JSON data
-            $('#selected_groups_data').val(JSON.stringify(selectedGroups));
-        }
-        
-        // Expose removeGroup function to global scope for the onclick handlers
-        window.removeGroup = function(index) {
-            selectedGroups.splice(index, 1);
-            updateSelectedGroupsDisplay();
-        };
-        
-        // Service (OU) Autocomplete
-        $('#ou').autocomplete({
-            source: function(request, response) {
-                $.getJSON("{{ url_for('autocomplete.autocomplete_services') }}", {
-                    term: request.term
-                }, function(data) {
-                    response(data);
+            // Check if the group is already in current memberships
+            if (currentGroups.includes(groupName)) {
+                alert('This group is already assigned to the user.');
+                $('#group_name').val('');
+                return;
+            }
+            
+            // Check if group already exists in our selection
+            if (!selectedGroups.some(g => g.name === groupName)) {
+                selectedGroups.push({
+                    name: groupName,
+                    dn: "" // In a real app, you'd get the DN from LDAP
                 });
-            },
-            select: function(event, ui) {
-                $('#ou').val(ui.item.value);
-                return false;
-            },
-            minLength: 2
-        });
+                updateSelectedGroupsDisplay();
+                $('#group_name').val('');
+            }
+        }
     });
+    
+    function updateSelectedGroupsDisplay() {
+        const container = $('#selected_groups');
+        container.empty();
+        
+        selectedGroups.forEach((group, index) => {
+            container.append(`
+                <div class="badge bg-primary me-2 mb-2 p-2">
+                    ${group.name}
+                    <button type="button" class="btn-close btn-close-white ms-2" 
+                            style="font-size: 0.5rem;" 
+                            onclick="removeGroup(${index})"></button>
+                </div>
+            `);
+        });
+        
+        // Update hidden field with JSON data
+        $('#selected_groups_data').val(JSON.stringify(selectedGroups));
+    }
+    
+    // Expose removeGroup function to global scope for the onclick handlers
+    window.removeGroup = function(index) {
+        selectedGroups.splice(index, 1);
+        updateSelectedGroupsDisplay();
+    };
+    
+    // Service (OU) Autocomplete
+    $('#ou').autocomplete({
+        source: function(request, response) {
+            $.getJSON("/autocomplete/services", {
+                term: request.term
+            }, function(data) {
+                response(data);
+            });
+        },
+        select: function(event, ui) {
+            $('#ou').val(ui.item.value);
+            return false;
+        },
+        minLength: 2
+    });
+});
 </script>
 
 <style>

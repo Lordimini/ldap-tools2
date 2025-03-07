@@ -1439,26 +1439,53 @@ class LDAPModel:
                 password = self.generate_password_from_cn(user_cn)
                 conn.modify(new_dn, {'userPassword': [(MODIFY_REPLACE, [password])]})
             
+            # Debug - Log the groups data
+            print(f"Groups to add: {groups}")
+            
             # Ajouter l'utilisateur aux groupes
             for group_data in groups:
-                group_name = group_data.get('name')
-                if group_name:
-                    # Rechercher le DN du groupe
-                    group_dn = None
-                    search_bases = ['ou=Groups,ou=IAM-Security,o=COPY', self.app_base_dn, 'ou=GROUPS,ou=SYNC,o=COPY']
+                # Ensure group_data is a dictionary
+                if not isinstance(group_data, dict):
+                    print(f"Warning: group_data is not a dict: {group_data}")
+                    continue
                     
-                    for base_dn in search_bases:
+                # Get the group name, trying various possible keys
+                group_name = None
+                for key in ['name', 'cn', 'group_name']:
+                    if key in group_data:
+                        group_name = group_data.get(key)
+                        break
+                
+                if not group_name:
+                    print(f"Warning: could not find group name in group data: {group_data}")
+                    continue
+                    
+                print(f"Processing group: {group_name}")
+                
+                # Rechercher le DN du groupe
+                group_dn = None
+                search_bases = ['ou=Groups,ou=IAM-Security,o=COPY', self.app_base_dn, 'ou=GROUPS,ou=SYNC,o=COPY']
+                
+                for base_dn in search_bases:
+                    try:
                         conn.search(base_dn, 
                                 f'(cn={group_name})', 
                                 search_scope='SUBTREE',
                                 attributes=['cn'])
                         if conn.entries:
                             group_dn = conn.entries[0].entry_dn
+                            print(f"Found group DN: {group_dn}")
                             break
-                    
-                    if group_dn:
-                        # Ajouter l'utilisateur au groupe
-                        self.add_user_to_group(new_dn, group_dn)
+                    except Exception as e:
+                        print(f"Error searching for group in {base_dn}: {str(e)}")
+                
+                if group_dn:
+                    # Ajouter l'utilisateur au groupe
+                    try:
+                        result = self.add_user_to_group(new_dn, group_dn)
+                        print(f"Result of adding user to group: {result}")
+                    except Exception as e:
+                        print(f"Error adding user to group: {str(e)}")
             
             conn.unbind()
             return True, f"Utilisateur {user_cn} déplacé avec succès vers {target_container}."
@@ -1466,7 +1493,7 @@ class LDAPModel:
         except Exception as e:
             print(f"Erreur lors de la finalisation de la création de l'utilisateur: {str(e)}")
             return False, f"Erreur: {str(e)}"
-
+    
     def delete_user(self, user_dn):
         """
         Supprime un utilisateur du répertoire.

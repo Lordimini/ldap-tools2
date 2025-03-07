@@ -67,12 +67,30 @@ def complete_user():
         selected_groups = []
         groups_json = request.form.get('selected_groups', '[]')
         try:
-            selected_groups = json.loads(groups_json)
-        except json.JSONDecodeError:
-            flash('Error parsing selected groups data', 'error')
+            groups_data = json.loads(groups_json)
+            # Debug log
+            print(f"Parsed groups data: {groups_data}")
+            
+            # Ensure each group has the correct format expected by the model
+            for group in groups_data:
+                # Check if group is a dict and has the 'name' key
+                if isinstance(group, dict) and 'name' in group:
+                    selected_groups.append(group)
+                else:
+                    # If the group doesn't have the expected format, try to normalize it
+                    normalized_group = {'name': str(group)}
+                    selected_groups.append(normalized_group)
+                    print(f"Normalized group: {normalized_group}")
+            
+        except json.JSONDecodeError as e:
+            flash(f'Error parsing selected groups data: {str(e)}', 'error')
+            selected_groups = []
         
         # Set password if requested
         set_password = request.form.get('set_password') == 'true'
+        
+        # Debug output
+        print(f"Selected groups to be passed to complete_user_creation: {selected_groups}")
         
         # Complete the user creation process
         ldap_model = LDAPModel()

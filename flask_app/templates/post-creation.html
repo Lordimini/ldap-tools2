@@ -99,17 +99,29 @@
                             <td>{{ selected_user.workforceID }}</td>
                         </tr>
                         {% endif %}
+                        {% if selected_user.generationQualifier %}
+                        <tr>
+                            <td class="attribute-cell">Langue/Taal</td>
+                            <td>{{ selected_user.generationQualifier }}</td>
+                        </tr>
+                        {% endif %}
                     </tbody>
                 </table>
                 
-                {% if selected_user.group_memberships %}
-                <h5 class="mt-4">Group Memberships</h5>
-                <ul class="list-group mb-3">
-                    {% for group in selected_user.group_memberships %}
-                    <li class="list-group-item">{{ group.cn }}</li>
-                    {% endfor %}
-                </ul>
-                {% endif %}
+                <h5 class="mt-4">Current Group Memberships</h5>
+                <div class="card p-3 bg-dark">
+                    <div id="current_groups">
+                        {% if selected_user.group_memberships %}
+                            {% for group in selected_user.group_memberships %}
+                                <div class="badge bg-info me-2 mb-2 p-2">
+                                    {{ group.cn }}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-muted">No group memberships</div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
             
             <!-- Right Column: Editable Fields -->
@@ -133,6 +145,16 @@
                            placeholder="Enter workforce ID">
                 </div>
                 
+                <!-- Langue (generationQualifier) -->
+                <div class="mb-3">
+                    <label for="generationQualifier" class="form-label">Langue:</label>
+                    <select id="generationQualifier" name="generationQualifier" class="form-select">
+                        <option value="">-- Sélectionner une langue --</option>
+                        <option value="NL" {% if selected_user.generationQualifier == 'NL' %}selected{% endif %}>NL</option>
+                        <option value="FR" {% if selected_user.generationQualifier == 'FR' or selected_user.generationQualifier == 'F' %}selected{% endif %}>FR</option>
+                    </select>
+                </div>
+                
                 <!-- Additional Attributes -->
                 <div class="mb-3">
                     <label for="title" class="form-label">Title:</label>
@@ -152,10 +174,14 @@
                     <label for="FavvEmployeeType" class="form-label">Employee Type:</label>
                     <select id="FavvEmployeeType" name="FavvEmployeeType" class="form-select">
                         <option value="">-- Select an employee type --</option>
-                        <option value="EXT" {% if selected_user.FavvEmployeeType == 'EXT' %}selected{% endif %}>External</option>
-                        <option value="INT" {% if selected_user.FavvEmployeeType == 'INT' %}selected{% endif %}>Internal</option>
-                        <option value="TMP" {% if selected_user.FavvEmployeeType == 'TMP' %}selected{% endif %}>Temporary</option>
-                        <option value="STAG" {% if selected_user.FavvEmployeeType == 'STAG' %}selected{% endif %}>Trainee</option>
+                        <option value="EXTERN" {% if selected_user.FavvEmployeeType == 'EXTERN' %}selected{% endif %}>EXTERN</option>
+                        <option value="CWK - DMO" {% if selected_user.FavvEmployeeType == 'CWK - DMO' %}selected{% endif %}>CWK - DMO</option>
+                        <option value="EMP - Employee" {% if selected_user.FavvEmployeeType == 'EMP - Employee' %}selected{% endif %}>EMP - Employee</option>
+                        <option value="EMP - Andere" {% if selected_user.FavvEmployeeType == 'EMP - Andere' %}selected{% endif %}>EMP - Andere</option>
+                        <option value="EMP - STAG" {% if selected_user.FavvEmployeeType == 'EMP - STAG' %}selected{% endif %}>EMP - STAG</option>
+                        {% if selected_user.FavvEmployeeType and selected_user.FavvEmployeeType not in ['EXTERN', 'CWK - DMO', 'EMP - Employee', 'EMP - Andere', 'EMP - STAG'] %}
+                        <option value="{{ selected_user.FavvEmployeeType }}" selected>{{ selected_user.FavvEmployeeType }}</option>
+                        {% endif %}
                     </select>
                 </div>
                 
@@ -394,6 +420,29 @@
     .btn-danger:hover {
         background-color: #c0392b;
         border-color: #c0392b;
+    }
+
+    /* Style for badges */
+    .badge {
+        font-size: 0.9rem;
+        font-weight: normal;
+    }
+
+    /* Style badges by type */
+    .badge.bg-info {
+        background-color: #3498db !important;
+    }
+
+    .badge.bg-success {
+        background-color: #2ecc71 !important;
+    }
+
+    .badge.bg-danger {
+        background-color: #e74c3c !important;
+    }
+
+    .badge.bg-secondary {
+        background-color: #7f8c8d !important;
     }
 </style>
 {% endblock %}

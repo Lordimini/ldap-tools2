@@ -56,6 +56,7 @@ def complete_user():
         attributes = {
             'workforceID': request.form.get('workforceID', ''),
             'title': request.form.get('title', ''),
+            'generationQualifier': request.form.get('generationQualifier', ''),
             'ou': request.form.get('ou', ''),
             'FavvEmployeeType': request.form.get('FavvEmployeeType', ''),
             'FavvHierarMgrDN': request.form.get('manager_dn', ''),

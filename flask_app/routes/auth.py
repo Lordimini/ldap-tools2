@@ -15,7 +15,7 @@ def login():
         # Capture the connection object returned by authenticate
         conn = ldap_model.authenticate(username, user_password)
 
-        if ldap_model.authenticate(username, user_password):
+        if conn:
             
             # Check if the user is a member of the admin group or reader group
             is_admin = False

@@ -1783,7 +1783,7 @@ class LDAPModel:
             return []
             
         # Ne pas effectuer de recherche si le terme est trop court
-        if len(search_term) < 3:
+        if search_type == 'fullName' and len(search_term) < 3:
             return []
         
         # Échapper les caractères spéciaux pour LDAP si nécessaire

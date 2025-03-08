@@ -279,6 +279,7 @@ $(document).ready(function() {
     
     // Call updateSelectedGroupsDisplay once to initialize the UI
     updateSelectedGroupsDisplay();
+    
     // Manager Autocomplete
     $('#hierarchical_manager').autocomplete({
         source: function(request, response) {
@@ -311,18 +312,21 @@ $(document).ready(function() {
         },
         select: function(event, ui) {
             $('#group_name').val(ui.item.value);
+            // Store the DN if available in the response
+            const dnMatch = ui.item.label.match(/\((.*?)\)$/);
+            if (dnMatch && dnMatch[1]) {
+                $('#group_name').data('dn', dnMatch[1]);
+            }
             return false;
         },
         minLength: 2
     });
     
-    // Selected Groups Management is initialized at the top of the document.ready function
-    
+    // Add Group Button Click Handler
     $('#add_group_btn').click(function() {
         const groupName = $('#group_name').val().trim();
         if (groupName) {
             // Check if group already exists in the user's current memberships
-            // Get all current group names from the left column
             const currentGroups = [];
             $('#current_groups .badge').each(function() {
                 currentGroups.push($(this).text().trim());
@@ -337,10 +341,11 @@ $(document).ready(function() {
             
             // Check if group already exists in our selection
             if (!selectedGroups.some(g => g.name === groupName)) {
-                // Create a group object with the name
+                // Create a group object with the name and DN if available
+                const groupDN = $('#group_name').data('dn') || "";
                 const newGroup = {
                     name: groupName,
-                    dn: "" // We don't have the DN here, the server will handle it
+                    dn: groupDN
                 };
                 
                 console.log("Adding group:", newGroup);
@@ -351,12 +356,23 @@ $(document).ready(function() {
                 // Update the display and hidden field
                 updateSelectedGroupsDisplay();
                 
-                // Clear the input field
+                // Clear the input field and stored DN
                 $('#group_name').val('');
+                $('#group_name').data('dn', '');
             } else {
                 alert('This group is already in your selection.');
             }
         }
+    });
+    
+    // Submit form handler to validate before submission
+    $('#userCompletionForm').submit(function(e) {
+        // Make sure the hidden field has the latest group data
+        $('#selected_groups_data').val(JSON.stringify(selectedGroups));
+        console.log("Form submission - Groups data:", $('#selected_groups_data').val());
+        
+        // Continue with form submission
+        return true;
     });
     
     // Define the update function
@@ -392,10 +408,6 @@ $(document).ready(function() {
         console.log("Removing group at index:", index);
         selectedGroups.splice(index, 1);
         updateSelectedGroupsDisplay();
-        
-        // Log the current state after removal
-        console.log("Groups after removal:", selectedGroups);
-        console.log("Hidden field value:", $('#selected_groups_data').val());
     };
     
     // Service (OU) Autocomplete

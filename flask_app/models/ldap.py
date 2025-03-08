@@ -1398,12 +1398,15 @@ class LDAPModel:
             user_dn (str): DN de l'utilisateur
             target_container (str): DN du container cible
             attributes (dict): Attributs à définir
-            groups (list): Liste des groupes à ajouter
+            groups (list): Liste des groupes à ajouter (format: [{'name': 'group_name'}])
             set_password (bool): Si True, définit un mot de passe par défaut
             
         Returns:
             tuple: (success, message)
         """
+        # Import the necessary constants
+        from ldap3 import MODIFY_REPLACE, MODIFY_ADD, MODIFY_DELETE
+        
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
@@ -1424,76 +1427,126 @@ class LDAPModel:
             new_dn = f"cn={user_cn},{target_container}"
             
             # Créer un dictionnaire pour filtrer les attributs vides
-            filtered_attributes = {k: [v] for k, v in attributes.items() if v}
+            filtered_attributes = {}
+            for k, v in attributes.items():
+                if v:  # Si la valeur n'est pas vide
+                    filtered_attributes[k] = [(MODIFY_REPLACE, [v])]
             
             # Déplacer l'utilisateur vers le container cible
-            conn.modify_dn(user_dn, f"cn={user_cn}", new_superior=target_container)
+            move_result = conn.modify_dn(user_dn, f"cn={user_cn}", new_superior=target_container)
+            if not move_result:
+                print(f"Error moving user: {conn.result}")
+                conn.unbind()
+                return False, f"Error moving user: {conn.result}"
             
             # Définir les attributs
             if filtered_attributes:
-                conn.modify(new_dn, changes=filtered_attributes)
+                attr_result = conn.modify(new_dn, changes=filtered_attributes)
+                if not attr_result:
+                    print(f"Error setting attributes: {conn.result}")
             
             # Définir le mot de passe si demandé
             if set_password:
                 # Générer un mot de passe basé sur le CN
                 password = self.generate_password_from_cn(user_cn)
-                conn.modify(new_dn, {'userPassword': [(MODIFY_REPLACE, [password])]})
+                password_result = conn.modify(new_dn, {'userPassword': [(MODIFY_REPLACE, [password])]})
+                if not password_result:
+                    print(f"Error setting password: {conn.result}")
             
-            # Debug - Log the groups data
+            # Log pour debugging
             print(f"Groups to add: {groups}")
+            
+            # Compteurs pour le rapport
+            groups_added = 0
+            groups_failed = 0
             
             # Ajouter l'utilisateur aux groupes
             for group_data in groups:
-                # Ensure group_data is a dictionary
+                print(f"Processing group data: {group_data}")
+                
+                # Vérifier que group_data est un dictionnaire
                 if not isinstance(group_data, dict):
                     print(f"Warning: group_data is not a dict: {group_data}")
+                    groups_failed += 1
                     continue
-                    
-                # Get the group name, trying various possible keys
+                
+                # Obtenir le nom du groupe
                 group_name = None
-                for key in ['name', 'cn', 'group_name']:
-                    if key in group_data:
-                        group_name = group_data.get(key)
-                        break
+                if 'name' in group_data:
+                    group_name = group_data['name']
+                elif 'cn' in group_data:
+                    group_name = group_data['cn']
                 
                 if not group_name:
-                    print(f"Warning: could not find group name in group data: {group_data}")
+                    print(f"Warning: no group name found in group data: {group_data}")
+                    groups_failed += 1
                     continue
-                    
-                print(f"Processing group: {group_name}")
+                
+                print(f"Looking for group with name: {group_name}")
                 
                 # Rechercher le DN du groupe
                 group_dn = None
                 search_bases = ['ou=Groups,ou=IAM-Security,o=COPY', self.app_base_dn, 'ou=GROUPS,ou=SYNC,o=COPY']
                 
                 for base_dn in search_bases:
-                    try:
-                        conn.search(base_dn, 
-                                f'(cn={group_name})', 
-                                search_scope='SUBTREE',
-                                attributes=['cn'])
-                        if conn.entries:
-                            group_dn = conn.entries[0].entry_dn
-                            print(f"Found group DN: {group_dn}")
-                            break
-                    except Exception as e:
-                        print(f"Error searching for group in {base_dn}: {str(e)}")
+                    conn.search(base_dn, 
+                            f'(cn={group_name})', 
+                            search_scope='SUBTREE',
+                            attributes=['cn'])
+                    if conn.entries:
+                        group_dn = conn.entries[0].entry_dn
+                        print(f"Found group DN: {group_dn}")
+                        break
                 
-                if group_dn:
-                    # Ajouter l'utilisateur au groupe
-                    try:
-                        result = self.add_user_to_group(new_dn, group_dn)
-                        print(f"Result of adding user to group: {result}")
-                    except Exception as e:
-                        print(f"Error adding user to group: {str(e)}")
+                if not group_dn:
+                    print(f"Warning: could not find group DN for name: {group_name}")
+                    groups_failed += 1
+                    continue
+                
+                # Ajouter l'utilisateur au groupe
+                try:
+                    # 1. Ajouter le DN du groupe à l'attribut groupMembership de l'utilisateur
+                    user_modify = conn.modify(
+                        new_dn, 
+                        {'groupMembership': [(MODIFY_ADD, [group_dn])]}
+                    )
+                    
+                    if not user_modify:
+                        print(f"Error adding group to user's groupMembership: {conn.result}")
+                    
+                    # 2. Ajouter le DN de l'utilisateur à l'attribut member du groupe
+                    group_modify = conn.modify(
+                        group_dn, 
+                        {'member': [(MODIFY_ADD, [new_dn])]}
+                    )
+                    
+                    if not group_modify:
+                        print(f"Error adding user to group's member attribute: {conn.result}")
+                    
+                    # Si les deux opérations ont réussi, incrémenter le compteur
+                    if user_modify and group_modify:
+                        print(f"Successfully added user to group: {group_name}")
+                        groups_added += 1
+                    else:
+                        groups_failed += 1
+                    
+                except Exception as e:
+                    print(f"Error adding user to group {group_name}: {str(e)}")
+                    groups_failed += 1
             
             conn.unbind()
-            return True, f"Utilisateur {user_cn} déplacé avec succès vers {target_container}."
+            success_message = f"User {user_cn} moved successfully to {target_container}. "
+            if groups_added > 0:
+                success_message += f"Added to {groups_added} groups. "
+            if groups_failed > 0:
+                success_message += f"Failed to add to {groups_failed} groups."
+            
+            return True, success_message
             
         except Exception as e:
-            print(f"Erreur lors de la finalisation de la création de l'utilisateur: {str(e)}")
-            return False, f"Erreur: {str(e)}"
-    
+            print(f"Error completing user creation: {str(e)}")
+            return False, f"Error: {str(e)}"
+            
     def delete_user(self, user_dn):
         """
         Supprime un utilisateur du répertoire.

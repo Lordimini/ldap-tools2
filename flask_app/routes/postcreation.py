@@ -52,7 +52,7 @@ def complete_user():
         user_dn = request.form.get('user_dn')
         target_container = request.form.get('target_container')
         
-        # Collect form data
+        # Collect form data for attributes
         attributes = {
             'workforceID': request.form.get('workforceID', ''),
             'title': request.form.get('title', ''),
@@ -63,34 +63,36 @@ def complete_user():
             'loginDisabled': 'TRUE' if request.form.get('loginDisabled') else 'FALSE'
         }
         
-        # Get selected groups
-        selected_groups = []
-        groups_json = request.form.get('selected_groups', '[]')
+        # Get and parse selected groups from the form
+        groups = []
         try:
-            groups_data = json.loads(groups_json)
-            # Debug log
-            print(f"Parsed groups data: {groups_data}")
+            groups_json = request.form.get('selected_groups', '[]')
+            print(f"Raw groups JSON: {groups_json}")
             
-            # Ensure each group has the correct format expected by the model
-            for group in groups_data:
-                # Check if group is a dict and has the 'name' key
-                if isinstance(group, dict) and 'name' in group:
-                    selected_groups.append(group)
-                else:
-                    # If the group doesn't have the expected format, try to normalize it
-                    normalized_group = {'name': str(group)}
-                    selected_groups.append(normalized_group)
-                    print(f"Normalized group: {normalized_group}")
+            # Parse JSON data
+            if groups_json:
+                groups_data = json.loads(groups_json)
+                print(f"Parsed groups data: {groups_data}")
+                
+                # Process each group entry
+                for group in groups_data:
+                    if isinstance(group, dict) and 'name' in group:
+                        # Group data is already in correct format
+                        groups.append(group)
+                    elif isinstance(group, str):
+                        # Simple string, convert to dict with name
+                        groups.append({'name': group})
+                    else:
+                        print(f"Warning: Unexpected group format: {group}")
+            
+            print(f"Processed groups to pass to complete_user_creation: {groups}")
             
         except json.JSONDecodeError as e:
-            flash(f'Error parsing selected groups data: {str(e)}', 'error')
-            selected_groups = []
+            flash(f'Error parsing group data: {str(e)}', 'error')
+            return redirect(url_for('postcreation.post_creation'))
         
-        # Set password if requested
+        # Set password flag
         set_password = request.form.get('set_password') == 'true'
-        
-        # Debug output
-        print(f"Selected groups to be passed to complete_user_creation: {selected_groups}")
         
         # Complete the user creation process
         ldap_model = LDAPModel()
@@ -98,7 +100,7 @@ def complete_user():
             user_dn=user_dn,
             target_container=target_container,
             attributes=attributes,
-            groups=selected_groups,
+            groups=groups,
             set_password=set_password
         )
         

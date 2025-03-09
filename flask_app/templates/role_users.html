@@ -8,53 +8,85 @@
     <form method="POST" action="{{ url_for('role.role_users') }}" class="card p-4 shadow mb-4">
         <div class="mb-3">
             <label for="role_cn" class="form-label">Search Role:</label>
-            <input type="text" class="form-control" id="role_cn" name="role_cn" placeholder="Start typing a role name..." value="{{ prefill_role_cn }}" required>
+            <input type="text" class="form-control" id="role_cn" name="role_cn" placeholder="Start typing a role name..." value="{{ prefill_role_name }}" required>
         </div>
         <button type="submit" class="btn btn-primary">Search</button>
     </form>
 
-    {% if result and result.users %}
-<div class="card p-4 shadow">
-    <h2 class="text-center mb-4">Users in Role: {{ result.role_cn }} ({{ result.role_dn }})</h2>
-    <div class="text-end mb-3">
-        <a href="{{ url_for('role.export_role_users_csv', role_cn=result.role_cn) }}" class="btn btn-success">
-            <i class="fas fa-file-csv"></i> Export to CSV
-        </a>
+    {% if result %}
+    <div class="card p-4 shadow">
+        <h2 class="text-center mb-4">Users in Role: {{ result.role_cn }} ({{ result.role_dn }})</h2>
+        <div class="text-end mb-3">
+            <a href="{{ url_for('role.export_role_users_csv', role_cn=result.role_cn) }}" class="btn btn-success">
+                <i class="fas fa-file-csv"></i> Export to CSV
+            </a>
+            <a href="{{ url_for('role.export_role_users_pdf', role_cn=result.role_cn) }}" class="btn btn-danger">
+                <i class="fas fa-file-pdf"></i> Export to PDF
+            </a>
+        </div>
+        {% if result.users %}
+        <table id="usersTable" class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>CN</th>
+                    <th>Full Name</th>
+                    <th>Title</th>
+                    <th>Service</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in result.users %}
+                <tr 
+                    role="button" 
+                    onclick="window.location.href='{{ url_for('search.search_user') }}?cn={{ user.CN | urlencode }}'" 
+                    style="cursor: pointer;"
+                >
+                    <td>{{ user.CN | default('N/A') }}</td>
+                    <td>{{ user.fullName | default('N/A') }}</td>
+                    <td>{{ user.title | default('N/A') }}</td>
+                    <td>{{ user.ou | default('N/A') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-center">No users found in this role.</p>
+        {% endif %}
     </div>
-    <table id="usersTable" data-toggle="table" class="table table-bordered table-hover">
-        <thead>
-            <tr>
-                <th data-field="cn" data-sortable="true">CN</th>
-                <th data-field="fullName" data-sortable="true">Full Name</th>
-                <th data-field="title" data-sortable="true">Title</th>
-                <th data-field="service" data-sortable="true">Service</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in result.users %}
-            <tr data-cn="{{ user.CN }}" style="cursor: pointer;">
-                <td>{{ user.CN }}</td>
-                <td>{{ user.fullName }}</td>
-                <td>{{ user.title }}</td>
-                <td>{{ user.ou }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endif %}
+    {% endif %}
 </div>
 
+<!-- Include DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 
-
-<!-- jQuery (required for autocomplete) -->
+<!-- jQuery (required for DataTables and autocomplete) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- jQuery UI (for autocomplete) -->
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
 
+<!-- Include DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
 <script>
-    $(function() {
+    $(document).ready(function () {
+        // Initialize DataTables on the table
+        if ($.fn.DataTable.isDataTable('#usersTable')) {
+            $('#usersTable').DataTable().destroy();
+        }
+        
+        $('#usersTable').DataTable({
+            paging: false, // Disable pagination if not needed
+            searching: false, // Disable search bar if not needed
+            info: false, // Disable "Showing X of Y entries" text
+            order: [[1, 'asc']], // Default sorting by the second column (Full Name) in ascending order
+            columnDefs: [
+                { orderable: true, targets: [0, 1, 2, 3] } // Enable sorting for all columns
+            ]
+        });
+
+        // Autocomplete for role_cn input
         $('#role_cn').autocomplete({
             source: function(request, response) {
                 $.getJSON("{{ url_for('autocomplete.autocomplete_roles') }}", {
@@ -72,25 +104,6 @@
                 .append(`<div>${item.label}</div>`)
                 .appendTo(ul);
         };
-    });
-</script>
-<!-- Add this script at the bottom of your HTML file -->
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Attach a click event listener to the table
-        const table = document.getElementById('usersTable');
-        table.addEventListener('click', function (event) {
-            // Find the closest <tr> element that was clicked
-            const row = event.target.closest('tr');
-            if (row && row.tagName === 'TR') {
-                // Get the CN value from the data-cn attribute
-                const cn = row.getAttribute('data-cn');
-                if (cn) {
-                    // Redirect to the search_user page with the CN parameter
-                    window.location.href = `{{ url_for('search.search_user') }}?cn=${encodeURIComponent(cn)}`;
-                }
-            }
-        });
     });
 </script>
 {% endblock %}

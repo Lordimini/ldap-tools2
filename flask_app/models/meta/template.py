@@ -52,7 +52,7 @@ class METATemplate(METABase):
             return None
         
     def get_user_types_from_ldap(self, dn):
-        conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+        conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
     
         search_base = dn
         attributes = ['cn', 'description', 'title']

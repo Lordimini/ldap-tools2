@@ -4,28 +4,56 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h1 class="text-center mb-4 text-white">User lookup</h1>
-    <form method="POST" action="{{ url_for('search.search_user') }}" class="card p-4 shadow mb-4">
-        <div class="mb-3">
-            <label for="search_type" class="form-label">Search By:</label>
-            <select class="form-select" id="search_type" name="search_type" required>
-                <option value="fullName" {% if prefill_fullName %}selected{% endif %}>Full Name</option>
-                <option value="cn" {% if prefill_cn %}selected{% endif %}>CN (Common Name)</option>
-                <option value="workforceID" {% if prefill_workforceID %}selected{% endif %}>Stamnummer - Numéro de Matricule</option>
-                <option value="FavvNatNr" {% if prefill_FavvNatNr %}selected{% endif %}>RijksregisterNr - N° de registre Nat.</option>
-            </select>
-        </div>
-        <div class="mb-3">
-            <label for="search_term" class="form-label">Search Term:</label>
-            <input type="text" class="form-control" id="search_term" name="search_term" value="{% if prefill_fullName %}{{ prefill_fullName }}{% elif prefill_cn %}{{ prefill_cn }}{% elif prefill_workforceID %}{{ prefill_workforceID }}{% elif prefill_FavvNatNr %}{{ prefill_FavvNatNr }}{% endif %}" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Search</button>
-    </form>
+    <h1 class="text-center mb-4">User Lookup</h1>
+    
+    <!-- Flash messages for any errors/warnings -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert-messages mb-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'success' %}success{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Search Form Card -->
+    <div class="card p-4 shadow mb-4">
+        <h4 class="mb-3">Search User</h4>
+        <form method="POST" action="{{ url_for('search.search_user') }}" class="mb-3">
+            <div class="mb-3">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="search_type" class="form-label">Search By:</label>
+                        <select class="form-select" id="search_type" name="search_type" required>
+                            <option value="fullName" {% if prefill_fullName %}selected{% endif %}>Full Name</option>
+                            <option value="cn" {% if prefill_cn %}selected{% endif %}>CN (Common Name)</option>
+                            <option value="workforceID" {% if prefill_workforceID %}selected{% endif %}>Stamnummer - Numéro de Matricule</option>
+                            <option value="FavvNatNr" {% if prefill_FavvNatNr %}selected{% endif %}>RijksregisterNr - N° de registre Nat.</option>
+                        </select>
+                    </div>
+                    <div class="col-md-7">
+                        <label for="search_term" class="form-label">Search Term:</label>
+                        <input type="text" class="form-control" id="search_term" name="search_term" value="{% if prefill_fullName %}{{ prefill_fullName }}{% elif prefill_cn %}{{ prefill_cn }}{% elif prefill_workforceID %}{{ prefill_workforceID }}{% elif prefill_FavvNatNr %}{{ prefill_FavvNatNr }}{% endif %}" required>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
 
     {% if result %}
+    <!-- User Details Card -->
     <div class="card p-4 shadow">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="mb-0">Search Results</h2>
+            <h4 class="mb-0">User Information</h4>
             {% if result.is_inactive %}
             <div class="alert alert-danger py-1 px-3 mb-0">
                 <i class="bi bi-exclamation-triangle-fill"></i> 
@@ -33,233 +61,169 @@
             </div>
             {% endif %}
         </div>
-        <table class="table table-dark table-bordered">
-            <thead>
-                <tr>
-                    <th style="width: 30%;">Attribute</th>
-                    <th style="width: 70%;">Value</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="attribute-cell">Intranet Contact</td>
-                    <td>
-                        <a href="http://intranet.linux.ici/contact/fr/ICIPDetail.asp?StamNr={{ result.workforceID }}">{{ result.givenName + ' ' + result.sn }}</a>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="attribute-cell">CN</td>
-                    <td>{{ result.CN }}</td>
-                </tr>
-                <tr>
-                    <td class="attribute-cell">Employee Type</td>
-                    <td>{{ result.favvEmployeeType }}</td>
-                </tr>
-                <tr>
-                    <td class="attribute-cell">Full Name</td>
-                    <td>{{ result.fullName }}</td>
-                </tr>
-                <tr>
-                    <td class="attribute-cell">Email</td>
-                    <td>{{ result.mail }}</td>
-                </tr>
-                <tr>
-                    <td class="attribute-cell">Stamnummer - numéro de matricule</td>
-                    <td>{{ result.workforceID }}</td>
-                </tr>
-                <tr>
-                    <td class="attribute-cell">RRN - NRN</td>
-                    <td>{{ result.FavvNatNr }}</td>
-                </tr>
-                <tr>
-                    <td class="attribute-cell">Service - Dienst</td>
-                    <td>
-                        {% if result.service %}
-                            <a href="{{ url_for('service.service_users') }}?service_name={{ result.service }}">{{ result.service }}</a>
-                        {% else %}
-                            No service found.
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <td class="attribute-cell">Title</td>
-                    <td>{{ result.title }}</td>
-                </tr>
-                <tr {% if result.loginDisabled == 'YES' %}class="table-danger"{% endif %}>
-                    <td class="attribute-cell">Login Disabled</td>
-                    <td>{{ result.loginDisabled }}</td>
-                </tr>
-                <tr>
-                    <td class="attribute-cell">Last Login time</td>
-                    <td>{{ result.loginTime }}</td>
-                </tr>
-                <tr>
-                    <td class="attribute-cell">Password Expiration date</td>
-                    <td>{{ result.passwordExpirationTime }}</td>
-                </tr>
-                <tr>
-                    <td class="attribute-cell">Chef Hiérarchique</td>
-                    <td>{{ result.ChefHierarchique }}</td>
-                </tr>
-                <tr>
-                    <td class="attribute-cell">Group Membership</td>
-                    <td>
+
+        <div class="row">
+            <!-- Left Column: User Basic Information -->
+            <div class="col-md-6">
+                <table class="table table-dark">
+                    <tbody>
+                        <tr>
+                            <td class="attribute-cell">Intranet Contact</td>
+                            <td>
+                                <a href="http://intranet.linux.ici/contact/fr/ICIPDetail.asp?StamNr={{ result.workforceID }}">{{ result.givenName + ' ' + result.sn }}</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">CN</td>
+                            <td>{{ result.CN }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Employee Type</td>
+                            <td>{{ result.favvEmployeeType }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Full Name</td>
+                            <td>{{ result.fullName }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Email</td>
+                            <td>{{ result.mail }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Stamnummer</td>
+                            <td>{{ result.workforceID }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">RRN - NRN</td>
+                            <td>{{ result.FavvNatNr }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Service - Dienst</td>
+                            <td>
+                                {% if result.service %}
+                                    <a href="{{ url_for('service.service_users') }}?service_name={{ result.service }}">{{ result.service }}</a>
+                                {% else %}
+                                    No service found.
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Right Column: Additional Information -->
+            <div class="col-md-6">
+                <table class="table table-dark">
+                    <tbody>
+                        <tr>
+                            <td class="attribute-cell">Title</td>
+                            <td>{{ result.title }}</td>
+                        </tr>
+                        <tr {% if result.loginDisabled == 'YES' %}class="table-danger"{% endif %}>
+                            <td class="attribute-cell">Login Disabled</td>
+                            <td>{{ result.loginDisabled }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Last Login time</td>
+                            <td>{{ result.loginTime }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Password Expiration</td>
+                            <td>{{ result.passwordExpirationTime }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Chef Hiérarchique</td>
+                            <td>{{ result.ChefHierarchique }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Action</td>
+                            <td>
+                                <a href="{{ url_for('userupdate.select_user', user_dn=result.dn) }}" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-pencil"></i> Edit User
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Group Memberships Section -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h5 class="mb-3">Group Memberships</h5>
+                <div class="card p-3 bg-dark">
+                    <div id="groups">
                         {% if result.groupMembership %}
-                        <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#groupMembershipModal">
-                            <i class="bi bi-people"></i> View Group Memberships ({{ result.groupMembership|length }})
-                        </button>
-                        {% else %}
-                        No group memberships found.
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <td class="attribute-cell">Assigned Roles</td>
-                    <td>
-                        {% if result.nrfMemberOf %}
-                        <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#rolesAssignedModal">
-                            <i class="bi bi-person-badge"></i> View Assigned Roles ({{ result.nrfMemberOf|length }})
-                        </button>
-                        {% else %}
-                        No assigned role found.
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <td class="attribute-cell">DirXML-Associations</td>
-                    <td>
-                        {% if result.DirXMLAssociations %}
-                        <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#DirXMLAssociationsModal">
-                            <i class="bi bi-link"></i> View DirXML Associations ({{ result.DirXMLAssociations|length }})
-                        </button>
-                        {% else %}
-                        No DirXML-Associations found.
-                        {% endif %}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-    <!-- Group Membership Modal -->
-    {% if result.groupMembership %}
-    <div class="modal fade" id="groupMembershipModal" tabindex="-1" aria-labelledby="groupMembershipModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content bg-dark text-white">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="groupMembershipModalLabel">Group Memberships for {{ result.fullName }}</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <table class="table table-dark table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th>Group CN</th>
-                                <th>Group DN</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
                             {% for group in result.groupMembership %}
-                            <tr>
-                                <td>{{ group.cn }}</td>
-                                <td class="text-truncate" style="max-width: 300px;" title="{{ group.dn }}">{{ group.dn }}</td>
-                                <td>
-                                    <a href="{{ url_for('group.group_users') }}?group_name={{ group.cn }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye"></i> View Group
+                                <div class="badge bg-info me-2 mb-2 p-2">
+                                    <a href="{{ url_for('group.group_users') }}?group_name={{ group.cn }}" class="text-white text-decoration-none">
+                                        {{ group.cn }}
                                     </a>
-                                </td>
-                            </tr>
+                                </div>
                             {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        {% else %}
+                            <div class="text-muted">No group memberships found.</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-    {% endif %}
-    
-    <!-- Roles Assigned Modal -->
-    {% if result.nrfMemberOf %}
-    <div class="modal fade" id="rolesAssignedModal" tabindex="-1" aria-labelledby="rolesAssignedModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content bg-dark text-white">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="rolesAssignedModalLabel">Assigned Roles for {{ result.fullName }}</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <table class="table table-dark table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th>Role CN</th>
-                                <th>Category</th>
-                                <th>Role DN</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+
+            <!-- Role Assignments Section -->
+            <div class="col-md-6">
+                <h5 class="mb-3">Assigned Roles</h5>
+                <div class="card p-3 bg-dark">
+                    <div id="roles">
+                        {% if result.nrfMemberOf %}
                             {% for role in result.nrfMemberOf %}
-                            <tr>
-                                <td>{{ role.cn }}</td>
-                                <td>{{ role.category }}</td>
-                                <td class="text-truncate" style="max-width: 250px;" title="{{ role.dn }}">{{ role.dn }}</td>
-                                <td>
-                                    <a href="{{ url_for('role.role_users') }}?role_cn={{ role.cn }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye"></i> View Role
+                                <div class="badge bg-secondary me-2 mb-2 p-2">
+                                    <a href="{{ url_for('role.role_users') }}?role_cn={{ role.cn }}" class="text-white text-decoration-none">
+                                        {{ role.cn }} ({{ role.category }})
                                     </a>
-                                </td>
-                            </tr>
+                                </div>
                             {% endfor %}
-                        </tbody>
-                    </table>
+                        {% else %}
+                            <div class="text-muted">No assigned roles found.</div>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+
+        <!-- DirXML Associations Section -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h5 class="mb-3">DirXML Associations</h5>
+                <div class="card p-3 bg-dark">
+                    <div id="dirxml">
+                        {% if result.DirXMLAssociations %}
+                            <div class="table-responsive">
+                                <table class="table table-dark table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Association</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for association in result.DirXMLAssociations %}
+                                        <tr>
+                                            <td class="text-break">{{ association }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-muted">No DirXML Associations found.</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    {% endif %}
-    
-    <!-- DirXML Associations Modal -->
-    {% if result.DirXMLAssociations %}
-    <div class="modal fade" id="DirXMLAssociationsModal" tabindex="-1" aria-labelledby="DirXMLAssociationsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content bg-dark text-white">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="DirXMLAssociationsModalLabel">DirXML Associations for {{ result.fullName }}</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <table class="table table-dark table-striped">
-                        <thead>
-                            <tr>
-                                <th>Association</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for association in result.DirXMLAssociations %}
-                            <tr>
-                                <td class="text-break">{{ association }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-    
     {% endif %}
 </div>
+
 <!-- jQuery (required for autocomplete) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- jQuery UI (for autocomplete) -->
@@ -269,12 +233,12 @@
 <style>
     /* Custom styles for the search results table */
     table.table-dark tbody tr td.attribute-cell {
-        background-color: #1a2533; /* Less dark background from the sidebar secondary-color */
-        color: #23c7bf !important; /* Light blue accent color from the theme with !important */
-        font-weight: 600 !important; /* Make font a bit bolder */
-        font-size: 1.05rem !important; /* Slightly larger font */
-        padding: 12px 15px; /* More padding for better readability */
-        border-right: 1px solid rgba(255, 255, 255, 0.05); /* Subtle border */
+        background-color: #1a2533;
+        color: #23c7bf !important;
+        font-weight: 600 !important;
+        font-size: 1.05rem !important;
+        padding: 12px 15px;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
     }
     
     /* Make sure the table uses the correct text colors even when Bootstrap might override them */
@@ -286,92 +250,123 @@
     
     /* Add a subtle hover effect for the rows */
     .table-dark tbody tr:hover {
-        background-color: rgba(52, 152, 219, 0.05); /* Very subtle blue highlight */
+        background-color: rgba(52, 152, 219, 0.05);
     }
     
     /* Override the table-danger class for login disabled rows to keep our styling */
     .table-dark tbody tr.table-danger td.attribute-cell {
-        background-color: #1a2533 !important; /* Keep our custom background */
-        color: #3498db !important; /* Keep our custom color */
+        background-color: #1a2533 !important;
+        color: #23c7bf !important;
     }
     
     /* Make table headers stand out more */
     .table-dark thead th {
-        background-color: #0f1926; /* Very dark blue from the theme */
-        color: #f8f9fa; /* Light text color */
+        background-color: #0f1926;
+        color: #f8f9fa;
         font-weight: bold;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         font-size: 0.9rem;
         padding: 12px 15px;
     }
+    
+    /* Style for badges */
+    .badge {
+        font-size: 0.9rem;
+        font-weight: normal;
+    }
+    
+    /* Style badges by type */
+    .badge.bg-info {
+        background-color: #3498db !important;
+    }
+    
+    .badge.bg-secondary {
+        background-color: #7f8c8d !important;
+    }
+    
+    /* Card styling */
+    .card {
+        margin-bottom: 1rem;
+        border: none;
+        border-radius: 8px;
+    }
+    
+    /* Style for the section headers */
+    .card h5 {
+        margin-bottom: 1rem;
+        color: #f8f9fa;
+        font-weight: 600;
+    }
+    
+    /* Button styling */
+    .btn-primary {
+        background-color: #3498db;
+        border-color: #3498db;
+    }
+    
+    .btn-primary:hover {
+        background-color: #2980b9;
+        border-color: #2980b9;
+    }
 </style>
 
 <script>
     $(document).ready(function() {
-    // Function to initialize autocomplete
-    function initializeAutocomplete() {
-        $('#search_term').autocomplete({
-            source: function(request, response) {
-                // Ne déclencher la recherche que si au moins 3 caractères sont saisis
-                if (request.term.length < 3) {
-                    response([]);
-                    return;
-                }
-                
-                // Ajouter une variable pour stocker la requête AJAX en cours
-                if (this.xhr) {
-                    this.xhr.abort();
-                }
-                
-                // Effectuer la requête AJAX avec un délai
-                this.xhr = $.getJSON("{{ url_for('autocomplete.autocomplete_fullName') }}", {
-                    term: request.term
-                }, function(data) {
-                    response(data);
-                });
-            },
-            minLength: 3,  // Définir une longueur minimale avant de déclencher l'autocomplétion
-            delay: 300,    // Ajouter un délai de 300ms entre les frappes et la recherche
-            select: function(event, ui) {
-                $('#search_term').val(ui.item.value);
-                return false;
+        // Function to initialize autocomplete
+        function initializeAutocomplete() {
+            if ($('#search_type').val() === 'fullName') {
+                $('#search_term').autocomplete({
+                    source: function(request, response) {
+                        // Ne déclencher la recherche que si au moins 3 caractères sont saisis
+                        if (request.term.length < 3) {
+                            response([]);
+                            return;
+                        }
+                        
+                        // Ajouter une variable pour stocker la requête AJAX en cours
+                        if (this.xhr) {
+                            this.xhr.abort();
+                        }
+                        
+                        // Effectuer la requête AJAX avec un délai
+                        this.xhr = $.getJSON("{{ url_for('autocomplete.autocomplete_fullName') }}", {
+                            term: request.term
+                        }, function(data) {
+                            response(data);
+                        });
+                    },
+                    minLength: 3,  // Définir une longueur minimale avant de déclencher l'autocomplétion
+                    delay: 300,    // Ajouter un délai de 300ms entre les frappes et la recherche
+                    select: function(event, ui) {
+                        $('#search_term').val(ui.item.value);
+                        return false;
+                    }
+                }).data('ui-autocomplete')._renderItem = function(ul, item) {
+                    return $('<li>')
+                        .append(`<div>${item.label}</div>`)
+                        .appendTo(ul);
+                };
+            } else {
+                // Unbind existing autocomplete if any
+                $('#search_term').autocomplete('destroy');
             }
-        }).data('ui-autocomplete')._renderItem = function(ul, item) {
-            return $('<li>')
-                .append(`<div>${item.label}</div>`)
-                .appendTo(ul);
-        };
-    }
+        }
 
-    // Check the selected search type and initialize autocomplete if needed
-    $('#search_type').change(function() {
-        if ($(this).val() === 'fullName') {
+        // Check the selected search type and initialize autocomplete if needed
+        $('#search_type').change(function() {
+            if ($(this).val() === 'fullName') {
+                initializeAutocomplete();
+            } else {
+                // Unbind existing autocomplete if any
+                $('#search_term').autocomplete('destroy');
+            }
+        });
+
+        // Initialize autocomplete on page load for the selected option
+        if ($('#search_type option:selected').val() === 'fullName') {
             initializeAutocomplete();
-        } else {
-            // Unbind existing autocomplete if any
-            $('#search_term').autocomplete('destroy');
         }
     });
-
-    // Initialize autocomplete on page load for the selected option
-    if ($('#search_type option:selected').val() === 'fullName') {
-        initializeAutocomplete();
-    }
-    
-    // Force apply our custom styles on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        // Ensure our styles are applied after Bootstrap has initialized everything
-        setTimeout(function() {
-            document.querySelectorAll('.attribute-cell').forEach(function(cell) {
-                cell.style.color = '#3498db';
-                cell.style.fontWeight = '600';
-                cell.style.fontSize = '1.05rem';
-                cell.style.backgroundColor = '#1a2533';
-            });
-        }, 100);
-    });
-});
 </script>
-
 {% endblock %}

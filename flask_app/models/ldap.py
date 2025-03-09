@@ -215,39 +215,64 @@ class LDAPModel:
 ####################################################################        
 
     def get_role_users(self, role_cn):
-            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True) 
+        """
+        Obtient les utilisateurs associés à un rôle, avec validation des DNs.
+        """
+        try:
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            
             # Search for the role in the entire subtree of o=FAVV and o=COPY
             role_dn = None
-            for base_dn in self.role_base_dn:
-                conn.search(base_dn, f'(cn={role_cn})', search_scope='SUBTREE', attributes=['equivalentToMe'])
-                
-                if conn.entries:
-                    role_dn = conn.entries[0].entry_dn
-                    break        
+            
+            # Vérifier que role_base_dn est une liste
+            base_dns = self.role_base_dn if isinstance(self.role_base_dn, list) else [self.role_base_dn]
+            
+            # Parcourir tous les base_dn valides
+            for base_dn in base_dns:
+                # Vérifier que le base_dn est valide
+                if not base_dn or not isinstance(base_dn, str) or '=' not in base_dn:
+                    print(f"Base DN invalide ignoré dans get_role_users: {base_dn}")
+                    continue
+                    
+                try:
+                    print(f"Recherche du rôle '{role_cn}' dans {base_dn}")
+                    conn.search(base_dn, f'(cn={role_cn})', search_scope='SUBTREE', attributes=['equivalentToMe'])
+                    
+                    if conn.entries:
+                        role_dn = conn.entries[0].entry_dn
+                        print(f"Rôle trouvé: {role_dn}")
+                        break
+                except Exception as e:
+                    print(f"Erreur lors de la recherche dans {base_dn}: {str(e)}")
+                    continue
+                    
             if role_dn:
-                print(f"Role found: {role_dn}")
+                print(f"Recherche des utilisateurs pour le rôle: {role_dn}")
 
                 # Fetch the role's equivalentToMe attribute (list of user DNs)
                 conn.search(role_dn, '(objectClass=nrfRole)', attributes=['equivalentToMe'])
-                if conn.entries and conn.entries[0].equivalentToMe:
+                if conn.entries and hasattr(conn.entries[0], 'equivalentToMe') and conn.entries[0].equivalentToMe:
                     user_dns = conn.entries[0].equivalentToMe.values
-                    #print(f"User DNs: {user_dns}")
                     users = []
 
                     # Fetch details for each user
                     for user_dn in user_dns:
-                        conn.search(user_dn, '(objectClass=*)', attributes=['cn', 'fullName', 'title', 'ou'])
-                        if conn.entries:
-                            user = conn.entries[0]
-                            
-                            users.append({
-                                'CN': user.cn.value,
-                                'fullName': user.fullName.value,
-                                'ou': user.ou.value,
-                                'title': user.title.value if user.title else 'N/A'
-                            })
-                        else:
-                            print(f"User not found for DN: {user_dn}")
+                        try:
+                            conn.search(user_dn, '(objectClass=*)', attributes=['cn', 'fullName', 'title', 'ou'])
+                            if conn.entries:
+                                user = conn.entries[0]
+                                
+                                users.append({
+                                    'CN': user.cn.value if hasattr(user, 'cn') and user.cn else 'Unknown',
+                                    'fullName': user.fullName.value if hasattr(user, 'fullName') and user.fullName else 'Unknown',
+                                    'ou': user.ou.value if hasattr(user, 'ou') and user.ou else 'N/A',
+                                    'title': user.title.value if hasattr(user, 'title') and user.title else 'N/A'
+                                })
+                            else:
+                                print(f"Utilisateur non trouvé pour DN: {user_dn}")
+                        except Exception as e:
+                            print(f"Erreur lors de la récupération des détails de l'utilisateur {user_dn}: {str(e)}")
+                            continue
 
                     result = {
                         'role_cn': role_cn,
@@ -260,16 +285,21 @@ class LDAPModel:
                         'role_dn': role_dn,
                         'users': []
                     }
-                    flash('Role has no equivalent users.', 'info')
+                    print('Le rôle n\'a pas d\'utilisateurs équivalents.')
             else:
                 result = None
-                print("Role not found dans ldap.py.")
-                flash('Role not found.', 'danger')
+                print(f"Rôle non trouvé: {role_cn}")
 
             # Unbind the connection
             conn.unbind()
             return result
-            
+                
+        except Exception as e:
+            import traceback
+            print(f"Erreur dans get_role_users: {str(e)}")
+            print(traceback.format_exc())
+            conn.unbind() if 'conn' in locals() and conn else None
+            return None        
 ####################################################################
 ####################################################################
 ####################################################################
@@ -1887,46 +1917,45 @@ class LDAPModel:
     
     def autocomplete_role(self, search_term):
         """
-        Fonction d'autocomplétion spécifique pour les rôles, avec gestion sécurisée des attributs.
+        Fonction d'autocomplétion spécifique pour les rôles, avec validation des DNs.
         """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, 
                             password=self.password, auto_bind=True)
             
             roles = []
-            # Utiliser une liste pour collecter toutes les entrées
-            all_entries = []
             
-            # Exécuter la recherche pour chaque base_dn
-            for base_dn in self.role_base_dn:
-                print(f"Recherche de rôles dans {base_dn} avec filtre: (cn=*{search_term}*)")
-                conn.search(base_dn, f'(cn=*{search_term}*)', 
-                        search_scope='SUBTREE', 
-                        attributes=['cn'])
-                
-                # Ajouter toutes les entrées trouvées à notre liste
-                all_entries.extend(conn.entries)
+            # Vérifier que role_base_dn est bien une liste
+            base_dns = self.role_base_dn if isinstance(self.role_base_dn, list) else [self.role_base_dn]
             
-            # Traiter les entrées trouvées
-            for entry in all_entries:
-                # Vérifier si les attributs existent avant d'y accéder
-                if hasattr(entry, 'cn') and entry.cn:
-                    # Construire l'objet de résultat de manière sécurisée
-                    label = f"{entry.cn.value}" if hasattr(entry.cn, 'value') else "Unknown"
-                    if hasattr(entry, 'entry_dn'):
-                        label += f" ({entry.entry_dn})"
+            # Exécuter la recherche pour chaque base_dn valide
+            for base_dn in base_dns:
+                # Vérifier que le base_dn est valide
+                if not base_dn or not isinstance(base_dn, str) or '=' not in base_dn:
+                    print(f"Base DN invalide ignoré: {base_dn}")
+                    continue
                     
-                    roles.append({
-                        'label': label,
-                        'value': entry.cn.value if hasattr(entry.cn, 'value') else entry.entry_dn
-                    })
-                else:
-                    # Fallback au cas où l'attribut cn n'existe pas
-                    if hasattr(entry, 'entry_dn'):
-                        roles.append({
-                            'label': f"Rôle sans nom ({entry.entry_dn})",
-                            'value': entry.entry_dn.split(',')[0].split('=')[1] if '=' in entry.entry_dn else "unknown"
-                        })
+                try:
+                    print(f"Recherche de rôles dans {base_dn} avec filtre: (cn=*{search_term}*)")
+                    conn.search(base_dn, f'(cn=*{search_term}*)', 
+                            search_scope='SUBTREE', 
+                            attributes=['cn'])
+                    
+                    # Traiter les entrées trouvées dans ce base_dn
+                    for entry in conn.entries:
+                        if hasattr(entry, 'cn') and entry.cn:
+                            label = f"{entry.cn.value}" if hasattr(entry.cn, 'value') else "Unknown"
+                            if hasattr(entry, 'entry_dn'):
+                                label += f" ({entry.entry_dn})"
+                            
+                            roles.append({
+                                'label': label,
+                                'value': entry.cn.value if hasattr(entry.cn, 'value') else entry.entry_dn
+                            })
+                except Exception as e:
+                    print(f"Erreur lors de la recherche dans {base_dn}: {str(e)}")
+                    # Continuer avec le prochain base_dn en cas d'erreur
+                    continue
             
             print(f"Nombre total de rôles trouvés: {len(roles)}")
             

@@ -138,7 +138,7 @@
                         <tr>
                             <td class="attribute-cell">Action</td>
                             <td>
-                                <a href="{{ url_for('userupdate.select_user', user_dn=result.dn) }}" class="btn btn-primary btn-sm">
+                                <a href="{{ url_for('userupdate.select_user') }}?user_dn={{ result.dn }}" class="btn btn-primary btn-sm">
                                     <i class="bi bi-pencil"></i> Edit User
                                 </a>
                             </td>

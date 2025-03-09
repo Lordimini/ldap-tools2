@@ -418,17 +418,51 @@ class LDAPModel:
    
   
     def get_service_users(self, service_name):
+        """
+        Récupère les utilisateurs d'un service donné, avec validation des DNs.
+        
+        Args:
+            service_name (str): Nom du service (ou) à rechercher
+            
+        Returns:
+            dict: Dictionnaire contenant le nom du service et la liste des utilisateurs
+        """
+        try:
             users = []
-            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True) 
-            for base_dn in self.actif_users_dn:
-                conn.search(base_dn, f'(ou={service_name})', search_scope='SUBTREE', attributes=['cn', 'fullName', 'title', 'mail'])
-                for entry in conn.entries:
-                    users.append({
-                        'CN': entry.cn.value,
-                        'fullName': entry.fullName.value,
-                        'title': entry.title.value if entry.title else 'N/A',
-                        'mail': entry.mail.value if entry.mail else 'N/A'
-                    })
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            
+            # S'assurer que actif_users_dn est une liste
+            base_dns = self.actif_users_dn if isinstance(self.actif_users_dn, list) else [self.actif_users_dn]
+            
+            # Échapper le service_name pour éviter les injections LDAP
+            service_name_escaped = self._escape_ldap_filter(service_name) if hasattr(self, '_escape_ldap_filter') else service_name
+            
+            # Parcourir tous les base_dn valides
+            for base_dn in base_dns:
+                # Vérifier que le base_dn est valide
+                if not base_dn or not isinstance(base_dn, str) or '=' not in base_dn:
+                    print(f"Base DN invalide ignoré dans get_service_users: {base_dn}")
+                    continue
+                    
+                try:
+                    print(f"Recherche des utilisateurs du service '{service_name}' dans {base_dn}")
+                    conn.search(base_dn, 
+                            f'(ou={service_name_escaped})', 
+                            search_scope='SUBTREE',
+                            attributes=['cn', 'fullName', 'title', 'mail'])
+                    
+                    # Traiter les résultats
+                    for entry in conn.entries:
+                        users.append({
+                            'CN': entry.cn.value if hasattr(entry, 'cn') and entry.cn else 'Unknown',
+                            'fullName': entry.fullName.value if hasattr(entry, 'fullName') and entry.fullName else 'Unknown',
+                            'title': entry.title.value if hasattr(entry, 'title') and entry.title else 'N/A',
+                            'mail': entry.mail.value if hasattr(entry, 'mail') and entry.mail else 'N/A'
+                        })
+                except Exception as e:
+                    print(f"Erreur lors de la recherche dans {base_dn}: {str(e)}")
+                    # Continuer avec le prochain base_dn en cas d'erreur
+                    continue
 
             if users:
                 result = {
@@ -437,14 +471,22 @@ class LDAPModel:
                 }
             else:
                 result = None
-                flash('No users found in this service.', 'info')
+                print(f"Aucun utilisateur trouvé pour le service: {service_name}")
 
-            # Unbind the connection
+            # Fermer la connexion
             conn.unbind()
             return result
+                
+        except Exception as e:
+            import traceback
+            print(f"Erreur dans get_service_users: {str(e)}")
+            print(traceback.format_exc())
+            if 'conn' in locals() and conn:
+                conn.unbind()
+            return None
+            
+            
         
-        
-    
         
     def _escape_ldap_filter(self, input_string):
         """
@@ -1802,7 +1844,7 @@ class LDAPModel:
             Type de recherche à effectuer ('group', 'fullName', 'role', 'services', 'managers')
         search_term : str
             Terme de recherche à utiliser pour l'autocomplete
-            
+                
         Returns:
         --------
         list
@@ -1811,10 +1853,16 @@ class LDAPModel:
         # Validation initiale
         if not search_term or not search_type:
             return []
-            
-        # Ne pas effectuer de recherche si le terme est trop court
+                
+        # Ne pas effectuer de recherche si le terme est trop court (uniquement pour fullName)
         if search_type == 'fullName' and len(search_term) < 3:
             return []
+        
+        # Utiliser les fonctions dédiées pour les cas spéciaux
+        if search_type == 'roles' or search_type == 'role':
+            return self.autocomplete_role(search_term)
+        elif search_type == 'services':
+            return self.autocomplete_services(search_term)
         
         # Échapper les caractères spéciaux pour LDAP si nécessaire
         search_term_escaped = self._escape_ldap_filter(search_term) if hasattr(self, '_escape_ldap_filter') else search_term
@@ -1863,28 +1911,6 @@ class LDAPModel:
                 
                 # Limiter à 20 résultats
                 results = results[:20]
-                
-            elif search_type == 'roles' or search_type == 'role':
-                for base_dn in self.role_base_dn:
-                    conn.search(base_dn, f'(cn=*{search_term_escaped}*)', 
-                            search_scope='SUBTREE', attributes=['cn'])
-                            
-                for entry in conn.entries:
-                    results.append({
-                        'label': f"{entry.cn.value} ({entry.entry_dn})",
-                        'value': entry.cn.value
-                    })
-                    
-            elif search_type == 'services':
-                for base_dn in [self.app_base_dn, self.base_dn]:
-                    conn.search(base_dn, f'(ou=*{search_term_escaped}*)', 
-                            search_scope='SUBTREE', attributes=['ou'])
-                            
-                for entry in conn.entries:
-                    results.append({
-                        'label': entry.ou.value,
-                        'value': entry.ou.value
-                    })
                     
             elif search_type == 'managers':
                 search_base = self.actif_users_dn
@@ -1906,15 +1932,15 @@ class LDAPModel:
             else:
                 # Type de recherche non reconnu
                 return []
-                
+                    
             # Fermer la connexion
             conn.unbind()
             return results
-            
+                
         except Exception as e:
             print(f"Erreur lors de l'autocomplétion ({search_type}): {str(e)}")
             return []
-    
+        
     def autocomplete_role(self, search_term):
         """
         Fonction d'autocomplétion spécifique pour les rôles, avec validation des DNs.
@@ -1967,3 +1993,83 @@ class LDAPModel:
             print(f"Erreur lors de l'autocomplétion des rôles: {str(e)}")
             print(traceback.format_exc())
             return []
+        
+    def autocomplete_services(self, search_term):
+        """
+        Fournit une fonctionnalité d'autocomplétion pour les services (OU),
+        avec élimination des doublons et validation des DNs.
+        
+        Args:
+            search_term (str): Terme de recherche pour filtrer les services
+            
+        Returns:
+            list: Liste des services correspondant au terme de recherche
+        """
+        try:
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            
+            # Échapper le terme de recherche
+            search_term_escaped = self._escape_ldap_filter(search_term) if hasattr(self, '_escape_ldap_filter') else search_term
+            
+            # Dictionnaire pour éliminer les doublons (clé = valeur du service en minuscules)
+            unique_services = {}
+            
+            # Bases DN à rechercher
+            base_dns = [self.app_base_dn, self.base_dn]
+            
+            # Parcourir toutes les bases DN
+            for base_dn in base_dns:
+                # Vérifier que le base_dn est valide
+                if not base_dn or not isinstance(base_dn, str) or '=' not in base_dn:
+                    print(f"Base DN invalide ignoré dans autocomplete_services: {base_dn}")
+                    continue
+                    
+                try:
+                    # Limiter la recherche pour de meilleures performances
+                    conn.search(
+                        base_dn, 
+                        f'(ou=*{search_term_escaped}*)', 
+                        search_scope='SUBTREE', 
+                        attributes=['ou'],
+                        size_limit=50,  # Limiter le nombre de résultats
+                        time_limit=5     # Limiter le temps de recherche en secondes
+                    )
+                    
+                    # Ajouter chaque service unique au dictionnaire
+                    for entry in conn.entries:
+                        if hasattr(entry, 'ou') and entry.ou and entry.ou.value:
+                            # Utiliser la valeur en minuscules comme clé pour éviter les doublons
+                            service_value = entry.ou.value
+                            service_key = service_value.lower()
+                            
+                            # Ajouter seulement si ce service n'existe pas déjà
+                            if service_key not in unique_services:
+                                unique_services[service_key] = {
+                                    'label': service_value,
+                                    'value': service_value
+                                }
+                except Exception as e:
+                    print(f"Erreur lors de la recherche dans {base_dn}: {str(e)}")
+                    # Continuer avec le prochain base_dn en cas d'erreur
+                    continue
+            
+            # Convertir le dictionnaire en liste pour le retour
+            services = list(unique_services.values())
+            
+            # Trier les services par ordre alphabétique
+            services.sort(key=lambda x: x['label'])
+            
+            # Limiter le nombre de résultats retournés
+            services = services[:20]
+            
+            # Fermer la connexion
+            conn.unbind()
+            return services
+                
+        except Exception as e:
+            import traceback
+            print(f"Erreur lors de l'autocomplétion des services: {str(e)}")
+            print(traceback.format_exc())
+            if 'conn' in locals() and conn:
+                conn.unbind()
+            return []    

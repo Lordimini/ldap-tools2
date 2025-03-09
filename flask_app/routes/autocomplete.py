@@ -89,12 +89,29 @@ def autocomplete_roles():
 @login_required
 def autocomplete_services():
     search_term = request.args.get('term', '')
-
+    print(f"Recherche de services avec le terme: '{search_term}'")
+    
     try:
+        # Vérifier si le résultat existe dans le cache
+        cached_result = get_cached_result('services', search_term)
+        if cached_result:
+            print(f"Résultats (du cache): {len(cached_result)}")
+            return jsonify(cached_result)
+        
+        # Effectuer la recherche
         ldap_model = LDAPModel()
-        result = ldap_model.autocomplete('services', search_term)
+        # Utiliser la fonction spécifique pour les services
+        result = ldap_model.autocomplete_services(search_term)
+        print(f"Résultats trouvés: {len(result)}")
+        
+        # Mettre en cache le résultat
+        set_cached_result('services', search_term, result)
+        
         return jsonify(result)
     except Exception as e:
+        import traceback
+        print(f"Erreur d'autocomplétion des services: {str(e)}")
+        print(traceback.format_exc())
         return jsonify([]), 500
     
 

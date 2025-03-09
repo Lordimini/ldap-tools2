@@ -31,4 +31,32 @@
     <p class="text-center text-danger">No groups found for this role.</p>
     {% endif %}
 </div>
+
+<!-- jQuery (required for autocomplete) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- jQuery UI (for autocomplete) -->
+<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+
+<script>
+    $(function() {
+        $('#role_cn').autocomplete({
+            source: function(request, response) {
+                $.getJSON("{{ url_for('autocomplete.autocomplete_roles') }}", {
+                    term: request.term
+                }, function(data) {
+                    response(data);
+                });
+            },
+            select: function(event, ui) {
+                $('#role_cn').val(ui.item.value);
+                return false;
+            }
+        }).data('ui-autocomplete')._renderItem = function(ul, item) {
+            return $('<li>')
+                .append(`<div>${item.label}</div>`)
+                .appendTo(ul);
+        };
+    });
+</script>
 {% endblock %}

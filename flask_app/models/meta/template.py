@@ -1,6 +1,6 @@
 # flask_app/models/meta/template.py
 from .base import METABase
-from ldap3 import Connection
+from ldap3 import Connection, SUBTREE
 
 class METATemplate(METABase):
     def get_template_details(self, template_cn):
@@ -51,3 +51,30 @@ class METATemplate(METABase):
             print(f"Error retrieving template details: {str(e)}")
             return None
         
+    def get_user_types_from_ldap(self, dn):
+        conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+    
+        search_base = dn
+        attributes = ['cn', 'description', 'title']
+    
+        conn.search(search_base=search_base,
+                    search_filter='(objectClass=template)',
+                    search_scope=SUBTREE,
+                    attributes=attributes)
+    
+        # Use a dictionary to ensure uniqueness by cn
+        unique_types = {}
+        for entry in conn.entries:
+            if hasattr(entry, 'description') and entry.description:
+                title_value = entry.title.value if hasattr(entry, 'title') and entry.title else None
+                unique_types[entry.cn.value] = {
+                    'description': entry.description.value,
+                    'title': title_value
+                }
+    
+        # Convert to the list of dictionaries format
+        user_types = [{'value': cn, 'label': data['description'], 'title': data['title']} 
+                      for cn, data in unique_types.items()]
+    
+        conn.unbind()
+        return user_types

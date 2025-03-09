@@ -1887,24 +1887,54 @@ class LDAPModel:
     
     def autocomplete_role(self, search_term):
         """
-        Fonction d'autocomplétion spécifique pour les rôles, pour préserver le comportement original.
+        Fonction d'autocomplétion spécifique pour les rôles, avec gestion sécurisée des attributs.
         """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, 
                             password=self.password, auto_bind=True)
             
             roles = []
+            # Utiliser une liste pour collecter toutes les entrées
+            all_entries = []
+            
+            # Exécuter la recherche pour chaque base_dn
             for base_dn in self.role_base_dn:
-                conn.search(base_dn, f'(cn=*{search_term}*)', search_scope='SUBTREE', attributes=['cn'])
-            for entry in conn.entries:
-                roles.append({
-                    'label': f"{entry.cn.value} ({entry.entry_dn})",
-                    'value': entry.cn.value
-                })
+                print(f"Recherche de rôles dans {base_dn} avec filtre: (cn=*{search_term}*)")
+                conn.search(base_dn, f'(cn=*{search_term}*)', 
+                        search_scope='SUBTREE', 
+                        attributes=['cn'])
+                
+                # Ajouter toutes les entrées trouvées à notre liste
+                all_entries.extend(conn.entries)
+            
+            # Traiter les entrées trouvées
+            for entry in all_entries:
+                # Vérifier si les attributs existent avant d'y accéder
+                if hasattr(entry, 'cn') and entry.cn:
+                    # Construire l'objet de résultat de manière sécurisée
+                    label = f"{entry.cn.value}" if hasattr(entry.cn, 'value') else "Unknown"
+                    if hasattr(entry, 'entry_dn'):
+                        label += f" ({entry.entry_dn})"
+                    
+                    roles.append({
+                        'label': label,
+                        'value': entry.cn.value if hasattr(entry.cn, 'value') else entry.entry_dn
+                    })
+                else:
+                    # Fallback au cas où l'attribut cn n'existe pas
+                    if hasattr(entry, 'entry_dn'):
+                        roles.append({
+                            'label': f"Rôle sans nom ({entry.entry_dn})",
+                            'value': entry.entry_dn.split(',')[0].split('=')[1] if '=' in entry.entry_dn else "unknown"
+                        })
+            
+            print(f"Nombre total de rôles trouvés: {len(roles)}")
             
             conn.unbind()
             return roles
             
         except Exception as e:
+            import traceback
             print(f"Erreur lors de l'autocomplétion des rôles: {str(e)}")
+            print(traceback.format_exc())
             return []

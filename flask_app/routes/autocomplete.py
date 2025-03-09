@@ -70,12 +70,18 @@ def autocomplete_fullName():
 @login_required
 def autocomplete_roles():
     search_term = request.args.get('term', '')
+    print(f"Recherche de rôles avec le terme: '{search_term}'")
+    
     try:
         ldap_model = LDAPModel()
-        #result = ldap_model.autocomplete('roles', search_term)
+        # Utiliser la fonction spécifique pour les rôles
         result = ldap_model.autocomplete_role(search_term)
+        print(f"Résultats trouvés: {len(result)}")
         return jsonify(result)
     except Exception as e:
+        import traceback
+        print(f"Erreur d'autocomplétion des rôles: {str(e)}")
+        print(traceback.format_exc())
         return jsonify([]), 500
 
 

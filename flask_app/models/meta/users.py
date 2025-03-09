@@ -453,59 +453,59 @@ class METAUserMixin(METABase):
     #         return None
 
     
-    def search_active_users(self, search_term, search_type):
-        """
-        Recherche d'utilisateurs actifs dans le répertoire LDAP en fonction du terme et du type de recherche.
+    # def search_active_users(self, search_term, search_type):
+    #     """
+    #     Recherche d'utilisateurs actifs dans le répertoire LDAP en fonction du terme et du type de recherche.
         
-        Args:
-            search_term (str): Le terme à rechercher
-            search_type (str): Le type de recherche (cn, fullName, mail, workforceID)
+    #     Args:
+    #         search_term (str): Le terme à rechercher
+    #         search_type (str): Le type de recherche (cn, fullName, mail, workforceID)
             
-        Returns:
-            list: Liste des utilisateurs correspondants avec informations de base
-        """
-        try:
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+    #     Returns:
+    #         list: Liste des utilisateurs correspondants avec informations de base
+    #     """
+    #     try:
+    #         conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
-            # Construction du filtre de recherche en fonction du type
-            if search_type == 'cn':
-                search_filter = f'(cn={search_term})'
-            elif search_type == 'fullName':
-                search_filter = f'(fullName=*{search_term}*)'
-            elif search_type == 'mail':
-                search_filter = f'(mail=*{search_term}*)'
-            elif search_type == 'workforceID':
-                search_filter = f'(workforceID={search_term})'
-            else:
-                # Type de recherche non valide
-                conn.unbind()
-                return []
+    #         # Construction du filtre de recherche en fonction du type
+    #         if search_type == 'cn':
+    #             search_filter = f'(cn={search_term})'
+    #         elif search_type == 'fullName':
+    #             search_filter = f'(fullName=*{search_term}*)'
+    #         elif search_type == 'mail':
+    #             search_filter = f'(mail=*{search_term}*)'
+    #         elif search_type == 'workforceID':
+    #             search_filter = f'(workforceID={search_term})'
+    #         else:
+    #             # Type de recherche non valide
+    #             conn.unbind()
+    #             return []
             
-            # Recherche dans le container des utilisateurs actifs
-            search_base = self.actif_users_dn
-            conn.search(search_base, 
-                    search_filter, 
-                    search_scope='SUBTREE',
-                    attributes=['cn', 'fullName', 'mail', 'ou', 'title'])
+    #         # Recherche dans le container des utilisateurs actifs
+    #         search_base = self.actif_users_dn
+    #         conn.search(search_base, 
+    #                 search_filter, 
+    #                 search_scope='SUBTREE',
+    #                 attributes=['cn', 'fullName', 'mail', 'ou', 'title'])
             
-            # Formater les résultats
-            users = []
-            for entry in conn.entries:
-                users.append({
-                    'dn': entry.entry_dn,
-                    'cn': entry.cn.value if hasattr(entry, 'cn') else '',
-                    'fullName': entry.fullName.value if hasattr(entry, 'fullName') else '',
-                    'mail': entry.mail.value if hasattr(entry, 'mail') else '',
-                    'ou': entry.ou.value if hasattr(entry, 'ou') else '',
-                    'title': entry.title.value if hasattr(entry, 'title') else ''
-                })
+    #         # Formater les résultats
+    #         users = []
+    #         for entry in conn.entries:
+    #             users.append({
+    #                 'dn': entry.entry_dn,
+    #                 'cn': entry.cn.value if hasattr(entry, 'cn') else '',
+    #                 'fullName': entry.fullName.value if hasattr(entry, 'fullName') else '',
+    #                 'mail': entry.mail.value if hasattr(entry, 'mail') else '',
+    #                 'ou': entry.ou.value if hasattr(entry, 'ou') else '',
+    #                 'title': entry.title.value if hasattr(entry, 'title') else ''
+    #             })
             
-            conn.unbind()
-            return users
+    #         conn.unbind()
+    #         return users
             
-        except Exception as e:
-            print(f"Erreur lors de la recherche d'utilisateurs actifs: {str(e)}")
-            return []
+    #     except Exception as e:
+    #         print(f"Erreur lors de la recherche d'utilisateurs actifs: {str(e)}")
+    #         return []
 
         
     def generate_unique_cn(self, given_name, sn):
@@ -907,80 +907,80 @@ class METAUserMixin(METABase):
             print(f"Erreur lors de la récupération des utilisateurs en attente: {str(e)}")
             return []
         
-    def get_user_details(self, user_dn):
-        """
-        Récupère les détails complets d'un utilisateur à partir de son DN.
+    # def get_user_details(self, user_dn):
+    #     """
+    #     Récupère les détails complets d'un utilisateur à partir de son DN.
         
-        Args:
-            user_dn (str): DN de l'utilisateur
+    #     Args:
+    #         user_dn (str): DN de l'utilisateur
             
-        Returns:
-            dict: Détails de l'utilisateur
-        """
-        try:
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+    #     Returns:
+    #         dict: Détails de l'utilisateur
+    #     """
+    #     try:
+    #         conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
-            # Rechercher l'utilisateur
-            conn.search(user_dn, 
-                    '(objectClass=*)', 
-                    search_scope='BASE',
-                    attributes=['cn', 'fullName', 'givenName', 'sn', 'mail', 
-                                'FavvNatNr', 'title', 'ou', 'FavvEmployeeType', 
-                                'workforceID', 'FavvHierarMgrDN', 'loginDisabled', 
-                                'groupMembership','generationQualifier'])
+    #         # Rechercher l'utilisateur
+    #         conn.search(user_dn, 
+    #                 '(objectClass=*)', 
+    #                 search_scope='BASE',
+    #                 attributes=['cn', 'fullName', 'givenName', 'sn', 'mail', 
+    #                             'FavvNatNr', 'title', 'ou', 'FavvEmployeeType', 
+    #                             'workforceID', 'FavvHierarMgrDN', 'loginDisabled', 
+    #                             'groupMembership','generationQualifier'])
             
-            if not conn.entries:
-                conn.unbind()
-                return None
+    #         if not conn.entries:
+    #             conn.unbind()
+    #             return None
             
-            entry = conn.entries[0]
+    #         entry = conn.entries[0]
             
-            # Construire l'objet utilisateur
-            user = {
-                'dn': user_dn,
-                'cn': entry.cn.value if hasattr(entry, 'cn') else '',
-                'fullName': entry.fullName.value if hasattr(entry, 'fullName') else '',
-                'givenName': entry.givenName.value if hasattr(entry, 'givenName') else '',
-                'sn': entry.sn.value if hasattr(entry, 'sn') else '',
-                'mail': entry.mail.value if hasattr(entry, 'mail') else '',
-                'FavvNatNr': entry.FavvNatNr.value if hasattr(entry, 'FavvNatNr') else '',
-                'title': entry.title.value if hasattr(entry, 'title') else '',
-                'ou': entry.ou.value if hasattr(entry, 'ou') else '',
-                'FavvEmployeeType': entry.FavvEmployeeType.value if hasattr(entry, 'FavvEmployeeType') else '',
-                'workforceID': entry.workforceID.value if hasattr(entry, 'workforceID') else '',
-                'loginDisabled': entry.loginDisabled.value if hasattr(entry, 'loginDisabled') else False,
-                'manager_dn': entry.FavvHierarMgrDN.value if hasattr(entry, 'FavvHierarMgrDN') else '',
-                'manager_name': '',
-                'groupMemberships': [],
-                'generationQualifier': entry.generationQualifier.value if hasattr(entry, 'generationQualifier') else ''
-            }
+    #         # Construire l'objet utilisateur
+    #         user = {
+    #             'dn': user_dn,
+    #             'cn': entry.cn.value if hasattr(entry, 'cn') else '',
+    #             'fullName': entry.fullName.value if hasattr(entry, 'fullName') else '',
+    #             'givenName': entry.givenName.value if hasattr(entry, 'givenName') else '',
+    #             'sn': entry.sn.value if hasattr(entry, 'sn') else '',
+    #             'mail': entry.mail.value if hasattr(entry, 'mail') else '',
+    #             'FavvNatNr': entry.FavvNatNr.value if hasattr(entry, 'FavvNatNr') else '',
+    #             'title': entry.title.value if hasattr(entry, 'title') else '',
+    #             'ou': entry.ou.value if hasattr(entry, 'ou') else '',
+    #             'FavvEmployeeType': entry.FavvEmployeeType.value if hasattr(entry, 'FavvEmployeeType') else '',
+    #             'workforceID': entry.workforceID.value if hasattr(entry, 'workforceID') else '',
+    #             'loginDisabled': entry.loginDisabled.value if hasattr(entry, 'loginDisabled') else False,
+    #             'manager_dn': entry.FavvHierarMgrDN.value if hasattr(entry, 'FavvHierarMgrDN') else '',
+    #             'manager_name': '',
+    #             'groupMemberships': [],
+    #             'generationQualifier': entry.generationQualifier.value if hasattr(entry, 'generationQualifier') else ''
+    #         }
             
-            # Récupérer le nom du manager si présent
-            if user['manager_dn']:
-                conn.search(user['manager_dn'], 
-                        '(objectClass=*)', 
-                        attributes=['fullName'])
-                if conn.entries:
-                    user['manager_name'] = conn.entries[0].fullName.value
+    #         # Récupérer le nom du manager si présent
+    #         if user['manager_dn']:
+    #             conn.search(user['manager_dn'], 
+    #                     '(objectClass=*)', 
+    #                     attributes=['fullName'])
+    #             if conn.entries:
+    #                 user['manager_name'] = conn.entries[0].fullName.value
             
-            # Récupérer les groupes si présents
-            if hasattr(entry, 'groupMembership') and entry.groupMembership:
-                for group_dn in entry.groupMembership.values:
-                    conn.search(group_dn, 
-                            '(objectClass=*)', 
-                            attributes=['cn'])
-                    if conn.entries:
-                        user['groupMemberships'].append({
-                            'dn': group_dn,
-                            'cn': conn.entries[0].cn.value
-                        })
+    #         # Récupérer les groupes si présents
+    #         if hasattr(entry, 'groupMembership') and entry.groupMembership:
+    #             for group_dn in entry.groupMembership.values:
+    #                 conn.search(group_dn, 
+    #                         '(objectClass=*)', 
+    #                         attributes=['cn'])
+    #                 if conn.entries:
+    #                     user['groupMemberships'].append({
+    #                         'dn': group_dn,
+    #                         'cn': conn.entries[0].cn.value
+    #                     })
             
-            conn.unbind()
-            return user
+    #         conn.unbind()
+    #         return user
             
-        except Exception as e:
-            print(f"Erreur lors de la récupération des détails de l'utilisateur: {str(e)}")
-            return None
+    #     except Exception as e:
+    #         print(f"Erreur lors de la récupération des détails de l'utilisateur: {str(e)}")
+    #         return None
     
     def complete_user_creation(self, user_dn, target_container, attributes, groups, set_password=False):
         """

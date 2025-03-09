@@ -209,7 +209,7 @@ def preview_user_details():
         # Get service manager's fullName if FavvExtDienstMgrDn is present
         if template_details and template_details.get('FavvExtDienstMgrDn'):
             try:
-                conn = Connection(ldap_model.ldap_server, user=ldap_model.bind_dn, password=ldap_model.password, auto_bind=True)
+                conn = Connection(ldap_model.meta_server, user=ldap_model.bind_dn, password=ldap_model.password, auto_bind=True)
                 conn.search(template_details['FavvExtDienstMgrDn'], '(objectClass=*)', attributes=['fullName'])
                 
                 if conn.entries and conn.entries[0].fullName:
@@ -226,7 +226,7 @@ def preview_user_details():
         if template_details and 'groupMembership' in template_details and template_details['groupMembership']:
             groups_info = []
             try:
-                conn = Connection(ldap_model.ldap_server, user=ldap_model.bind_dn, password=ldap_model.password, auto_bind=True)
+                conn = Connection(ldap_model.meta_server, user=ldap_model.bind_dn, password=ldap_model.password, auto_bind=True)
                 
                 for group_dn in template_details['groupMembership']:
                     conn.search(group_dn, '(objectClass=*)', attributes=['cn'])

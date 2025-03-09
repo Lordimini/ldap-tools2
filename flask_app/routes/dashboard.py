@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template
 from flask_app.utils.ldap_utils import login_required
-from flask_app.models.ldap import LDAPModel
+from flask_app.models.meta_model import METAModel
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -8,7 +8,7 @@ dashboard_bp = Blueprint('dashboard', __name__)
 @login_required
 def dashboard():
     # Créer une instance du modèle LDAP
-    ldap_model = LDAPModel()
+    ldap_model = METAModel()
     
     # Récupérer les statistiques
     disabled_accounts = ldap_model.get_disabled_accounts_count()

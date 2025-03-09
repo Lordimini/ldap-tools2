@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for
-from flask_app.models.ldap import LDAPModel
+from flask_app.models.meta_model import METAModel
 from flask_app.utils.export_utils import util_export_group_users_csv
 from flask_app.utils.ldap_utils import login_required
 
@@ -17,7 +17,7 @@ def group_users():
         group_dn = request.form.get('group_dn', '') or prefill_group_dn
         
         # Utiliser le modèle LDAP pour obtenir les utilisateurs du groupe
-        ldap_model = LDAPModel()
+        ldap_model = METAModel()
         
         # Si nous avons un DN spécifique, l'utiliser pour la recherche
         if group_dn:
@@ -42,7 +42,7 @@ def export_group_users_csv():
     group_name = request.args.get('group_name', '')
     group_dn = request.args.get('group_dn', '')
     
-    ldap_model = LDAPModel()
+    ldap_model = METAModel()
     
     # Si nous avons un DN spécifique, l'utiliser
     if group_dn:

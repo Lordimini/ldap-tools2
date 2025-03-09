@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, session, url_for, redirect
-from flask_app.models.ldap import LDAPModel
+from flask_app.models.meta_model import METAModel
 from flask_app.utils.ldap_utils import login_required
 
 search_bp = Blueprint('search', __name__)
@@ -33,7 +33,7 @@ def search_user():
                                    prefill_fullName=prefill_fullName)
         
         # Perform the search
-        ldap_model = LDAPModel()
+        ldap_model = METAModel()
         result = ldap_model.search_user(search_term, search_type)
         
         # Check result and set appropriate message
@@ -42,7 +42,7 @@ def search_user():
     
     # If we have a DN parameter, try to get user details
     elif request.args.get('dn'):
-        ldap_model = LDAPModel()
+        ldap_model = METAModel()
         user_dn = request.args.get('dn')
         result = ldap_model.search_user_by_dn(user_dn)
             

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
-from flask_app.models.ldap import LDAPModel
+from flask_app.models.meta_model import METAModel
 from flask_app.utils.ldap_utils import login_required
 from flask_wtf import FlaskForm
 from wtforms import SelectField, StringField, HiddenField
@@ -19,7 +19,7 @@ class UserCreationForm(FlaskForm):
 
 @usercreation_bp.route('/fetch_user_types')
 def fetch_user_types():
-    ldap_model = LDAPModel()
+    ldap_model = METAModel()
     user_types = ldap_model.get_user_types_from_ldap('ou=tpl,ou=sync,o=copy')  # Adjust the DN as needed
     return jsonify(user_types)
 
@@ -30,7 +30,7 @@ def create_user():
     form = UserCreationForm()
     
     # Récupérer les types d'utilisateurs pour le formulaire
-    ldap_model = LDAPModel()
+    ldap_model = METAModel()
     user_types = ldap_model.get_user_types_from_ldap('ou=tpl,ou=sync,o=copy')
     form.user_type.choices = [(ut['value'], ut['label']) for ut in user_types]
     
@@ -195,7 +195,7 @@ def preview_user_details():
             return jsonify({'error': 'Given name, surname and user type are required'}), 400
         
         # Instantiate the LDAP model
-        ldap_model = LDAPModel()
+        ldap_model = METAModel()
         
         # Generate the CN
         cn = ldap_model.generate_unique_cn(given_name, sn)
@@ -264,7 +264,7 @@ def check_name_exists():
     if not given_name or not sn:
         return jsonify({'status': 'error', 'message': 'Prénom et nom sont requis'}), 400
     
-    ldap_model = LDAPModel()
+    ldap_model = METAModel()
     exists, existing_dn = ldap_model.check_name_combination_exists(given_name, sn)
     
     if exists:
@@ -292,7 +292,7 @@ def check_favvnatnr_exists():
     # Normaliser le FavvNatNr
     normalized_favvnatnr = favvnatnr.replace(' ', '').replace('-', '')
     
-    ldap_model = LDAPModel()
+    ldap_model = METAModel()
     exists, existing_dn, fullname = ldap_model.check_favvnatnr_exists(normalized_favvnatnr)
     
     if exists:

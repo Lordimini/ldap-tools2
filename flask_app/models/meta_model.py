@@ -1,4 +1,4 @@
-# flask_app/models/ldap_model.py
+# flask_app/models/meta_model.py
 from flask_app.config.meta_config import meta_login_config
 from flask_app.models.meta import (
     METABase, 
@@ -13,6 +13,7 @@ from flask_app.models.meta import (
 from ldap3 import Server, Connection, ALL
 
 class METAModel(
+    METABase,
     METAUserMixin,
     METAGroupMixin,
     METARoleMixin,

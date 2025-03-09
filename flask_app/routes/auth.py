@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-from flask_app.models.ldap import LDAPModel
+from flask_app.models.meta_model import METAModel
 
 
 auth_bp = Blueprint('auth', __name__)
@@ -10,7 +10,7 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         user_password = request.form['password']
-        ldap_model = LDAPModel()
+        ldap_model = METAModel()
 
         # Capture the connection object returned by authenticate
         conn = ldap_model.authenticate(username, user_password)

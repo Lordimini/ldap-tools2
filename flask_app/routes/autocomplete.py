@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session, flash, json
-from flask_app.models.ldap import LDAPModel
+from flask_app.models.meta_model import METAModel
 from flask_app.utils.ldap_utils import login_required
 from functools import lru_cache
 
@@ -30,7 +30,7 @@ def set_cached_result(search_type, search_term, result):
 def autocomplete_groups():
     search_term = request.args.get('term', '')
     try:
-        ldap_model = LDAPModel()
+        ldap_model = METAModel()
         result = ldap_model.autocomplete('group', search_term)
         return jsonify(result)
     except Exception as e:
@@ -52,7 +52,7 @@ def autocomplete_fullName():
             return jsonify(cached_result)
         
         # Effectuer la requête LDAP avec la nouvelle fonction unifiée
-        ldap_model = LDAPModel()
+        ldap_model = METAModel()
         result = ldap_model.autocomplete('fullName', search_term)
         
         # Limiter les résultats retournés
@@ -73,7 +73,7 @@ def autocomplete_roles():
     print(f"Recherche de rôles avec le terme: '{search_term}'")
     
     try:
-        ldap_model = LDAPModel()
+        ldap_model = METAModel()
         # Utiliser la fonction spécifique pour les rôles
         result = ldap_model.autocomplete_role(search_term)
         print(f"Résultats trouvés: {len(result)}")
@@ -99,7 +99,7 @@ def autocomplete_services():
             return jsonify(cached_result)
         
         # Effectuer la recherche
-        ldap_model = LDAPModel()
+        ldap_model = METAModel()
         # Utiliser la fonction spécifique pour les services
         result = ldap_model.autocomplete_services(search_term)
         print(f"Résultats trouvés: {len(result)}")
@@ -120,7 +120,7 @@ def autocomplete_services():
 def autocomplete_managers():
     search_term = request.args.get('term', '')
     try:
-        ldap_model = LDAPModel()
+        ldap_model = METAModel()
         result = ldap_model.autocomplete('managers', search_term)
         return jsonify(result)
     except Exception as e:
@@ -158,7 +158,7 @@ def unified_autocomplete():
             return jsonify(cached_result)
             
         # Effectuer la recherche
-        ldap_model = LDAPModel()
+        ldap_model = METAModel()
         result = ldap_model.autocomplete(search_type, search_term)
         
         # Mettre en cache le résultat

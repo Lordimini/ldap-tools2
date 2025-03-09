@@ -1,5 +1,5 @@
 # flask_app/models/ldap/base.py
-from ldap3 import Connection, ALL
+from ldap3 import Server, Connection, ALL
 
 
 class METABase:

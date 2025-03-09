@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, json
-from flask_app.models.ldap import LDAPModel
+from flask_app.models.meta_model import METAModel
 from flask_app.utils.ldap_utils import login_required
 from ldap3 import MODIFY_REPLACE, MODIFY_DELETE, MODIFY_ADD
 
@@ -20,7 +20,7 @@ def update_user_page():
     # Check if a user_dn parameter is provided in the URL (after redirecting from search results)
     if request.args.get('user_dn'):
         user_dn = request.args.get('user_dn')
-        ldap_model = LDAPModel()
+        ldap_model = METAModel()
         user_info = ldap_model.search_user_by_dn(user_dn)
         if user_info:
             selected_user = user_info
@@ -45,7 +45,7 @@ def search_user():
             flash('Please provide a search term and type', 'error')
             return redirect(url_for('userupdate.update_user_page'))
         
-        ldap_model = LDAPModel()
+        ldap_model = METAModel()
         search_results = ldap_model.search_active_users(search_term, search_type)
         
         return render_template('update-user.html', 
@@ -68,7 +68,7 @@ def select_user():
         flash('No user selected', 'error')
         return redirect(url_for('userupdate.update_user_page'))
     
-    ldap_model = LDAPModel()
+    ldap_model = METAModel()
     user_info = ldap_model.search_user_by_dn(user_dn)
     
     if not user_info:
@@ -150,7 +150,7 @@ def update_user():
     change_reason = request.form.get('change_reason', '')
     
     # Call the LDAP model to update the user
-    ldap_model = LDAPModel()
+    ldap_model = METAModel()
     success, message = ldap_model.update_user(
         user_dn=user_dn,
         attributes=attributes,

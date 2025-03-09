@@ -1885,3 +1885,26 @@ class LDAPModel:
             print(f"Erreur lors de l'autocomplétion ({search_type}): {str(e)}")
             return []
     
+    def autocomplete_role(self, search_term):
+        """
+        Fonction d'autocomplétion spécifique pour les rôles, pour préserver le comportement original.
+        """
+        try:
+            conn = Connection(self.ldap_server, user=self.bind_dn, 
+                            password=self.password, auto_bind=True)
+            
+            roles = []
+            for base_dn in self.role_base_dn:
+                conn.search(base_dn, f'(cn=*{search_term}*)', search_scope='SUBTREE', attributes=['cn'])
+            for entry in conn.entries:
+                roles.append({
+                    'label': f"{entry.cn.value} ({entry.entry_dn})",
+                    'value': entry.cn.value
+                })
+            
+            conn.unbind()
+            return roles
+            
+        except Exception as e:
+            print(f"Erreur lors de l'autocomplétion des rôles: {str(e)}")
+            return []

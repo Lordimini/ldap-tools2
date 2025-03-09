@@ -72,7 +72,8 @@ def autocomplete_roles():
     search_term = request.args.get('term', '')
     try:
         ldap_model = LDAPModel()
-        result = ldap_model.autocomplete('roles', search_term)
+        #result = ldap_model.autocomplete('roles', search_term)
+        result = ldap_model.autocomplete_role(search_term)
         return jsonify(result)
     except Exception as e:
         return jsonify([]), 500

@@ -2073,3 +2073,68 @@ class LDAPModel:
             if 'conn' in locals() and conn:
                 conn.unbind()
             return []    
+        
+    def get_group_users_by_dn(self, group_dn, group_name=None):
+        """
+        Récupère les utilisateurs d'un groupe en utilisant son DN complet.
+        
+        Args:
+            group_dn (str): DN complet du groupe
+            group_name (str, optional): Nom du groupe (pour l'affichage)
+            
+        Returns:
+            dict: Informations sur le groupe et ses utilisateurs
+        """
+        try:
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            
+            # Vérifier si le groupe existe
+            conn.search(group_dn, '(objectClass=*)', search_scope='BASE', attributes=['cn'])
+            
+            if not conn.entries:
+                print(f"Group with DN '{group_dn}' not found")
+                return None
+                
+            # Utiliser le CN du groupe si group_name n'est pas fourni
+            if not group_name and conn.entries:
+                group_name = conn.entries[0].cn.value
+            
+            # Récupérer les membres du groupe
+            conn.search(group_dn, '(objectClass=*)', attributes=['member'])
+            
+            users = []
+            if conn.entries and hasattr(conn.entries[0], 'member') and conn.entries[0].member:
+                members = conn.entries[0].member.values
+                
+                # Récupérer les détails de chaque membre
+                for member_dn in members:
+                    try:
+                        conn.search(member_dn, '(objectClass=*)', attributes=['cn', 'fullName', 'title', 'ou'])
+                        if conn.entries:
+                            user = conn.entries[0]
+                            users.append({
+                                'CN': user.cn.value if hasattr(user, 'cn') else 'Unknown',
+                                'fullName': user.fullName.value if hasattr(user, 'fullName') else 'Unknown',
+                                'title': user.title.value if hasattr(user, 'title') else 'N/A',
+                                'service': user.ou.value if hasattr(user, 'ou') else 'N/A'
+                            })
+                    except Exception as e:
+                        print(f"Error fetching user details for {member_dn}: {str(e)}")
+            
+            # Créer le résultat
+            result = {
+                'group_name': group_name,
+                'group_dn': group_dn,
+                'users': users
+            }
+            
+            conn.unbind()
+            return result
+            
+        except Exception as e:
+            import traceback
+            print(f"Error in get_group_users_by_dn: {str(e)}")
+            print(traceback.format_exc())
+            if 'conn' in locals() and conn:
+                conn.unbind()
+            return None

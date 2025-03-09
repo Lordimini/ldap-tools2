@@ -7,6 +7,8 @@
         <div class="mb-3">
             <label for="group_name" class="form-label">Search Group:</label>
             <input type="text" class="form-control" id="group_name" name="group_name" placeholder="Start typing a group name..." value="{{ prefill_group_name }}" required>
+            <!-- Champ caché pour stocker le DN complet -->
+            <input type="hidden" id="group_dn" name="group_dn" value="{{ prefill_group_dn }}">
         </div>
         <button type="submit" class="btn btn-primary">Search</button>
     </form>
@@ -15,7 +17,7 @@
     <div class="card p-4 shadow">
         <h2 class="text-center mb-4">Users in Group: {{ result.group_name }} ({{ result.group_dn }})</h2>
         <div class="text-end mb-3">
-            <a href="{{ url_for('group.export_group_users_csv', group_name=result.group_name) }}" class="btn btn-success">
+            <a href="{{ url_for('group.export_group_users_csv') }}?group_name={{ result.group_name | urlencode }}&group_dn={{ result.group_dn | urlencode }}" class="btn btn-success">
                 <i class="fas fa-file-csv"></i> Export to CSV
             </a>
         </div>
@@ -65,40 +67,58 @@
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-    $(document).ready(function () {
-        // Initialize DataTables on the table
-        if ($.fn.DataTable.isDataTable('#usersTable')) {
-            $('#usersTable').DataTable().destroy();
-        }
-        
-        $('#usersTable').DataTable({
-            paging: false, // Disable pagination if not needed
-            searching: false, // Disable search bar if not needed
-            info: false, // Disable "Showing X of Y entries" text
-            order: [[1, 'asc']], // Default sorting by the second column (Full Name) in ascending order
-            columnDefs: [
-                { orderable: true, targets: [0, 1, 2, 3] } // Enable sorting for all columns
-            ]
-        });
+    // Remplacer le code JavaScript d'autocomplétion dans group_users.html par celui-ci
+$(document).ready(function () {
+    // Initialize DataTables on the table
+    if ($.fn.DataTable.isDataTable('#usersTable')) {
+        $('#usersTable').DataTable().destroy();
+    }
+    
+    $('#usersTable').DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        order: [[1, 'asc']],
+        columnDefs: [
+            { orderable: true, targets: [0, 1, 2, 3] }
+        ]
+    });
 
-        // Autocomplete for group_name input
-        $('#group_name').autocomplete({
-            source: function(request, response) {
-                $.getJSON("{{ url_for('autocomplete.autocomplete_groups') }}", {
-                    term: request.term
-                }, function(data) {
-                    response(data);
-                });
-            },
-            select: function(event, ui) {
-                $('#group_name').val(ui.item.value);
-                return false;
+    // Champ caché pour stocker le DN du groupe
+    if (!$('#group_dn').length) {
+        $('<input>').attr({
+            type: 'hidden',
+            id: 'group_dn',
+            name: 'group_dn'
+        }).appendTo('form');
+    }
+
+    // Autocomplete pour group_name avec stockage du DN
+    $('#group_name').autocomplete({
+        source: function(request, response) {
+            $.getJSON("{{ url_for('autocomplete.autocomplete_groups') }}", {
+                term: request.term
+            }, function(data) {
+                response(data);
+            });
+        },
+        select: function(event, ui) {
+            // Définir la valeur visible (CN)
+            $('#group_name').val(ui.item.value);
+            
+            // Stocker le DN complet
+            const dnMatch = ui.item.label.match(/\((.*?)\)$/);
+            if (dnMatch && dnMatch[1]) {
+                $('#group_dn').val(dnMatch[1]);
             }
-        }).data('ui-autocomplete')._renderItem = function(ul, item) {
-            return $('<li>')
-                .append(`<div>${item.label}</div>`)
-                .appendTo(ul);
-        };
+            
+            return false;
+        }
+    }).data('ui-autocomplete')._renderItem = function(ul, item) {
+        return $('<li>')
+            .append(`<div>${item.label}</div>`)
+            .appendTo(ul);
+    };
     });
 </script>
 {% endblock %}

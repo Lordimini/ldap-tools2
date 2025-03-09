@@ -34,7 +34,7 @@ def search_user():
         
         # Perform the search
         ldap_model = METAModel()
-        result = ldap_model.search_user(search_term, search_type)
+        result = ldap_model.search_user_final(search_term, search_type)
         
         # Check result and set appropriate message
         if not result:
@@ -44,7 +44,7 @@ def search_user():
     elif request.args.get('dn'):
         ldap_model = METAModel()
         user_dn = request.args.get('dn')
-        result = ldap_model.search_user_by_dn(user_dn)
+        result = ldap_model.search_user_final(user_dn)
             
     # Render the template with appropriate data
     return render_template('search.html', 

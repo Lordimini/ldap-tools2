@@ -21,7 +21,7 @@ def update_user_page():
     if request.args.get('user_dn'):
         user_dn = request.args.get('user_dn')
         ldap_model = METAModel()
-        user_info = ldap_model.search_user_by_dn(user_dn)
+        user_info = ldap_model.search_user_final(user_dn)
         if user_info:
             selected_user = user_info
 
@@ -46,7 +46,7 @@ def search_user():
             return redirect(url_for('userupdate.update_user_page'))
         
         ldap_model = METAModel()
-        search_results = ldap_model.search_active_users(search_term, search_type)
+        search_results = ldap_model.search_user_final(search_term, search_type, return_list=True)
         
         return render_template('update-user.html', 
                               search_type=search_type,
@@ -69,7 +69,7 @@ def select_user():
         return redirect(url_for('userupdate.update_user_page'))
     
     ldap_model = METAModel()
-    user_info = ldap_model.search_user_by_dn(user_dn)
+    user_info = ldap_model.search_user_final(user_dn)
     
     if not user_info:
         flash('User not found', 'error')

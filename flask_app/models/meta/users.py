@@ -6,71 +6,210 @@ from .base import METABase
 from flask import flash,redirect,url_for
 
 class METAUserMixin(METABase):
-    def search_user(self, search_term, search_type):
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True) 
-            
-            if search_type == 'cn':
-                search_filter = f'(cn={search_term})'
-            elif search_type == 'fullName':
-                search_filter = f'(fullName={search_term})'    
-            elif search_type == 'workforceID':
-                search_filter = f'(workforceID={search_term})'
-            elif search_type == 'FavvNatNr':
-                search_filter = f'(FavvNatNr={search_term})'
-            else:
-                flash('Invalid search type.', 'danger')
-                return redirect(url_for('search_user'))
+    def search_user_final(self, search_param, search_type=None, simplified=False, search_active_only=False, return_list=False):
+        """
+        Comprehensive function to search for users in the LDAP directory with multiple modes.
         
-        # Search for the user in the entire subtree of o=FAVV and o=COPY
-            user_dn = None
-           
-            for base_dn in [self.actif_users_dn, self.out_users_dn]:
-                conn.search(base_dn, search_filter, search_scope='SUBTREE', attributes=['cn', 'favvEmployeeType', 'sn', 'givenName', 'FavvNatNr', 'fullName', 'mail', 'workforceID', 'groupMembership', 'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 'nrfMemberOf', 'loginDisabled', 'loginTime', 'passwordExpirationTime'])
+        Args:
+            search_param (str): The search term or user DN
+            search_type (str, optional): Type of search ('cn', 'fullName', 'workforceID', 'FavvNatNr', 'mail')
+                                        If None, search_param is treated as a user DN
+            simplified (bool): If True, returns a simplified result format
+            search_active_only (bool): If True, only searches active users container
+            return_list (bool): If True, returns a list of matching users instead of detailed info for a single user
+                            (used for active users search)
+            
+            # Replace search_user:
+            user_info = self.search_user("johndoe", "cn")
 
-                if conn.entries:
-                    user_dn = conn.entries[0].entry_dn
-                    # Store which base DN the user was found in
-                    user_container = base_dn
-                    break    
-            if user_dn:
-                # Extract the attributes
+            # Replace search_user_by_dn:
+            user_info = self.search_user("cn=username,ou=Users,o=FAVV")
+
+            # Replace get_user_details:
+            user_details = self.search_user("cn=username,ou=Users,o=FAVV", simplified=True)
+
+            # Replace search_active_users:
+            active_users = self.search_user("john", "fullName", return_list=True)
+            active_users = self.search_user("@example.com", "mail", return_list=True)
+        
+        Returns:
+            dict or list: User information or list of users, or None if not found
+        """
+        try:
+            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            
+            # Define attributes based on the search mode
+            if return_list:
+                # Basic attributes for list-style results (like search_active_users)
+                attributes = ['cn', 'fullName', 'mail', 'ou', 'title']
+            else:
+                # Comprehensive attributes for detailed user info
+                attributes = [
+                    'cn', 'favvEmployeeType', 'sn', 'givenName', 'FavvNatNr', 
+                    'fullName', 'mail', 'workforceID', 'groupMembership', 
+                    'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 
+                    'nrfMemberOf', 'loginDisabled', 'loginTime', 'passwordExpirationTime',
+                    'generationQualifier'
+                ]
+            
+            # Determine search parameters based on mode
+            if search_type is None and not return_list:
+                # Direct DN search
+                user_dn = search_param
+                search_scope = 'BASE'
+                search_filter = '(objectClass=*)'
+                search_base = user_dn
+            else:
+                # Construct search filter based on search_type
+                if search_type == 'cn':
+                    search_filter = f'(cn={search_param})'
+                elif search_type == 'fullName':
+                    # Use wildcards for fullName search when return_list is True (like search_active_users)
+                    if return_list:
+                        search_filter = f'(fullName=*{search_param}*)'
+                    else:
+                        search_filter = f'(fullName={search_param})'
+                elif search_type == 'mail':
+                    # Use wildcards for mail search when return_list is True
+                    if return_list:
+                        search_filter = f'(mail=*{search_param}*)'
+                    else:
+                        search_filter = f'(mail={search_param})'  
+                elif search_type == 'workforceID':
+                    search_filter = f'(workforceID={search_param})'
+                elif search_type == 'FavvNatNr':
+                    search_filter = f'(FavvNatNr={search_param})'
+                else:
+                    flash('Invalid search type.', 'danger')
+                    return redirect(url_for('search_user'))
+                
+                search_scope = 'SUBTREE'
+                
+                # Determine which containers to search
+                if search_active_only or return_list:
+                    # Only search active users container
+                    search_bases = [self.actif_users_dn]
+                else:
+                    # Search both active and inactive user containers
+                    search_bases = [self.actif_users_dn, self.out_users_dn]
+            
+            # Handle list-style searches (similar to search_active_users)
+            if return_list:
+                users = []
+                for search_base in search_bases:
+                    conn.search(search_base, 
+                            search_filter, 
+                            search_scope=search_scope,
+                            attributes=attributes)
+                    
+                    # Add results to the list
+                    for entry in conn.entries:
+                        users.append({
+                            'dn': entry.entry_dn,
+                            'cn': entry.cn.value if hasattr(entry, 'cn') else '',
+                            'fullName': entry.fullName.value if hasattr(entry, 'fullName') else '',
+                            'mail': entry.mail.value if hasattr(entry, 'mail') else '',
+                            'ou': entry.ou.value if hasattr(entry, 'ou') else '',
+                            'title': entry.title.value if hasattr(entry, 'title') else ''
+                        })
+                
+                conn.unbind()
+                return users
+                
+            # Handle single-user search (original search_user, search_user_by_dn, and get_user_details functionality)
+            else:
+                user_dn = None
+                user_container = None
+                
+                # If not direct DN search, find the user first
+                if search_type is not None:
+                    for search_base in search_bases:
+                        conn.search(search_base, 
+                                search_filter, 
+                                search_scope=search_scope,
+                                attributes=attributes)
+                        
+                        if conn.entries:
+                            user_dn = conn.entries[0].entry_dn
+                            user_container = search_base
+                            break
+                            
+                    if not user_dn:
+                        print("User not found.")
+                        if not return_list:  # Only flash message for single-user search
+                            flash('User not found.', 'danger')
+                        conn.unbind()
+                        return None
+                else:
+                    # For direct DN search, search_base was already set to user_dn
+                    conn.search(search_base, 
+                            search_filter, 
+                            search_scope=search_scope,
+                            attributes=attributes)
+                    
+                    if not conn.entries:
+                        conn.unbind()
+                        return None
+                        
+                    # Determine which container the user is in
+                    if self.out_users_dn in search_base:
+                        user_container = self.out_users_dn
+                    else:
+                        user_container = self.actif_users_dn
+                        
+                # Determine if user is inactive
+                is_inactive = user_container == self.out_users_dn
+                
+                # Get the user attributes
                 user_attributes = conn.entries[0]
+                
+                # Build the result dictionary
                 result = {
-                    'CN': user_attributes.cn.value,
-                    'favvEmployeeType': user_attributes.favvEmployeeType.value,
-                    'fullName': user_attributes.fullName.value,
-                    'mail': user_attributes.mail.value,
-                    'sn': user_attributes.sn.value,
-                    'givenName': user_attributes.givenName.value,
-                    'workforceID': user_attributes.workforceID.value,
-                    'title': user_attributes.title.value,
-                    'service': user_attributes.ou.value,
-                    'FavvNatNr': user_attributes.FavvNatNr.value,
+                    'dn': user_dn if search_type is not None else search_base,
+                    'CN': getattr(user_attributes, 'cn', {}).value if hasattr(user_attributes, 'cn') else '',
+                    'favvEmployeeType': getattr(user_attributes, 'favvEmployeeType', {}).value if hasattr(user_attributes, 'favvEmployeeType') else '',
+                    'fullName': getattr(user_attributes, 'fullName', {}).value if hasattr(user_attributes, 'fullName') else '',
+                    'mail': getattr(user_attributes, 'mail', {}).value if hasattr(user_attributes, 'mail') else '',
+                    'sn': getattr(user_attributes, 'sn', {}).value if hasattr(user_attributes, 'sn') else '',
+                    'givenName': getattr(user_attributes, 'givenName', {}).value if hasattr(user_attributes, 'givenName') else '',
+                    'workforceID': getattr(user_attributes, 'workforceID', {}).value if hasattr(user_attributes, 'workforceID') else '',
+                    'title': getattr(user_attributes, 'title', {}).value if hasattr(user_attributes, 'title') else '',
+                    'service': getattr(user_attributes, 'ou', {}).value if hasattr(user_attributes, 'ou') else '',
+                    'FavvNatNr': getattr(user_attributes, 'FavvNatNr', {}).value if hasattr(user_attributes, 'FavvNatNr') else '',
                     'groupMembership': [],
-                    'DirXMLAssociations': user_attributes['DirXML-Associations'].values if user_attributes['DirXML-Associations'] else [],
-                    'FavvHierarMgrDN': user_attributes['FavvHierarMgrDN'].value if user_attributes['FavvHierarMgrDN'] else None,
+                    'DirXMLAssociations': getattr(user_attributes, 'DirXML-Associations', {}).values if hasattr(user_attributes, 'DirXML-Associations') else [],
+                    'FavvHierarMgrDN': getattr(user_attributes, 'FavvHierarMgrDN', {}).value if hasattr(user_attributes, 'FavvHierarMgrDN') else None,
                     'nrfMemberOf': [],
-                    'loginDisabled': 'YES' if user_attributes.loginDisabled.value else 'NO',  # Convert boolean to YES/NO
-                    'loginTime': user_attributes.loginTime.value,
-                    'passwordExpirationTime': user_attributes.passwordExpirationTime.value,
-                    'is_inactive': user_container == self.out_users_dn
+                    'loginDisabled': 'YES' if hasattr(user_attributes, 'loginDisabled') and user_attributes.loginDisabled.value else 'NO',
+                    'loginTime': getattr(user_attributes, 'loginTime', {}).value if hasattr(user_attributes, 'loginTime') else '',
+                    'passwordExpirationTime': getattr(user_attributes, 'passwordExpirationTime', {}).value if hasattr(user_attributes, 'passwordExpirationTime') else '',
+                    'is_inactive': is_inactive,
+                    'generationQualifier': getattr(user_attributes, 'generationQualifier', {}).value if hasattr(user_attributes, 'generationQualifier') else ''
                 }
+                
                 # Fetch the manager's full name
                 if result['FavvHierarMgrDN']:
                     try:
                         conn.search(result['FavvHierarMgrDN'], '(objectClass=*)', attributes=['fullName'])
                         if conn.entries:
-                            result['ChefHierarchique'] = conn.entries[0].fullName.value
+                            # Standardize on field names for manager
+                            manager_name = conn.entries[0].fullName.value
+                            result['ChefHierarchique'] = manager_name
+                            result['manager_name'] = manager_name  # For compatibility
                         else:
                             result['ChefHierarchique'] = 'Manager not found'
+                            result['manager_name'] = 'Manager not found'
                     except Exception as e:
-                        result['ChefHierarchique'] = f'Error fetching manager: {str(e)}'
+                        error_msg = f'Error fetching manager: {str(e)}'
+                        result['ChefHierarchique'] = error_msg
+                        result['manager_name'] = error_msg
                 else:
                     result['ChefHierarchique'] = 'No manager specified'
-
+                    result['manager_name'] = 'No manager specified'
+                
                 # Fetch the groups (groupMembership)
-                if user_attributes['groupMembership']:
-                    for group_dn in user_attributes['groupMembership'].values:
+                if hasattr(user_attributes, 'groupMembership') and user_attributes.groupMembership:
+                    for group_dn in user_attributes.groupMembership.values:
                         conn.search(group_dn, '(objectClass=groupOfNames)', attributes=['cn'])
                         if conn.entries:
                             group_cn = conn.entries[0].cn.value
@@ -80,121 +219,238 @@ class METAUserMixin(METABase):
                             })
                 
                 # Fetch the roles (nrfMemberOf)
-                if user_attributes['nrfMemberOf']:
-                    for role_dn in user_attributes['nrfMemberOf'].values:
+                if hasattr(user_attributes, 'nrfMemberOf') and user_attributes.nrfMemberOf:
+                    for role_dn in user_attributes.nrfMemberOf.values:
                         conn.search(role_dn, '(objectClass=nrfRole)', attributes=['cn', 'nrfRoleCategoryKey'])
                         if conn.entries:
                             role_cn = conn.entries[0].cn.value
-                            role_catKey = conn.entries[0].nrfRoleCategoryKey.value
+                            role_catKey = conn.entries[0].nrfRoleCategoryKey.value if hasattr(conn.entries[0], 'nrfRoleCategoryKey') else 'N/A'
                             result['nrfMemberOf'].append({
                                 'dn': role_dn,
                                 'cn': role_cn,
                                 'category': role_catKey
                             })
-
-            else:
-                result = None
-                print("User not found.")
-                flash('User not found.', 'danger')
-
-            # Unbind the connection
-            conn.unbind()    
-            return result
-        
-        
-    def search_user_by_dn(self, user_dn):
-        """
-        Recherche un utilisateur par son DN et retourne ses informations détaillées.
-        Similaire à search_user mais accepte un DN directement.
-        
-        Args:
-            user_dn (str): DN de l'utilisateur à rechercher
-            
-        Returns:
-            dict: Informations de l'utilisateur ou None si non trouvé
-        """
-        try:
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
-            
-            # Vérifier si l'utilisateur existe
-            conn.search(user_dn, 
-                    '(objectClass=*)', 
-                    search_scope='BASE',
-                    attributes=['cn', 'favvEmployeeType', 'sn', 'givenName', 'FavvNatNr', 
-                                'fullName', 'mail', 'workforceID', 'groupMembership', 
-                                'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 
-                                'nrfMemberOf', 'loginDisabled', 'loginTime', 'passwordExpirationTime'])
-            
-            if not conn.entries:
+                
+                # Apply simplified format if requested
+                if simplified:
+                    # Create a simplified version with only essential fields
+                    simplified_result = {
+                        'dn': result['dn'],
+                        'cn': result['CN'],
+                        'fullName': result['fullName'],
+                        'givenName': result['givenName'],
+                        'sn': result['sn'],
+                        'mail': result['mail'],
+                        'FavvNatNr': result['FavvNatNr'],
+                        'title': result['title'],
+                        'ou': result['service'],
+                        'FavvEmployeeType': result['favvEmployeeType'],
+                        'workforceID': result['workforceID'],
+                        'loginDisabled': result['loginDisabled'] == 'YES',
+                        'FavvHierarMgrDN': result['FavvHierarMgrDN'],
+                        'ChefHierarchique': result['ChefHierarchique'],
+                        'groupMembership': result['groupMembership'],
+                        'generationQualifier': result['generationQualifier']
+                    }
+                    result = simplified_result
+                
                 conn.unbind()
-                return None
-            
-            # Extraire les attributs
-            user_attributes = conn.entries[0]
-            result = {
-                'dn': user_dn,
-                'CN': user_attributes.cn.value,
-                'favvEmployeeType': user_attributes.favvEmployeeType.value if hasattr(user_attributes, 'favvEmployeeType') else '',
-                'fullName': user_attributes.fullName.value if hasattr(user_attributes, 'fullName') else '',
-                'mail': user_attributes.mail.value if hasattr(user_attributes, 'mail') else '',
-                'sn': user_attributes.sn.value if hasattr(user_attributes, 'sn') else '',
-                'givenName': user_attributes.givenName.value if hasattr(user_attributes, 'givenName') else '',
-                'workforceID': user_attributes.workforceID.value if hasattr(user_attributes, 'workforceID') else '',
-                'title': user_attributes.title.value if hasattr(user_attributes, 'title') else '',
-                'service': user_attributes.ou.value if hasattr(user_attributes, 'ou') else '',
-                'FavvNatNr': user_attributes.FavvNatNr.value if hasattr(user_attributes, 'FavvNatNr') else '',
-                'groupMembership': [],
-                'DirXMLAssociations': user_attributes['DirXML-Associations'].values if hasattr(user_attributes, 'DirXML-Associations') else [],
-                'FavvHierarMgrDN': user_attributes['FavvHierarMgrDN'].value if hasattr(user_attributes, 'FavvHierarMgrDN') else None,
-                'nrfMemberOf': [],
-                'loginDisabled': 'YES' if hasattr(user_attributes, 'loginDisabled') and user_attributes.loginDisabled.value else 'NO',
-                'loginTime': user_attributes.loginTime.value if hasattr(user_attributes, 'loginTime') else '',
-                'passwordExpirationTime': user_attributes.passwordExpirationTime.value if hasattr(user_attributes, 'passwordExpirationTime') else ''
-            }
-            
-            # Rechercher le nom du manager
-            if result['FavvHierarMgrDN']:
-                try:
-                    conn.search(result['FavvHierarMgrDN'], '(objectClass=*)', attributes=['fullName'])
-                    if conn.entries:
-                        result['ChefHierarchique'] = conn.entries[0].fullName.value
-                    else:
-                        result['ChefHierarchique'] = 'Manager not found'
-                except Exception as e:
-                    result['ChefHierarchique'] = f'Error fetching manager: {str(e)}'
-            else:
-                result['ChefHierarchique'] = 'No manager specified'
-            
-            # Récupérer les adhésions aux groupes
-            if hasattr(user_attributes, 'groupMembership') and user_attributes.groupMembership:
-                for group_dn in user_attributes.groupMembership.values:
-                    conn.search(group_dn, '(objectClass=groupOfNames)', attributes=['cn'])
-                    if conn.entries:
-                        group_cn = conn.entries[0].cn.value
-                        result['groupMembership'].append({
-                            'dn': group_dn,
-                            'cn': group_cn,
-                        })
-            
-            # Récupérer les adhésions aux rôles
-            if hasattr(user_attributes, 'nrfMemberOf') and user_attributes.nrfMemberOf:
-                for role_dn in user_attributes.nrfMemberOf.values:
-                    conn.search(role_dn, '(objectClass=nrfRole)', attributes=['cn', 'nrfRoleCategoryKey'])
-                    if conn.entries:
-                        role_cn = conn.entries[0].cn.value
-                        role_catKey = conn.entries[0].nrfRoleCategoryKey.value if hasattr(conn.entries[0], 'nrfRoleCategoryKey') else 'N/A'
-                        result['nrfMemberOf'].append({
-                            'dn': role_dn,
-                            'cn': role_cn,
-                            'category': role_catKey
-                        })
-            
-            conn.unbind()
-            return result
+                return result
             
         except Exception as e:
-            print(f"Erreur lors de la recherche de l'utilisateur par DN: {str(e)}")
+            print(f"Error searching for user: {str(e)}")
             return None
+    
+    
+    # def search_user(self, search_term, search_type):
+    #         conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True) 
+            
+    #         if search_type == 'cn':
+    #             search_filter = f'(cn={search_term})'
+    #         elif search_type == 'fullName':
+    #             search_filter = f'(fullName={search_term})'    
+    #         elif search_type == 'workforceID':
+    #             search_filter = f'(workforceID={search_term})'
+    #         elif search_type == 'FavvNatNr':
+    #             search_filter = f'(FavvNatNr={search_term})'
+    #         else:
+    #             flash('Invalid search type.', 'danger')
+    #             return redirect(url_for('search_user'))
+        
+    #     # Search for the user in the entire subtree of o=FAVV and o=COPY
+    #         user_dn = None
+           
+    #         for base_dn in [self.actif_users_dn, self.out_users_dn]:
+    #             conn.search(base_dn, search_filter, search_scope='SUBTREE', attributes=['cn', 'favvEmployeeType', 'sn', 'givenName', 'FavvNatNr', 'fullName', 'mail', 'workforceID', 'groupMembership', 'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 'nrfMemberOf', 'loginDisabled', 'loginTime', 'passwordExpirationTime'])
+
+    #             if conn.entries:
+    #                 user_dn = conn.entries[0].entry_dn
+    #                 # Store which base DN the user was found in
+    #                 user_container = base_dn
+    #                 break    
+    #         if user_dn:
+    #             # Extract the attributes
+    #             user_attributes = conn.entries[0]
+    #             result = {
+    #                 'CN': user_attributes.cn.value,
+    #                 'favvEmployeeType': user_attributes.favvEmployeeType.value,
+    #                 'fullName': user_attributes.fullName.value,
+    #                 'mail': user_attributes.mail.value,
+    #                 'sn': user_attributes.sn.value,
+    #                 'givenName': user_attributes.givenName.value,
+    #                 'workforceID': user_attributes.workforceID.value,
+    #                 'title': user_attributes.title.value,
+    #                 'service': user_attributes.ou.value,
+    #                 'FavvNatNr': user_attributes.FavvNatNr.value,
+    #                 'groupMembership': [],
+    #                 'DirXMLAssociations': user_attributes['DirXML-Associations'].values if user_attributes['DirXML-Associations'] else [],
+    #                 'FavvHierarMgrDN': user_attributes['FavvHierarMgrDN'].value if user_attributes['FavvHierarMgrDN'] else None,
+    #                 'nrfMemberOf': [],
+    #                 'loginDisabled': 'YES' if user_attributes.loginDisabled.value else 'NO',  # Convert boolean to YES/NO
+    #                 'loginTime': user_attributes.loginTime.value,
+    #                 'passwordExpirationTime': user_attributes.passwordExpirationTime.value,
+    #                 'is_inactive': user_container == self.out_users_dn
+    #             }
+    #             # Fetch the manager's full name
+    #             if result['FavvHierarMgrDN']:
+    #                 try:
+    #                     conn.search(result['FavvHierarMgrDN'], '(objectClass=*)', attributes=['fullName'])
+    #                     if conn.entries:
+    #                         result['ChefHierarchique'] = conn.entries[0].fullName.value
+    #                     else:
+    #                         result['ChefHierarchique'] = 'Manager not found'
+    #                 except Exception as e:
+    #                     result['ChefHierarchique'] = f'Error fetching manager: {str(e)}'
+    #             else:
+    #                 result['ChefHierarchique'] = 'No manager specified'
+
+    #             # Fetch the groups (groupMembership)
+    #             if user_attributes['groupMembership']:
+    #                 for group_dn in user_attributes['groupMembership'].values:
+    #                     conn.search(group_dn, '(objectClass=groupOfNames)', attributes=['cn'])
+    #                     if conn.entries:
+    #                         group_cn = conn.entries[0].cn.value
+    #                         result['groupMembership'].append({
+    #                             'dn': group_dn,
+    #                             'cn': group_cn,
+    #                         })
+                
+    #             # Fetch the roles (nrfMemberOf)
+    #             if user_attributes['nrfMemberOf']:
+    #                 for role_dn in user_attributes['nrfMemberOf'].values:
+    #                     conn.search(role_dn, '(objectClass=nrfRole)', attributes=['cn', 'nrfRoleCategoryKey'])
+    #                     if conn.entries:
+    #                         role_cn = conn.entries[0].cn.value
+    #                         role_catKey = conn.entries[0].nrfRoleCategoryKey.value
+    #                         result['nrfMemberOf'].append({
+    #                             'dn': role_dn,
+    #                             'cn': role_cn,
+    #                             'category': role_catKey
+    #                         })
+
+    #         else:
+    #             result = None
+    #             print("User not found.")
+    #             flash('User not found.', 'danger')
+
+    #         # Unbind the connection
+    #         conn.unbind()    
+    #         return result
+        
+        
+    # def search_user_by_dn(self, user_dn):
+    #     """
+    #     Recherche un utilisateur par son DN et retourne ses informations détaillées.
+    #     Similaire à search_user mais accepte un DN directement.
+        
+    #     Args:
+    #         user_dn (str): DN de l'utilisateur à rechercher
+            
+    #     Returns:
+    #         dict: Informations de l'utilisateur ou None si non trouvé
+    #     """
+    #     try:
+    #         conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            
+    #         # Vérifier si l'utilisateur existe
+    #         conn.search(user_dn, 
+    #                 '(objectClass=*)', 
+    #                 search_scope='BASE',
+    #                 attributes=['cn', 'favvEmployeeType', 'sn', 'givenName', 'FavvNatNr', 
+    #                             'fullName', 'mail', 'workforceID', 'groupMembership', 
+    #                             'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 
+    #                             'nrfMemberOf', 'loginDisabled', 'loginTime', 'passwordExpirationTime'])
+            
+    #         if not conn.entries:
+    #             conn.unbind()
+    #             return None
+            
+    #         # Extraire les attributs
+    #         user_attributes = conn.entries[0]
+    #         result = {
+    #             'dn': user_dn,
+    #             'CN': user_attributes.cn.value,
+    #             'favvEmployeeType': user_attributes.favvEmployeeType.value if hasattr(user_attributes, 'favvEmployeeType') else '',
+    #             'fullName': user_attributes.fullName.value if hasattr(user_attributes, 'fullName') else '',
+    #             'mail': user_attributes.mail.value if hasattr(user_attributes, 'mail') else '',
+    #             'sn': user_attributes.sn.value if hasattr(user_attributes, 'sn') else '',
+    #             'givenName': user_attributes.givenName.value if hasattr(user_attributes, 'givenName') else '',
+    #             'workforceID': user_attributes.workforceID.value if hasattr(user_attributes, 'workforceID') else '',
+    #             'title': user_attributes.title.value if hasattr(user_attributes, 'title') else '',
+    #             'service': user_attributes.ou.value if hasattr(user_attributes, 'ou') else '',
+    #             'FavvNatNr': user_attributes.FavvNatNr.value if hasattr(user_attributes, 'FavvNatNr') else '',
+    #             'groupMembership': [],
+    #             'DirXMLAssociations': user_attributes['DirXML-Associations'].values if hasattr(user_attributes, 'DirXML-Associations') else [],
+    #             'FavvHierarMgrDN': user_attributes['FavvHierarMgrDN'].value if hasattr(user_attributes, 'FavvHierarMgrDN') else None,
+    #             'nrfMemberOf': [],
+    #             'loginDisabled': 'YES' if hasattr(user_attributes, 'loginDisabled') and user_attributes.loginDisabled.value else 'NO',
+    #             'loginTime': user_attributes.loginTime.value if hasattr(user_attributes, 'loginTime') else '',
+    #             'passwordExpirationTime': user_attributes.passwordExpirationTime.value if hasattr(user_attributes, 'passwordExpirationTime') else ''
+    #         }
+            
+    #         # Rechercher le nom du manager
+    #         if result['FavvHierarMgrDN']:
+    #             try:
+    #                 conn.search(result['FavvHierarMgrDN'], '(objectClass=*)', attributes=['fullName'])
+    #                 if conn.entries:
+    #                     result['ChefHierarchique'] = conn.entries[0].fullName.value
+    #                 else:
+    #                     result['ChefHierarchique'] = 'Manager not found'
+    #             except Exception as e:
+    #                 result['ChefHierarchique'] = f'Error fetching manager: {str(e)}'
+    #         else:
+    #             result['ChefHierarchique'] = 'No manager specified'
+            
+    #         # Récupérer les adhésions aux groupes
+    #         if hasattr(user_attributes, 'groupMembership') and user_attributes.groupMembership:
+    #             for group_dn in user_attributes.groupMembership.values:
+    #                 conn.search(group_dn, '(objectClass=groupOfNames)', attributes=['cn'])
+    #                 if conn.entries:
+    #                     group_cn = conn.entries[0].cn.value
+    #                     result['groupMembership'].append({
+    #                         'dn': group_dn,
+    #                         'cn': group_cn,
+    #                     })
+            
+    #         # Récupérer les adhésions aux rôles
+    #         if hasattr(user_attributes, 'nrfMemberOf') and user_attributes.nrfMemberOf:
+    #             for role_dn in user_attributes.nrfMemberOf.values:
+    #                 conn.search(role_dn, '(objectClass=nrfRole)', attributes=['cn', 'nrfRoleCategoryKey'])
+    #                 if conn.entries:
+    #                     role_cn = conn.entries[0].cn.value
+    #                     role_catKey = conn.entries[0].nrfRoleCategoryKey.value if hasattr(conn.entries[0], 'nrfRoleCategoryKey') else 'N/A'
+    #                     result['nrfMemberOf'].append({
+    #                         'dn': role_dn,
+    #                         'cn': role_cn,
+    #                         'category': role_catKey
+    #                     })
+            
+    #         conn.unbind()
+    #         return result
+            
+    #     except Exception as e:
+    #         print(f"Erreur lors de la recherche de l'utilisateur par DN: {str(e)}")
+    #         return None
 
     
     def search_active_users(self, search_term, search_type):
@@ -695,7 +951,7 @@ class METAUserMixin(METABase):
                 'loginDisabled': entry.loginDisabled.value if hasattr(entry, 'loginDisabled') else False,
                 'manager_dn': entry.FavvHierarMgrDN.value if hasattr(entry, 'FavvHierarMgrDN') else '',
                 'manager_name': '',
-                'group_memberships': [],
+                'groupMemberships': [],
                 'generationQualifier': entry.generationQualifier.value if hasattr(entry, 'generationQualifier') else ''
             }
             
@@ -714,7 +970,7 @@ class METAUserMixin(METABase):
                             '(objectClass=*)', 
                             attributes=['cn'])
                     if conn.entries:
-                        user['group_memberships'].append({
+                        user['groupMemberships'].append({
                             'dn': group_dn,
                             'cn': conn.entries[0].cn.value
                         })

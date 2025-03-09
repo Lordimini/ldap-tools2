@@ -111,8 +111,8 @@
                 <h5 class="mt-4">Current Group Memberships</h5>
                 <div class="card p-3 bg-dark">
                     <div id="current_groups">
-                        {% if selected_user.group_memberships %}
-                            {% for group in selected_user.group_memberships %}
+                        {% if selected_user.groupMemberships %}
+                            {% for group in selected_user.groupMemberships %}
                                 <div class="badge bg-info me-2 mb-2 p-2">
                                     {{ group.cn }}
                                 </div>

@@ -16,39 +16,51 @@
     {% if result %}
     <div class="card p-4 shadow">
         <h2 class="text-center mb-4">Users in Role: {{ result.role_cn }} ({{ result.role_dn }})</h2>
-        <div class="text-end mb-3">
-            <a href="{{ url_for('role.export_role_users_csv', role_cn=result.role_cn) }}" class="btn btn-success">
-                <i class="fas fa-file-csv"></i> Export to CSV
-            </a>
-            <a href="{{ url_for('role.export_role_users_pdf', role_cn=result.role_cn) }}" class="btn btn-danger">
-                <i class="fas fa-file-pdf"></i> Export to PDF
-            </a>
+        <div class="d-flex justify-content-between mb-3 align-items-center">
+            <div>
+                <div class="input-group" style="width: 300px;">
+                    <span class="input-group-text" id="basic-addon1">
+                        <i class="fas fa-filter"></i>
+                    </span>
+                    <input type="text" id="serviceFilter" class="form-control" placeholder="Filter by service..." aria-label="Filter">
+                </div>
+            </div>
+            <div>
+                <a href="{{ url_for('role.export_role_users_csv', role_cn=result.role_cn) }}" class="btn btn-success">
+                    <i class="fas fa-file-csv"></i> Export to CSV
+                </a>
+                <a href="{{ url_for('role.export_role_users_pdf', role_cn=result.role_cn) }}" class="btn btn-danger">
+                    <i class="fas fa-file-pdf"></i> Export to PDF
+                </a>
+            </div>
         </div>
         {% if result.users %}
-        <table id="usersTable" class="table table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th>CN</th>
-                    <th>Full Name</th>
-                    <th>Title</th>
-                    <th>Service</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in result.users %}
-                <tr 
-                    role="button" 
-                    onclick="window.location.href='{{ url_for('search.search_user') }}?cn={{ user.CN | urlencode }}'" 
-                    style="cursor: pointer;"
-                >
-                    <td>{{ user.CN | default('N/A') }}</td>
-                    <td>{{ user.fullName | default('N/A') }}</td>
-                    <td>{{ user.title | default('N/A') }}</td>
-                    <td>{{ user.ou | default('N/A') }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table id="usersTable" class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>CN</th>
+                        <th>Full Name</th>
+                        <th>Title</th>
+                        <th>Service</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in result.users %}
+                    <tr 
+                        role="button" 
+                        onclick="window.location.href='{{ url_for('search.search_user') }}?cn={{ user.CN | urlencode }}'" 
+                        style="cursor: pointer;"
+                    >
+                        <td>{{ user.CN | default('N/A') }}</td>
+                        <td>{{ user.fullName | default('N/A') }}</td>
+                        <td>{{ user.title | default('N/A') }}</td>
+                        <td>{{ user.ou | default('N/A') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% else %}
         <p class="text-center">No users found in this role.</p>
         {% endif %}
@@ -56,8 +68,9 @@
     {% endif %}
 </div>
 
-<!-- Include DataTables CSS -->
+<!-- Include DataTables CSS with extensions for better styling -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css">
 
 <!-- jQuery (required for DataTables and autocomplete) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -65,45 +78,70 @@
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
 
-<!-- Include DataTables JS -->
+<!-- Include DataTables JS with pagination and responsive extensions -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap5.min.js"></script>
 
 <script>
-    $(document).ready(function () {
-        // Initialize DataTables on the table
-        if ($.fn.DataTable.isDataTable('#usersTable')) {
-            $('#usersTable').DataTable().destroy();
+$(document).ready(function () {
+    // Initialize DataTables on the table
+    if ($.fn.DataTable.isDataTable('#usersTable')) {
+        $('#usersTable').DataTable().destroy();
+    }
+    
+    // Initialize DataTable with pagination and responsive features
+    var table = $('#usersTable').DataTable({
+        responsive: true,
+        paging: true,
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        searching: true,
+        info: true,
+        order: [[1, 'asc']], // Default sorting by Full Name
+        columnDefs: [
+            { orderable: true, targets: [0, 1, 2, 3] }
+        ],
+        language: {
+            search: "",
+            searchPlaceholder: "Search in all columns...",
+            zeroRecords: "No matching records found",
+            info: "Showing _START_ to _END_ of _TOTAL_ users",
+            infoEmpty: "No users found",
+            infoFiltered: "(filtered from _MAX_ total users)"
         }
-        
-        $('#usersTable').DataTable({
-            paging: false, // Disable pagination if not needed
-            searching: false, // Disable search bar if not needed
-            info: false, // Disable "Showing X of Y entries" text
-            order: [[1, 'asc']], // Default sorting by the second column (Full Name) in ascending order
-            columnDefs: [
-                { orderable: true, targets: [0, 1, 2, 3] } // Enable sorting for all columns
-            ]
-        });
-
-        // Autocomplete for role_cn input
-        $('#role_cn').autocomplete({
-            source: function(request, response) {
-                $.getJSON("{{ url_for('autocomplete.autocomplete_roles') }}", {
-                    term: request.term
-                }, function(data) {
-                    response(data);
-                });
-            },
-            select: function(event, ui) {
-                $('#role_cn').val(ui.item.value);
-                return false;
-            }
-        }).data('ui-autocomplete')._renderItem = function(ul, item) {
-            return $('<li>')
-                .append(`<div>${item.label}</div>`)
-                .appendTo(ul);
-        };
     });
+    
+    // Custom filtering for Service column (index 3)
+    $('#serviceFilter').on('keyup', function() {
+        table.column(3).search(this.value).draw();
+    });
+
+    // Make DataTables search box more Bootstrap-like
+    $('.dataTables_filter input').addClass('form-control');
+    $('.dataTables_filter input').css('margin-left', '0.5em');
+    $('.dataTables_length select').addClass('form-select form-select-sm');
+    $('.dataTables_length select').css('width', 'auto');
+
+    // Autocomplete for role_cn input
+    $('#role_cn').autocomplete({
+        source: function(request, response) {
+            $.getJSON("{{ url_for('autocomplete.autocomplete_roles') }}", {
+                term: request.term
+            }, function(data) {
+                response(data);
+            });
+        },
+        select: function(event, ui) {
+            $('#role_cn').val(ui.item.value);
+            return false;
+        }
+    }).data('ui-autocomplete')._renderItem = function(ul, item) {
+        return $('<li>')
+            .append(`<div>${item.label}</div>`)
+            .appendTo(ul);
+    };
+});
 </script>
 {% endblock %}

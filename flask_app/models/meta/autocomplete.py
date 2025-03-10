@@ -48,7 +48,7 @@ class METAAutocompleteMixin(METABase):
             # Configuration spécifique selon le type de recherche
             if search_type == 'group':
                 for base_dn in [self.base_dn, self.app_base_dn]:
-                    conn.search(base_dn, f'(cn=*{search_term_escaped}*)', 
+                    conn.search(base_dn, f'(&(cn=*{search_term_escaped}*)(objectClass=groupOfNames))', 
                             search_scope='SUBTREE', attributes=['cn'])
                     
                     for entry in conn.entries:

@@ -141,7 +141,7 @@ class METAAutocompleteMixin(METABase):
                         if hasattr(entry, 'cn') and entry.cn:
                             label = f"{entry.cn.value}" if hasattr(entry.cn, 'value') else "Unknown"
                             if hasattr(entry, 'entry_dn'):
-                                label += f" ({entry.entry_dn})"
+                                label += f" (category: {entry.nrfRoleCategoryKey.value})"
                             
                             roles.append({
                                 'label': label,

@@ -33,8 +33,9 @@
     <!-- User Search and Selection Section (only displayed if a group is selected) -->
     {% if group_info %}
     <div class="row">
-        <!-- User Search -->
+        <!-- User Search and Selected Users (stacked vertically) -->
         <div class="col-md-6">
+            <!-- User Search -->
             <div class="card p-4 shadow mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="mb-0">Search Users to Add</h4>
@@ -95,10 +96,8 @@
                 </div>
                 {% endif %}
             </div>
-        </div>
 
-        <!-- Selected Users -->
-        <div class="col-md-6">
+            <!-- Selected Users (now below the search) -->
             <div class="card p-4 shadow mb-4">
                 <h4 class="mb-3">Selected Users</h4>
                 <div id="selected_users_container" class="mb-3">
@@ -118,8 +117,10 @@
                     </div>
                 </form>
             </div>
+        </div>
 
-            <!-- Current Group Members -->
+        <!-- Current Group Members (still in the right column) -->
+        <div class="col-md-6">
             <div class="card p-4 shadow">
                 <h4 class="mb-3">Current Group Members</h4>
                 {% if group_info.users and group_info.users|length > 0 %}

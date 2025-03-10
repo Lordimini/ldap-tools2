@@ -191,3 +191,58 @@ def confirm_add_users():
     
     # Rediriger vers la page du groupe pour voir les changements
     return redirect(url_for('group.group_users', group_name=group_name, group_dn=group_dn))
+
+@group_bp.route('/validate_bulk_cns', methods=['POST'])
+@login_required
+def validate_bulk_cns():
+    """Valide une liste de CNs et retourne les utilisateurs trouvés"""
+    # Récupérer les données JSON de la requête
+    data = request.get_json()
+    if not data or 'cn_list' not in data or 'group_dn' not in data:
+        return jsonify({'error': 'Missing required parameters'}), 400
+    
+    cn_list = data.get('cn_list', [])
+    group_dn = data.get('group_dn', '')
+    
+    if not cn_list or not group_dn:
+        return jsonify({'error': 'Empty CN list or group DN'}), 400
+    
+    ldap_model = METAModel()
+    
+    # Récupérer les informations du groupe pour vérifier les membres existants
+    group_info = ldap_model.get_group_users_by_dn(group_dn)
+    existing_cns = []
+    if group_info and 'users' in group_info:
+        existing_cns = [user['CN'].upper() for user in group_info['users']]
+    
+    valid_users = []
+    invalid_users = []
+    
+    # Pour chaque CN dans la liste, vérifier s'il existe
+    for cn in cn_list:
+        # Convertir le CN en majuscules pour être cohérent avec le format LDAP
+        cn = cn.strip().upper()
+        
+        # Vérifier si l'utilisateur est déjà membre du groupe
+        if cn in existing_cns:
+            invalid_users.append(cn)
+            continue
+        
+        # Rechercher l'utilisateur dans le LDAP
+        user_info = ldap_model.search_user_final(cn, 'cn', simplified=True)
+        
+        if user_info:
+            # Utilisateur trouvé, ajouter aux utilisateurs valides
+            valid_users.append({
+                'dn': user_info['dn'],
+                'cn': user_info['cn'],
+                'fullName': user_info['fullName']
+            })
+        else:
+            # Utilisateur non trouvé, ajouter aux CNs invalides
+            invalid_users.append(cn)
+    
+    return jsonify({
+        'valid_users': valid_users,
+        'invalid_users': invalid_users
+    })

@@ -1,6 +1,6 @@
 # flask_app/models/ldap/groups.py
 from .base import METABase
-from ldap3 import Connection
+from ldap3 import Connection, MODIFY_ADD, MODIFY_DELETE
 
 class METAGroupMixin(METABase):
     

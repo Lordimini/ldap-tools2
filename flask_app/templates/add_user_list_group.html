@@ -49,7 +49,7 @@
                 <form id="userSearchForm" method="POST" action="{{ url_for('group.search_users_for_group') }}" class="mb-3">
                     <input type="hidden" name="group_name" value="{{ group_info.group_name }}">
                     <input type="hidden" name="group_dn" value="{{ group_info.group_dn }}">
-                    <input type="hidden" name="selected_users" id="hidden_selected_users">
+                    <input type="hidden" name="selected_users_json" id="hidden_selected_users">
                     <div class="mb-3">
                         <label for="search_type" class="form-label">Search By:</label>
                         <select class="form-select" id="search_type" name="search_type" required>
@@ -353,6 +353,7 @@ $(document).ready(function () {
     
     // Update the UI based on selected users
     function updateSelectedUsersUI() {
+        console.log("Updating UI with users:", selectedUsers);
         const container = $('#selected_users_list');
         // Clear previous content except the "no users" message
         container.find('.list-group-item').remove();
@@ -380,8 +381,10 @@ $(document).ready(function () {
         }
         
         // Update hidden inputs with JSON data
-        $('#selected_users_data').val(JSON.stringify(selectedUsers));
-        $('#hidden_selected_users').val(JSON.stringify(selectedUsers));
+        const jsonData = JSON.stringify(selectedUsers);
+        $('#selected_users_data').val(jsonData);
+        $('#hidden_selected_users').val(jsonData);
+        console.log("Updated hidden fields with:", jsonData);
     }
     
     // Add user button click handler
@@ -423,8 +426,15 @@ $(document).ready(function () {
             .prop('disabled', false);
     });
     
-    // Initialize UI
+    // Initialize UI with selected users data
     updateSelectedUsersUI();
+    console.log("Initialized with users:", selectedUsers);
+    
+    // Add form submit event to ensure selected users are saved
+    $('#userSearchForm').on('submit', function(e) {
+        // Update the hidden field with current selected users
+        $('#hidden_selected_users').val(JSON.stringify(selectedUsers));
+    });
     
     // Handle bulk CN processing
     $('#processBulkCNButton').on('click', function() {

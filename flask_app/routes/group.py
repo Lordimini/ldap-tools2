@@ -71,11 +71,13 @@ def add_users_to_group():
         group_dn = request.form.get('group_dn', '')
         
         # Récupérer les utilisateurs sélectionnés, si présents
-        selected_users_json = request.form.get('selected_users', '[]')
+        selected_users_json = request.form.get('selected_users_json', '[]')
         try:
             import json
             selected_users = json.loads(selected_users_json)
-        except:
+            print(f"POST add_users_to_group - selected_users: {selected_users}")
+        except Exception as e:
+            print(f"Error parsing selected_users_json: {e}")
             selected_users = []
         
         ldap_model = METAModel()
@@ -114,6 +116,7 @@ def add_users_to_group():
         group_data = session['current_group']
         group_info = ldap_model.get_group_users_by_dn(group_data['dn'], group_data['name'])
         selected_users = session.get('selected_users', [])
+        print(f"GET add_users_to_group - selected_users from session: {selected_users}")
     
     return render_template('add_user_list_group.html', 
                           group_info=group_info,
@@ -130,8 +133,18 @@ def search_users_for_group():
     search_type = request.form.get('search_type', 'fullName')
     search_term = request.form.get('search_term', '')
     
-    # Récupérer les utilisateurs déjà sélectionnés de la session si présents
-    selected_users = session.get('selected_users', [])
+    # Récupérer les utilisateurs déjà sélectionnés du formulaire
+    selected_users_json = request.form.get('selected_users_json', '[]')
+    
+    import json
+    try:
+        selected_users = json.loads(selected_users_json)
+    except Exception as e:
+        print(f"Error parsing selected_users_json: {e}")
+        selected_users = []
+    
+    # Sauvegarder dans la session
+    session['selected_users'] = selected_users
     
     if not group_name or not group_dn or not search_term:
         flash('Missing required parameters.', 'danger')
@@ -159,7 +172,7 @@ def search_users_for_group():
     
     # Filtrer également les utilisateurs déjà sélectionnés
     if search_results and selected_users:
-        selected_users_dn = [user['dn'] for user in selected_users]
+        selected_users_dn = [user.get('dn') for user in selected_users]
         search_results = [user for user in search_results if user['dn'] not in selected_users_dn]
     
     return render_template('add_user_list_group.html',
@@ -182,7 +195,9 @@ def confirm_add_users():
     import json
     try:
         selected_users = json.loads(selected_users_json)
-    except:
+        print(f"confirm_add_users - Processing users: {selected_users}")
+    except Exception as e:
+        print(f"Error parsing selected_users: {e}")
         selected_users = []
     
     # Vider la liste des utilisateurs sélectionnés dans la session

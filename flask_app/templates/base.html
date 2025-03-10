@@ -417,6 +417,13 @@
                 </li>
 
                 <li class="nav-item">
+                    <a class="nav-link {% if '/group' in request.path %}active{% endif %}" href="{{ url_for('group.add_users_to_group') }}">
+                        <i class="bi bi-people"></i>
+                        <span>Search Group</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a class="nav-link {% if '/service' in request.path %}active{% endif %}" href="{{ url_for('service.service_users') }}">
                         <i class="bi bi-gear"></i>
                         <span>Search Services</span>

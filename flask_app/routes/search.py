@@ -12,6 +12,7 @@ def search_user():
     and the actual search functionality.
     """
     result = None
+    search_results = None
     prefill_cn = request.args.get('cn', '')
     prefill_workforceID = request.args.get('workforceID', '')
     prefill_FavvNatNr = request.args.get('FavvNatNr', '')
@@ -26,19 +27,36 @@ def search_user():
         if not search_term or not search_type:
             flash('Please provide a search term and type.', 'warning')
             return render_template('search.html', 
-                                   result=None, 
+                                   result=None,
+                                   search_results=None,
                                    prefill_cn=prefill_cn, 
                                    prefill_workforceID=prefill_workforceID, 
                                    prefill_FavvNatNr=prefill_FavvNatNr,
                                    prefill_fullName=prefill_fullName)
         
+        # Check if wildcard search is needed (for fullName or cn)
+        has_wildcard = '*' in search_term and search_type in ['fullName', 'cn']
+        
         # Perform the search
         ldap_model = METAModel()
-        result = ldap_model.search_user_final(search_term, search_type)
         
-        # Check result and set appropriate message
-        if not result:
-            flash('User not found.', 'danger')
+        if has_wildcard:
+            # Use return_list=True for wildcard searches to get multiple results
+            search_results = ldap_model.search_user_final(search_term, search_type, return_list=True)
+            
+            # If only one result is found, show it directly
+            if len(search_results) == 1:
+                result = ldap_model.search_user_final(search_results[0]['dn'])
+                search_results = None
+            elif len(search_results) == 0:
+                flash('No users found matching your criteria.', 'danger')
+        else:
+            # Regular search for a specific user
+            result = ldap_model.search_user_final(search_term, search_type)
+            
+            # Check result and set appropriate message
+            if not result:
+                flash('User not found.', 'danger')
     
     # If we have a DN parameter, try to get user details
     elif request.args.get('dn'):
@@ -48,7 +66,8 @@ def search_user():
             
     # Render the template with appropriate data
     return render_template('search.html', 
-                           result=result, 
+                           result=result,
+                           search_results=search_results,
                            prefill_cn=prefill_cn, 
                            prefill_workforceID=prefill_workforceID, 
                            prefill_FavvNatNr=prefill_FavvNatNr,

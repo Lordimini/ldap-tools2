@@ -13,6 +13,35 @@
         <button type="submit" class="btn btn-primary">Search</button>
     </form>
 
+    <!-- Search Results (only shown when multiple results are found) -->
+    {% if search_results %}
+    <div class="card p-4 shadow mb-4">
+        <h4 class="mb-3">Search Results</h4>
+        <div class="table-responsive">
+            <table class="table table-hover table-dark">
+                <thead>
+                    <tr>
+                        <th>Role Name</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for role in search_results %}
+                    <tr>
+                        <td>{{ role.label }}</td>
+                        <td>
+                            <a href="{{ url_for('role.role_users') }}?role_cn={{ role.value | urlencode }}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-people"></i> View Users
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
     {% if result %}
     <div class="card p-4 shadow">
         <h2 class="text-center mb-4">Users in Role: {{ result.role_cn }} ({{ result.role_dn }})</h2>
@@ -142,6 +171,15 @@ $(document).ready(function () {
             .append(`<div>${item.label}</div>`)
             .appendTo(ul);
     };
+    
+    // Astuce pour la recherche avec caractères génériques
+    var wildcardTip = `
+        <div class="alert alert-info mt-2">
+            <i class="bi bi-info-circle-fill"></i> 
+            <strong>Search tip:</strong> You can use the asterisk (*) as a wildcard. 
+        </div>
+    `;
+    $('.card form').append(wildcardTip);
 });
 </script>
 {% endblock %}

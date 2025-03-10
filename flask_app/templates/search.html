@@ -186,12 +186,20 @@
         <!-- Group Memberships Section -->
         <div class="row mt-4">
             <div class="col-md-6">
-                <h5 class="mb-3">Group Memberships</h5>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">Group Memberships</h5>
+                    <div class="d-flex">
+                        <input type="text" id="group-filter" class="form-control form-control-sm me-2" placeholder="Filter groups...">
+                        <button id="sort-groups" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-sort-alpha-down"></i>
+                        </button>
+                    </div>
+                </div>
                 <div class="card p-3 bg-dark">
                     <div id="groups">
                         {% if result.groupMembership %}
                             {% for group in result.groupMembership %}
-                                <div class="badge bg-info me-2 mb-2 p-2">
+                                <div class="badge bg-info me-2 mb-2 p-2 group-badge">
                                     <a href="{{ url_for('group.group_users') }}?group_name={{ group.cn }}" class="text-white text-decoration-none">
                                         {{ group.cn }}
                                     </a>
@@ -206,12 +214,20 @@
 
             <!-- Role Assignments Section -->
             <div class="col-md-6">
-                <h5 class="mb-3">Assigned Roles</h5>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">Assigned Roles</h5>
+                    <div class="d-flex">
+                        <input type="text" id="role-filter" class="form-control form-control-sm me-2" placeholder="Filter roles...">
+                        <button id="sort-roles" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-sort-alpha-down"></i>
+                        </button>
+                    </div>
+                </div>
                 <div class="card p-3 bg-dark">
                     <div id="roles">
                         {% if result.nrfMemberOf %}
                             {% for role in result.nrfMemberOf %}
-                                <div class="badge bg-secondary me-2 mb-2 p-2">
+                                <div class="badge bg-secondary me-2 mb-2 p-2 role-badge">
                                     <a href="{{ url_for('role.role_users') }}?role_cn={{ role.cn }}" class="text-white text-decoration-none">
                                         {{ role.cn }} ({{ role.category }})
                                     </a>
@@ -407,11 +423,74 @@
         var wildcardTip = `
             <div class="alert alert-info mt-2">
                 <i class="bi bi-info-circle-fill"></i> 
-                <strong>Astuce de recherche:</strong> Vous pouvez utiliser l'astérisque (*) comme caractère générique. 
-                Par exemple: "eric*" trouve tous les utilisateurs dont le nom commence par "eric".
+                <strong>Search tip:</strong> You can use the asterisk (*) as a wildcard. For example: “vik*” finds all users whose name starts with “vik”.
             </div>
         `;
         $('.card form').append(wildcardTip);
+        
+        // Groupes - Filtrer
+        $('#group-filter').on('keyup', function() {
+            let filter = $(this).val().toLowerCase();
+            $('.group-badge').each(function() {
+                let text = $(this).text().toLowerCase();
+                $(this).toggle(text.indexOf(filter) > -1);
+            });
+        });
+        
+        // Rôles - Filtrer
+        $('#role-filter').on('keyup', function() {
+            let filter = $(this).val().toLowerCase();
+            $('.role-badge').each(function() {
+                let text = $(this).text().toLowerCase();
+                $(this).toggle(text.indexOf(filter) > -1);
+            });
+        });
+        
+        // Variables pour le tri
+        let groupSortAsc = true;
+        let roleSortAsc = true;
+        
+        // Groupes - Trier
+        $('#sort-groups').click(function() {
+            let groups = $('#groups .group-badge').get();
+            groups.sort(function(a, b) {
+                let textA = $(a).text().trim().toLowerCase();
+                let textB = $(b).text().trim().toLowerCase();
+                return groupSortAsc ? (textA > textB ? 1 : -1) : (textA < textB ? 1 : -1);
+            });
+            
+            // Changer l'icône
+            $(this).find('i').toggleClass('bi-sort-alpha-down bi-sort-alpha-up');
+            
+            // Inverser pour le prochain clic
+            groupSortAsc = !groupSortAsc;
+            
+            // Réinsérer les éléments triés
+            $.each(groups, function(index, group) {
+                $('#groups').append(group);
+            });
+        });
+        
+        // Rôles - Trier
+        $('#sort-roles').click(function() {
+            let roles = $('#roles .role-badge').get();
+            roles.sort(function(a, b) {
+                let textA = $(a).text().trim().toLowerCase();
+                let textB = $(b).text().trim().toLowerCase();
+                return roleSortAsc ? (textA > textB ? 1 : -1) : (textA < textB ? 1 : -1);
+            });
+            
+            // Changer l'icône
+            $(this).find('i').toggleClass('bi-sort-alpha-down bi-sort-alpha-up');
+            
+            // Inverser pour le prochain clic
+            roleSortAsc = !roleSortAsc;
+            
+            // Réinsérer les éléments triés
+            $.each(roles, function(index, role) {
+                $('#roles').append(role);
+            });
+        });
     });
 </script>
 {% endblock %}

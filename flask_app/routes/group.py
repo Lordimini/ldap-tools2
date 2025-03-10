@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_app.models.meta_model import METAModel
 from flask_app.utils.export_utils import util_export_group_users_csv
 from flask_app.utils.ldap_utils import login_required
@@ -55,3 +55,139 @@ def export_group_users_csv():
         return util_export_group_users_csv(result['group_name'], result['users'])
     
     return redirect(url_for('group.group_users'))
+
+@group_bp.route('/add_users_to_group', methods=['GET', 'POST'])
+@login_required
+def add_users_to_group():
+    """Route pour la page d'ajout d'utilisateurs à un groupe"""
+    prefill_group_name = request.args.get('group_name', '')
+    prefill_group_dn = request.args.get('group_dn', '')
+    group_info = None
+    
+    if request.method == 'POST':
+        # Récupérer les informations du groupe depuis le formulaire
+        group_name = request.form.get('group_name', '')
+        group_dn = request.form.get('group_dn', '')
+        
+        ldap_model = METAModel()
+        
+        # Si nous avons un DN spécifique, l'utiliser pour la recherche
+        if group_dn:
+            group_info = ldap_model.get_group_users_by_dn(group_dn, group_name)
+        else:
+            # Sinon, utiliser la méthode existante basée sur le CN
+            group_info = ldap_model.get_group_users(group_name)
+        
+        if not group_info:
+            flash('Group not found. Please try again.', 'danger')
+            return render_template('add_user_list_group.html', 
+                                  prefill_group_name=group_name, 
+                                  prefill_group_dn=group_dn)
+        
+        # Stocker les informations du groupe en session pour les futures requêtes
+        session['current_group'] = {
+            'name': group_info['group_name'],
+            'dn': group_info['group_dn']
+        }
+        
+        return render_template('add_user_list_group.html', 
+                              group_info=group_info,
+                              prefill_group_name=group_name, 
+                              prefill_group_dn=group_dn)
+    
+    # En cas de GET, si on a des informations en session, les restaurer
+    if 'current_group' in session:
+        ldap_model = METAModel()
+        group_data = session['current_group']
+        group_info = ldap_model.get_group_users_by_dn(group_data['dn'], group_data['name'])
+    
+    return render_template('add_user_list_group.html', 
+                          group_info=group_info,
+                          prefill_group_name=prefill_group_name, 
+                          prefill_group_dn=prefill_group_dn)
+
+@group_bp.route('/search_users_for_group', methods=['POST'])
+@login_required
+def search_users_for_group():
+    """Route pour rechercher des utilisateurs à ajouter au groupe"""
+    group_name = request.form.get('group_name', '')
+    group_dn = request.form.get('group_dn', '')
+    search_type = request.form.get('search_type', 'fullName')
+    search_term = request.form.get('search_term', '')
+    
+    if not group_name or not group_dn or not search_term:
+        flash('Missing required parameters.', 'danger')
+        return redirect(url_for('group.add_users_to_group'))
+    
+    ldap_model = METAModel()
+    
+    # Récupérer les informations du groupe
+    group_info = ldap_model.get_group_users_by_dn(group_dn, group_name)
+    
+    if not group_info:
+        flash('Group not found.', 'danger')
+        return redirect(url_for('group.add_users_to_group'))
+    
+    # Rechercher les utilisateurs actifs
+    search_results = ldap_model.search_user_final(search_term, search_type, search_active_only=True, return_list=True)
+    
+    if not search_results:
+        flash('No users found matching your search criteria.', 'info')
+    
+    # Filtrer les utilisateurs qui sont déjà membres du groupe
+    if search_results and group_info and 'users' in group_info:
+        existing_users_cn = [user['CN'] for user in group_info['users']]
+        search_results = [user for user in search_results if user['cn'] not in existing_users_cn]
+    
+    return render_template('add_user_list_group.html',
+                          group_info=group_info,
+                          search_results=search_results,
+                          search_type=search_type,
+                          search_term=search_term,
+                          prefill_group_name=group_name,
+                          prefill_group_dn=group_dn)
+
+@group_bp.route('/confirm_add_users', methods=['POST'])
+@login_required
+def confirm_add_users():
+    """Route pour confirmer l'ajout des utilisateurs sélectionnés au groupe"""
+    group_name = request.form.get('group_name', '')
+    group_dn = request.form.get('group_dn', '')
+    selected_users_json = request.form.get('selected_users', '[]')
+    
+    import json
+    try:
+        selected_users = json.loads(selected_users_json)
+    except:
+        selected_users = []
+    
+    if not group_name or not group_dn or not selected_users:
+        flash('No users selected or group information missing.', 'warning')
+        return redirect(url_for('group.add_users_to_group'))
+    
+    ldap_model = METAModel()
+    
+    # Compter les succès et les échecs
+    success_count = 0
+    failures = []
+    
+    # Ajouter chaque utilisateur au groupe
+    for user in selected_users:
+        user_dn = user.get('dn')
+        if user_dn:
+            result = ldap_model.add_user_to_group(user_dn, group_dn)
+            if result:
+                success_count += 1
+            else:
+                failures.append(f"Failed to add user {user.get('cn')} ({user.get('fullName')})")
+    
+    # Construire un message de succès/échec
+    if success_count > 0:
+        flash(f'Successfully added {success_count} users to group {group_name}.', 'success')
+    
+    if failures:
+        for failure in failures:
+            flash(failure, 'danger')
+    
+    # Rediriger vers la page du groupe pour voir les changements
+    return redirect(url_for('group.group_users', group_name=group_name, group_dn=group_dn))

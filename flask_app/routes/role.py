@@ -9,17 +9,46 @@ role_bp = Blueprint('role', __name__)
 @login_required
 def role_users():
     prefill_role_name = request.args.get('role_cn', '')
+    search_results = None
+    result = None
+
     if request.method == 'POST' or prefill_role_name:
         # Get the role CN from the form
         role_cn = request.form.get('role_cn', '') or prefill_role_name
         
-        # Use the LDAPModel to get role users            
+        # Check if wildcard search is needed (contains *)
+        has_wildcard = '*' in role_cn
+        
+        # Use the METAModel for searching
         ldap_model = METAModel()
-        result = ldap_model.get_role_users(role_cn)
         
-        return render_template('role_users.html', result=result, prefill_role_name=prefill_role_name)
+        if has_wildcard:
+            # For wildcard searches, get multiple matching roles
+            search_results = ldap_model.autocomplete_role(role_cn)
+            
+            # If only one role is found, get its users directly
+            if len(search_results) == 1:
+                exact_role_cn = search_results[0]['value']
+                result = ldap_model.get_role_users(exact_role_cn)
+                search_results = None
+            elif len(search_results) == 0:
+                flash('No roles found matching your criteria.', 'warning')
+        else:
+            # Direct search for a specific role
+            result = ldap_model.get_role_users(role_cn)
+            
+            if not result:
+                flash('Role not found.', 'warning')
         
-    return render_template('role_users.html', result=None, prefill_role_name= prefill_role_name)
+        return render_template('role_users.html', 
+                              result=result, 
+                              search_results=search_results, 
+                              prefill_role_name=role_cn)
+        
+    return render_template('role_users.html', 
+                          result=None, 
+                          search_results=None, 
+                          prefill_role_name=prefill_role_name)
 
 @role_bp.route('/role_groups', methods=['GET', 'POST'])
 @login_required
@@ -68,5 +97,3 @@ def view_role(dn):
     except Exception as e:
         print(f'Erreur: {str(e)}', 'danger')
         return redirect(url_for('ldap.ldap_browser'))
-
-  

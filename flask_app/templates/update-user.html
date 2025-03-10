@@ -154,11 +154,19 @@
                 </table>
                 
                 <h5 class="mt-4">Current Group Memberships</h5>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex">
+                        <input type="text" id="group-filter" class="form-control form-control-sm me-2" placeholder="Filter groups...">
+                        <button id="sort-groups" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-sort-alpha-down"></i>
+                        </button>
+                    </div>
+                </div>
                 <div class="card p-3 bg-dark">
                     <div id="current_groups">
                         {% if selected_user.groupMembership %}
                             {% for group in selected_user.groupMembership %}
-                                <div class="badge bg-info me-2 mb-2 p-2">
+                                <div class="badge bg-info me-2 mb-2 p-2 group-badge">
                                     {{ group.cn }}
                                 </div>
                             {% endfor %}
@@ -169,11 +177,19 @@
                 </div>
                 
                 <h5 class="mt-4">Current Role Memberships</h5>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex">
+                        <input type="text" id="role-filter" class="form-control form-control-sm me-2" placeholder="Filter roles...">
+                        <button id="sort-roles" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-sort-alpha-down"></i>
+                        </button>
+                    </div>
+                </div>
                 <div class="card p-3 bg-dark">
                     <div id="current_roles">
                         {% if selected_user.nrfMemberOf %}
                             {% for role in selected_user.nrfMemberOf %}
-                                <div class="badge bg-secondary me-2 mb-2 p-2">
+                                <div class="badge bg-secondary me-2 mb-2 p-2 role-badge">
                                     {{ role.cn }} ({{ role.category }})
                                 </div>
                             {% endfor %}
@@ -578,6 +594,70 @@
             groupsToRemove.splice(index, 1);
             updateGroupsToRemoveDisplay();
         };
+        
+        // Groupes - Filtrer
+        $('#group-filter').on('keyup', function() {
+            let filter = $(this).val().toLowerCase();
+            $('.group-badge').each(function() {
+                let text = $(this).text().toLowerCase();
+                $(this).toggle(text.indexOf(filter) > -1);
+            });
+        });
+        
+        // Rôles - Filtrer
+        $('#role-filter').on('keyup', function() {
+            let filter = $(this).val().toLowerCase();
+            $('.role-badge').each(function() {
+                let text = $(this).text().toLowerCase();
+                $(this).toggle(text.indexOf(filter) > -1);
+            });
+        });
+        
+        // Variables pour le tri
+        let groupSortAsc = true;
+        let roleSortAsc = true;
+        
+        // Groupes - Trier
+        $('#sort-groups').click(function() {
+            let groups = $('#current_groups .group-badge').get();
+            groups.sort(function(a, b) {
+                let textA = $(a).text().trim().toLowerCase();
+                let textB = $(b).text().trim().toLowerCase();
+                return groupSortAsc ? (textA > textB ? 1 : -1) : (textA < textB ? 1 : -1);
+            });
+            
+            // Changer l'icône
+            $(this).find('i').toggleClass('bi-sort-alpha-down bi-sort-alpha-up');
+            
+            // Inverser pour le prochain clic
+            groupSortAsc = !groupSortAsc;
+            
+            // Réinsérer les éléments triés
+            $.each(groups, function(index, group) {
+                $('#current_groups').append(group);
+            });
+        });
+        
+        // Rôles - Trier
+        $('#sort-roles').click(function() {
+            let roles = $('#current_roles .role-badge').get();
+            roles.sort(function(a, b) {
+                let textA = $(a).text().trim().toLowerCase();
+                let textB = $(b).text().trim().toLowerCase();
+                return roleSortAsc ? (textA > textB ? 1 : -1) : (textA < textB ? 1 : -1);
+            });
+            
+            // Changer l'icône
+            $(this).find('i').toggleClass('bi-sort-alpha-down bi-sort-alpha-up');
+            
+            // Inverser pour le prochain clic
+            roleSortAsc = !roleSortAsc;
+            
+            // Réinsérer les éléments triés
+            $.each(roles, function(index, role) {
+                $('#current_roles').append(role);
+            });
+        });
     });
 </script>
 

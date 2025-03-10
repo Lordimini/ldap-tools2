@@ -153,10 +153,14 @@
             <div class="col-md-6">
                 <h5 class="mb-3">Group Memberships</h5>
                 <div class="card p-3 bg-dark">
+                    <div class="mb-2">
+                        <input type="text" class="form-control form-control-sm bg-dark text-white" id="groupFilter" placeholder="Filter groups..." onkeyup="filterGroups()">
+                    </div>
                     <div id="groups">
                         {% if result.groupMembership %}
-                            {% for group in result.groupMembership %}
-                                <div class="badge bg-info me-2 mb-2 p-2">
+                            {% set sorted_groups = result.groupMembership|sort(attribute='cn') %}
+                            {% for group in sorted_groups %}
+                                <div class="badge bg-info me-2 mb-2 p-2 group-badge">
                                     <a href="{{ url_for('group.group_users') }}?group_name={{ group.cn }}" class="text-white text-decoration-none">
                                         {{ group.cn }}
                                     </a>
@@ -173,10 +177,14 @@
             <div class="col-md-6">
                 <h5 class="mb-3">Assigned Roles</h5>
                 <div class="card p-3 bg-dark">
+                    <div class="mb-2">
+                        <input type="text" class="form-control form-control-sm bg-dark text-white" id="roleFilter" placeholder="Filter roles..." onkeyup="filterRoles()">
+                    </div>
                     <div id="roles">
                         {% if result.nrfMemberOf %}
-                            {% for role in result.nrfMemberOf %}
-                                <div class="badge bg-secondary me-2 mb-2 p-2">
+                            {% set sorted_roles = result.nrfMemberOf|sort(attribute='cn') %}
+                            {% for role in sorted_roles %}
+                                <div class="badge bg-secondary me-2 mb-2 p-2 role-badge">
                                     <a href="{{ url_for('role.role_users') }}?role_cn={{ role.cn }}" class="text-white text-decoration-none">
                                         {{ role.cn }} ({{ role.category }})
                                     </a>
@@ -309,6 +317,21 @@
         background-color: #2980b9;
         border-color: #2980b9;
     }
+
+    /* Filter input style */
+    .form-control-sm {
+        border-color: #495057;
+    }
+    
+    .form-control-sm:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+    }
+    
+    /* Hidden badge style */
+    .hidden-badge {
+        display: none !important;
+    }
 </style>
 
 <script>
@@ -368,5 +391,36 @@
             initializeAutocomplete();
         }
     });
+
+    // Filter functions
+    function filterGroups() {
+        var input = document.getElementById('groupFilter');
+        var filter = input.value.toUpperCase();
+        var badges = document.querySelectorAll('#groups .group-badge');
+        
+        badges.forEach(function(badge) {
+            var text = badge.textContent || badge.innerText;
+            if (text.toUpperCase().indexOf(filter) > -1) {
+                badge.classList.remove('hidden-badge');
+            } else {
+                badge.classList.add('hidden-badge');
+            }
+        });
+    }
+
+    function filterRoles() {
+        var input = document.getElementById('roleFilter');
+        var filter = input.value.toUpperCase();
+        var badges = document.querySelectorAll('#roles .role-badge');
+        
+        badges.forEach(function(badge) {
+            var text = badge.textContent || badge.innerText;
+            if (text.toUpperCase().indexOf(filter) > -1) {
+                badge.classList.remove('hidden-badge');
+            } else {
+                badge.classList.add('hidden-badge');
+            }
+        });
+    }
 </script>
 {% endblock %}

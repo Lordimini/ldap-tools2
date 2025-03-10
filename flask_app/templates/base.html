@@ -388,14 +388,14 @@
                 <li class="nav-item">
                     <a class="nav-link {% if '/role/users' in request.path %}active{% endif %}" href="{{ url_for('role.role_users') }}">
                         <i class="bi bi-person-badge"></i>
-                        <span>Search Role</span>
+                        <span>List Role assigned members</span>
                     </a>
                 </li>
                 
                 <li class="nav-item">
                     <a class="nav-link {% if '/role/groups' in request.path %}active{% endif %}" href="{{ url_for('role.role_groups') }}">
                         <i class="bi bi-diagram-3"></i>
-                        <span>Role Groups</span>
+                        <span>List Role ressources</span>
                     </a>
                 </li>
                 
@@ -412,21 +412,21 @@
                 <li class="nav-item">
                     <a class="nav-link {% if '/group' in request.path %}active{% endif %}" href="{{ url_for('group.group_users') }}">
                         <i class="bi bi-people"></i>
-                        <span>Search Group</span>
+                        <span>Group membership detail</span>
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a class="nav-link {% if '/group' in request.path %}active{% endif %}" href="{{ url_for('group.add_users_to_group') }}">
                         <i class="bi bi-people"></i>
-                        <span>Search Group</span>
+                        <span>Group populate</span>
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a class="nav-link {% if '/service' in request.path %}active{% endif %}" href="{{ url_for('service.service_users') }}">
                         <i class="bi bi-gear"></i>
-                        <span>Search Services</span>
+                        <span>List Services members</span>
                     </a>
                 </li>
 

@@ -32,19 +32,14 @@
 
     <!-- User Search and Selection Section (only displayed if a group is selected) -->
     {% if group_info %}
-    <div class="card p-4 shadow mb-4">
-        <h4 class="mb-3">Group Information</h4>
-        <div class="alert alert-info">
-            <strong>Selected Group:</strong> {{ group_info.group_name }} <br>
-            <strong>DN:</strong> {{ group_info.group_dn }}
-        </div>
-    </div>
-
     <div class="row">
         <!-- User Search -->
         <div class="col-md-6">
             <div class="card p-4 shadow mb-4">
-                <h4 class="mb-3">Search Users to Add</h4>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">Search Users to Add</h4>
+                    <span class="badge bg-primary">Group: {{ group_info.group_name }}</span>
+                </div>
                 <form id="userSearchForm" method="POST" action="{{ url_for('group.search_users_for_group') }}" class="mb-3">
                     <input type="hidden" name="group_name" value="{{ group_info.group_name }}">
                     <input type="hidden" name="group_dn" value="{{ group_info.group_dn }}">
@@ -157,6 +152,41 @@
                 {% else %}
                 <p class="text-center">No users currently in this group.</p>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Group Information (at the bottom) -->
+    <div class="card p-4 shadow mt-4">
+        <h4 class="mb-3">Group Information</h4>
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-dark">
+                    <tbody>
+                        <tr>
+                            <td class="attribute-cell">Group Name</td>
+                            <td>{{ group_info.group_name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Group DN</td>
+                            <td><code>{{ group_info.group_dn }}</code></td>
+                        </tr>
+                        <tr>
+                            <td class="attribute-cell">Member Count</td>
+                            <td>{{ group_info.users|length }} user(s)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('group.group_users') }}?group_name={{ group_info.group_name | urlencode }}&group_dn={{ group_info.group_dn | urlencode }}" class="btn btn-info">
+                        <i class="bi bi-eye"></i> View Group Details
+                    </a>
+                    <a href="{{ url_for('group.export_group_users_csv') }}?group_name={{ group_info.group_name | urlencode }}&group_dn={{ group_info.group_dn | urlencode }}" class="btn btn-success">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> Export Group to CSV
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -362,6 +392,12 @@ $(document).ready(function () {
         font-weight: normal;
     }
     
+    .badge.bg-primary {
+        background-color: #3498db !important;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    
     /* Make table rows more compact for readability */
     .table td, .table th {
         padding: 0.5rem;
@@ -378,6 +414,26 @@ $(document).ready(function () {
     #selected_users_container {
         max-height: 300px;
         overflow-y: auto;
+    }
+    
+    /* Style for attribute cells in tables */
+    table.table-dark tbody tr td.attribute-cell {
+        background-color: #1a2533;
+        color: #23c7bf !important;
+        font-weight: 600 !important;
+        font-size: 1.05rem !important;
+        padding: 12px 15px;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Style for code elements */
+    code {
+        background-color: #192734;
+        color: #e2e2e2;
+        padding: 2px 5px;
+        border-radius: 3px;
+        font-size: 0.9em;
+        word-break: break-all;
     }
 </style>
 {% endblock %}

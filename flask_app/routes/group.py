@@ -63,11 +63,20 @@ def add_users_to_group():
     prefill_group_name = request.args.get('group_name', '')
     prefill_group_dn = request.args.get('group_dn', '')
     group_info = None
+    selected_users = []
     
     if request.method == 'POST':
         # Récupérer les informations du groupe depuis le formulaire
         group_name = request.form.get('group_name', '')
         group_dn = request.form.get('group_dn', '')
+        
+        # Récupérer les utilisateurs sélectionnés, si présents
+        selected_users_json = request.form.get('selected_users', '[]')
+        try:
+            import json
+            selected_users = json.loads(selected_users_json)
+        except:
+            selected_users = []
         
         ldap_model = METAModel()
         
@@ -90,21 +99,27 @@ def add_users_to_group():
             'dn': group_info['group_dn']
         }
         
+        # Stocker également les utilisateurs sélectionnés
+        session['selected_users'] = selected_users
+        
         return render_template('add_user_list_group.html', 
                               group_info=group_info,
                               prefill_group_name=group_name, 
-                              prefill_group_dn=group_dn)
+                              prefill_group_dn=group_dn,
+                              selected_users=selected_users)
     
     # En cas de GET, si on a des informations en session, les restaurer
     if 'current_group' in session:
         ldap_model = METAModel()
         group_data = session['current_group']
         group_info = ldap_model.get_group_users_by_dn(group_data['dn'], group_data['name'])
+        selected_users = session.get('selected_users', [])
     
     return render_template('add_user_list_group.html', 
                           group_info=group_info,
                           prefill_group_name=prefill_group_name, 
-                          prefill_group_dn=prefill_group_dn)
+                          prefill_group_dn=prefill_group_dn,
+                          selected_users=selected_users)
 
 @group_bp.route('/search_users_for_group', methods=['POST'])
 @login_required
@@ -114,6 +129,9 @@ def search_users_for_group():
     group_dn = request.form.get('group_dn', '')
     search_type = request.form.get('search_type', 'fullName')
     search_term = request.form.get('search_term', '')
+    
+    # Récupérer les utilisateurs déjà sélectionnés de la session si présents
+    selected_users = session.get('selected_users', [])
     
     if not group_name or not group_dn or not search_term:
         flash('Missing required parameters.', 'danger')
@@ -139,13 +157,19 @@ def search_users_for_group():
         existing_users_cn = [user['CN'] for user in group_info['users']]
         search_results = [user for user in search_results if user['cn'] not in existing_users_cn]
     
+    # Filtrer également les utilisateurs déjà sélectionnés
+    if search_results and selected_users:
+        selected_users_dn = [user['dn'] for user in selected_users]
+        search_results = [user for user in search_results if user['dn'] not in selected_users_dn]
+    
     return render_template('add_user_list_group.html',
                           group_info=group_info,
                           search_results=search_results,
                           search_type=search_type,
                           search_term=search_term,
                           prefill_group_name=group_name,
-                          prefill_group_dn=group_dn)
+                          prefill_group_dn=group_dn,
+                          selected_users=selected_users)
 
 @group_bp.route('/confirm_add_users', methods=['POST'])
 @login_required
@@ -160,6 +184,9 @@ def confirm_add_users():
         selected_users = json.loads(selected_users_json)
     except:
         selected_users = []
+    
+    # Vider la liste des utilisateurs sélectionnés dans la session
+    session.pop('selected_users', None)
     
     if not group_name or not group_dn or not selected_users:
         flash('No users selected or group information missing.', 'warning')

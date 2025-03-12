@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_app.models.edir_model import EDIRModel
+from flask_app.models.ldap_config_manager import LDAPConfigManager
 from flask_app.utils.export_utils import util_export_group_users_csv
 from flask_app.utils.ldap_utils import login_required
 
@@ -16,8 +17,14 @@ def group_users():
         group_name = request.form.get('group_name', '') or prefill_group_name
         group_dn = request.form.get('group_dn', '') or prefill_group_dn
         
-        # Utiliser le modèle LDAP pour obtenir les utilisateurs du groupe
-        ldap_model = EDIRModel()
+        # Récupérer la source LDAP depuis les paramètres de requête
+        ldap_source = request.args.get('source', 'meta')
+        # Créer une instance du modèle LDAP avec la source spécifiée
+        ldap_model = EDIRModel(source=ldap_source)
+        
+        # Récupérer le nom de la directory depuis la configuration
+        config = LDAPConfigManager.get_config(ldap_source)
+        ldap_name = config.get('LDAP_name', 'META')
         
         # Si nous avons un DN spécifique, l'utiliser pour la recherche
         if group_dn:
@@ -29,12 +36,16 @@ def group_users():
         return render_template('group_users.html', 
                               result=result, 
                               prefill_group_name=group_name, 
-                              prefill_group_dn=group_dn)
+                              prefill_group_dn=group_dn,
+                              ldap_source=ldap_source,
+                              ldap_name=ldap_name)
     
     return render_template('group_users.html', 
                           result=None, 
                           prefill_group_name=prefill_group_name, 
-                          prefill_group_dn=prefill_group_dn)
+                          prefill_group_dn=prefill_group_dn,
+                          ldap_source=ldap_source,
+                          ldap_name=ldap_name)
     
 @group_bp.route('/export_group_users_csv')
 @login_required

@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">User Lookup</h1>
-    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
+    
     <!-- Flash messages for any errors/warnings -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -24,6 +24,7 @@
     <div class="card p-4 shadow mb-4">
         <h4 class="mb-3">Search User</h4>
         <form method="POST" action="{{ url_for('search.search_user') }}" class="mb-3">
+            <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
             <div class="mb-3">
                 <div class="row">
                     <div class="col-md-3">

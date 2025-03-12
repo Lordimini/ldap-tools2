@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, json
-from flask_app.models.meta_model import METAModel
+from flask_app.models.edir_model import EDIRModel
 from flask_app.utils.ldap_utils import login_required
 
 postcreation_bp = Blueprint('postcreation', __name__)
@@ -11,7 +11,7 @@ def post_creation():
     Display the list of pending users in the to-process container
     and allow selection for completion.
     """
-    ldap_model = METAModel()
+    ldap_model = EDIRModel()
     pending_users = ldap_model.get_pending_users()
     
     selected_user = None
@@ -95,7 +95,7 @@ def complete_user():
         set_password = request.form.get('set_password') == 'true'
         
         # Complete the user creation process
-        ldap_model = METAModel()
+        ldap_model = EDIRModel()
         success, message = ldap_model.complete_user_creation(
             user_dn=user_dn,
             target_container=target_container,
@@ -123,7 +123,7 @@ def delete_user():
         user_dn = request.form.get('user_dn')
         
         if user_dn:
-            ldap_model = METAModel()
+            ldap_model = EDIRModel()
             success, message = ldap_model.delete_user(user_dn)
             
             if success:

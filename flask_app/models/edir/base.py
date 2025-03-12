@@ -2,9 +2,9 @@
 from ldap3 import Server, Connection, ALL
 
 
-class METABase:
+class EDIRBase:
     def __init__(self, config):
-        self.meta_server = config['meta_server']
+        self.edir_server = config['edir_server']
         self.bind_dn = config['bind_dn']
         self.password = config['bind_password']
         self.base_dn = config['base_dn']
@@ -25,7 +25,7 @@ class METABase:
         Obtenir une connexion LDAP déjà établie pour réutilisation.
         """
         return Connection(
-            self.meta_server,
+            self.edir_server,
             user=self.bind_dn,
             password=self.password,
             auto_bind=True

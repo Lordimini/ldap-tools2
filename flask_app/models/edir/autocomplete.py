@@ -1,8 +1,8 @@
 # flask_app/models/ldap/autocomplete.py
-from .base import METABase
+from .base import EDIRBase
 from ldap3 import Connection
 
-class METAAutocompleteMixin(METABase):
+class EDIRAutocompleteMixin(EDIRBase):
     def autocomplete(self, search_type, search_term):
         """
         Fonction d'autocomplete unifiée supportant différents types de recherche.
@@ -41,7 +41,7 @@ class METAAutocompleteMixin(METABase):
             if hasattr(self, '_get_connection'):
                 conn = self._get_connection()
             else:
-                conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+                conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             results = []
             
@@ -115,7 +115,7 @@ class METAAutocompleteMixin(METABase):
         Fonction d'autocomplétion spécifique pour les rôles, avec validation des DNs.
         """
         try:
-            conn = Connection(self.meta_server, user=self.bind_dn, 
+            conn = Connection(self.edir_server, user=self.bind_dn, 
                             password=self.password, auto_bind=True)
             
             roles = []
@@ -175,7 +175,7 @@ class METAAutocompleteMixin(METABase):
             list: Liste des services correspondant au terme de recherche
         """
         try:
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Échapper le terme de recherche
             search_term_escaped = self._escape_ldap_filter(search_term) if hasattr(self, '_escape_ldap_filter') else search_term

@@ -1,8 +1,8 @@
 # flask_app/models/ldap/services.py
-from .base import METABase
+from .base import EDIRBase
 from ldap3 import Connection, SUBTREE
 
-class METAServiceMixin(METABase):
+class EDIRServiceMixin(EDIRBase):
     def get_service_users(self, service_name):
         """
         Récupère les utilisateurs d'un service donné, avec validation des DNs.
@@ -15,7 +15,7 @@ class METAServiceMixin(METABase):
         """
         try:
             users = []
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # S'assurer que actif_users_dn est une liste
             base_dns = self.actif_users_dn if isinstance(self.actif_users_dn, list) else [self.actif_users_dn]
@@ -79,7 +79,7 @@ class METAServiceMixin(METABase):
         list: Liste des utilisateurs chefs hiérarchiques avec leur fullName et DN
         """
         try:
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
         
             # Rechercher les utilisateurs avec FavvDienstHoofd=YES
             search_base = self.actif_users_dn

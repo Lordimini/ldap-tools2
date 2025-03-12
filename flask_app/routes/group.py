@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
-from flask_app.models.meta_model import METAModel
+from flask_app.models.edir_model import EDIRModel
 from flask_app.utils.export_utils import util_export_group_users_csv
 from flask_app.utils.ldap_utils import login_required
 
@@ -17,7 +17,7 @@ def group_users():
         group_dn = request.form.get('group_dn', '') or prefill_group_dn
         
         # Utiliser le modèle LDAP pour obtenir les utilisateurs du groupe
-        ldap_model = METAModel()
+        ldap_model = EDIRModel()
         
         # Si nous avons un DN spécifique, l'utiliser pour la recherche
         if group_dn:
@@ -42,7 +42,7 @@ def export_group_users_csv():
     group_name = request.args.get('group_name', '')
     group_dn = request.args.get('group_dn', '')
     
-    ldap_model = METAModel()
+    ldap_model = EDIRModel()
     
     # Si nous avons un DN spécifique, l'utiliser
     if group_dn:
@@ -80,7 +80,7 @@ def add_users_to_group():
             print(f"Error parsing selected_users_json: {e}")
             selected_users = []
         
-        ldap_model = METAModel()
+        ldap_model = EDIRModel()
         
         # Si nous avons un DN spécifique, l'utiliser pour la recherche
         if group_dn:
@@ -112,7 +112,7 @@ def add_users_to_group():
     
     # En cas de GET, si on a des informations en session, les restaurer
     if 'current_group' in session:
-        ldap_model = METAModel()
+        ldap_model = EDIRModel()
         group_data = session['current_group']
         group_info = ldap_model.get_group_users_by_dn(group_data['dn'], group_data['name'])
         selected_users = session.get('selected_users', [])
@@ -150,7 +150,7 @@ def search_users_for_group():
         flash('Missing required parameters.', 'danger')
         return redirect(url_for('group.add_users_to_group'))
     
-    ldap_model = METAModel()
+    ldap_model = EDIRModel()
     
     # Récupérer les informations du groupe
     group_info = ldap_model.get_group_users_by_dn(group_dn, group_name)
@@ -207,7 +207,7 @@ def confirm_add_users():
         flash('No users selected or group information missing.', 'warning')
         return redirect(url_for('group.add_users_to_group'))
     
-    ldap_model = METAModel()
+    ldap_model = EDIRModel()
     
     # Compter les succès et les échecs
     success_count = 0
@@ -249,7 +249,7 @@ def validate_bulk_cns():
     if not cn_list or not group_dn:
         return jsonify({'error': 'Empty CN list or group DN'}), 400
     
-    ldap_model = METAModel()
+    ldap_model = EDIRModel()
     
     # Récupérer les informations du groupe pour vérifier les membres existants
     group_info = ldap_model.get_group_users_by_dn(group_dn)

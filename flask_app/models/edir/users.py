@@ -2,10 +2,10 @@
 import unicodedata
 from ldap3 import Connection, MODIFY_REPLACE, MODIFY_DELETE, SUBTREE, MODIFY_ADD
 import json
-from .base import METABase
+from .base import EDIRBase
 from flask import flash,redirect,url_for
 
-class METAUserMixin(METABase):
+class EDIRUserMixin(EDIRBase):
     def search_user_final(self, search_param, search_type=None, simplified=False, search_active_only=False, return_list=False):
         """
         Comprehensive function to search for users in the LDAP directory with multiple modes.
@@ -36,7 +36,7 @@ class METAUserMixin(METABase):
             dict or list: User information or list of users, or None if not found
         """
         try:
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Define attributes based on the search mode
             if return_list:
@@ -311,7 +311,7 @@ class METAUserMixin(METABase):
         cn = normalize_cn(cn_temp)
     
         # Check for uniqueness
-        conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True) 
+        conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True) 
         i = 2
     
         while True:
@@ -378,7 +378,7 @@ class METAUserMixin(METABase):
     
     def create_user(self, cn, ldap_attributes, template_details=None):
         try:
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             # Bind to the server
             conn.bind()
 
@@ -449,7 +449,7 @@ class METAUserMixin(METABase):
             if change_reason:
                 log_messages.append(f"Reason for changes: {change_reason}")
             
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Vérifier que l'utilisateur existe
             conn.search(user_dn, 
@@ -559,7 +559,7 @@ class METAUserMixin(METABase):
         tuple: (bool, str) - (True if exists + user DN, False if not exists + empty string)
         """
         try:
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Create a search filter that combines both first name and last name
             search_filter = f'(&(givenName={given_name})(sn={sn}))'
@@ -596,7 +596,7 @@ class METAUserMixin(METABase):
         tuple: (bool, str) - (True si existe + user DN, False si n'existe pas + chaîne vide)
         """
         try:
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
         
             # Normaliser le FavvNatNr (enlever espaces et tirets)
             normalized_favvnatnr = favvnatnr.replace(' ', '').replace('-', '')
@@ -634,7 +634,7 @@ class METAUserMixin(METABase):
             list: Liste d'objets utilisateur avec dn, cn et fullName
         """
         try:
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Définir le DN du conteneur to-process
             to_process_dn = self.toprocess_users_dn
@@ -680,7 +680,7 @@ class METAUserMixin(METABase):
         #
         
         try:
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Vérifier que l'utilisateur existe
             conn.search(user_dn, 
@@ -830,7 +830,7 @@ class METAUserMixin(METABase):
             tuple: (success, message)
         """
         try:
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Vérifier que l'utilisateur existe
             conn.search(user_dn, 

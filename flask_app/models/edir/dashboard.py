@@ -1,8 +1,8 @@
 # flask_app/models/ldap/dashboard.py
-from .base import METABase
+from .base import EDIRBase
 from ldap3 import Connection
 
-class METADashboardMixin(METABase):
+class EDIRDashboardMixin(EDIRBase):
     def get_dashboard_stats(self):
         """
         Récupère toutes les statistiques nécessaires pour le tableau de bord
@@ -27,7 +27,7 @@ class METADashboardMixin(METABase):
             int: Nombre total d'utilisateurs
         """
         try:
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Recherche tous les utilisateurs dans la base spécifiée
             search_base = self.actif_users_dn
@@ -80,7 +80,7 @@ class METADashboardMixin(METABase):
             limit_date = datetime.now() - timedelta(days=days)
             limit_timestamp = limit_date.strftime("%Y%m%d%H%M%SZ")
             
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Rechercher les utilisateurs avec une date de connexion récente
             search_base = self.actif_users_dn
@@ -109,7 +109,7 @@ class METADashboardMixin(METABase):
             int: Nombre de comptes désactivés
         """
         try:
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Rechercher les utilisateurs avec loginDisabled=TRUE
             search_base = self.actif_users_dn
@@ -148,7 +148,7 @@ class METADashboardMixin(METABase):
             limit_date = datetime.now() - timedelta(days=30*months)
             limit_timestamp = limit_date.strftime("%Y%m%d%H%M%SZ")
             
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Rechercher les utilisateurs actifs mais avec une ancienne date de connexion
             search_base = self.actif_users_dn
@@ -182,7 +182,7 @@ class METADashboardMixin(METABase):
             # Obtenir la date actuelle au format LDAP GeneralizedTime
             current_date = datetime.now().strftime("%Y%m%d%H%M%SZ")
             
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Rechercher les utilisateurs actifs avec un mot de passe expiré
             search_base = self.actif_users_dn
@@ -211,7 +211,7 @@ class METADashboardMixin(METABase):
             int: Nombre d'utilisateurs qui ne se sont jamais connectés
         """
         try:
-            conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Rechercher les utilisateurs actifs sans attribut loginTime
             search_base = self.actif_users_dn

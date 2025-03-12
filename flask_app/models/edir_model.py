@@ -1,25 +1,24 @@
-# flask_app/models/meta_model.py
-#from flask_app.config.meta_config import meta_login_config
+# flask_app/models/edir_model.py
 from flask_app.models.ldap_config_manager import LDAPConfigManager
-from flask_app.models.meta import (
-    METAUserMixin,
-    METAGroupMixin,
-    METARoleMixin,
-    METAServiceMixin,
-    METAAutocompleteMixin,
-    METADashboardMixin,
-    METATemplate
+from flask_app.models.edir import (
+    EDIRUserMixin,
+    EDIRGroupMixin,
+    EDIRRoleMixin,
+    EDIRServiceMixin,
+    EDIRAutocompleteMixin,
+    EDIRDashboardMixin,
+    EDIRTemplate
 )
 from ldap3 import Server, Connection, ALL
 
-class METAModel(
-    METAUserMixin,
-    METAGroupMixin,
-    METARoleMixin,
-    METAServiceMixin,
-    METAAutocompleteMixin,
-    METADashboardMixin,
-    METATemplate
+class EDIRModel(
+    EDIRUserMixin,
+    EDIRGroupMixin,
+    EDIRRoleMixin,
+    EDIRServiceMixin,
+    EDIRAutocompleteMixin,
+    EDIRDashboardMixin,
+    EDIRTemplate
 ):
     def __init__(self, source='meta'):
         """
@@ -36,7 +35,7 @@ class METAModel(
         user_dn = f'cn={username},{self.actif_users_dn}'
         try:
             # Set up the server with a timeout
-            server = Server(self.meta_server, get_info=ALL, connect_timeout=10)
+            server = Server(self.edir_server, get_info=ALL, connect_timeout=10)
             
             # Connect with timeout parameters
             conn = Connection(
@@ -59,7 +58,7 @@ class METAModel(
     
     def authenticate_admin(self, username, password):
         try:
-            server = Server(self.meta_server, get_info=ALL)
+            server = Server(self.edir_server, get_info=ALL)
             conn = Connection(server, username, password=password, auto_bind=True)
             return conn
             

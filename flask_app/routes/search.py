@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, session, url_for, redirect
-from flask_app.models.meta_model import METAModel
+from flask_app.models.edir_model import EDIRModel
 from flask_app.utils.ldap_utils import login_required
 
 search_bp = Blueprint('search', __name__)
@@ -38,7 +38,7 @@ def search_user():
         has_wildcard = '*' in search_term and search_type in ['fullName', 'cn']
         
         # Perform the search
-        ldap_model = METAModel()
+        ldap_model = EDIRModel()
         
         if has_wildcard:
             # Use return_list=True for wildcard searches to get multiple results
@@ -60,7 +60,7 @@ def search_user():
     
     # If we have a DN parameter, try to get user details
     elif request.args.get('dn'):
-        ldap_model = METAModel()
+        ldap_model = EDIRModel()
         user_dn = request.args.get('dn')
         result = ldap_model.search_user_final(user_dn)
             

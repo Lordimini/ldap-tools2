@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request
 from flask_app.utils.ldap_utils import login_required
-from flask_app.models.meta_model import METAModel
+from flask_app.models.edir_model import EDIRModel
 from flask_app.models.ldap_config_manager import LDAPConfigManager
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -12,7 +12,7 @@ def dashboard():
     ldap_source = request.args.get('source', 'meta')
     
     # Créer une instance du modèle LDAP avec la source spécifiée
-    ldap_model = METAModel(source=ldap_source)
+    ldap_model = EDIRModel(source=ldap_source)
     
     # Récupérer le nom de la directory depuis la configuration
     config = LDAPConfigManager.get_config(ldap_source)

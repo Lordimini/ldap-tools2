@@ -201,7 +201,7 @@
                         {% if result.groupMembership %}
                             {% for group in result.groupMembership %}
                                 <div class="badge bg-info me-2 mb-2 p-2 group-badge">
-                                    <a href="{{ url_for('group.group_users') }}?group_name={{ group.cn }}" class="text-white text-decoration-none">
+                                    <a href="{{ url_for('group.group_users') }}?group_name={{ group.cn }}&source={{ ldap_source }}" class="text-white text-decoration-none">
                                         {{ group.cn }}
                                     </a>
                                 </div>

@@ -12,19 +12,23 @@ def group_users():
     prefill_group_name = request.args.get('group_name', '')
     prefill_group_dn = request.args.get('group_dn', '')
     
+    # Récupérer la source LDAP depuis les paramètres de requête - à définir avant les conditions
+    ldap_source = request.args.get('source', 'meta')
+    if request.method == 'POST':
+        # Si la méthode est POST, prendre la source du formulaire si elle existe
+        ldap_source = request.form.get('ldap_source', ldap_source)
+    
+    # Créer une instance du modèle LDAP avec la source spécifiée
+    ldap_model = EDIRModel(source=ldap_source)
+    
+    # Récupérer le nom de la directory depuis la configuration
+    config = LDAPConfigManager.get_config(ldap_source)
+    ldap_name = config.get('LDAP_name', 'META')
+    
     if request.method == 'POST' or prefill_group_name:
         # Récupérer les données du formulaire ou des paramètres de requête
         group_name = request.form.get('group_name', '') or prefill_group_name
         group_dn = request.form.get('group_dn', '') or prefill_group_dn
-        
-        # Récupérer la source LDAP depuis les paramètres de requête
-        ldap_source = request.args.get('source', 'meta')
-        # Créer une instance du modèle LDAP avec la source spécifiée
-        ldap_model = EDIRModel(source=ldap_source)
-        
-        # Récupérer le nom de la directory depuis la configuration
-        config = LDAPConfigManager.get_config(ldap_source)
-        ldap_name = config.get('LDAP_name', 'META')
         
         # Si nous avons un DN spécifique, l'utiliser pour la recherche
         if group_dn:

@@ -376,6 +376,9 @@
                             return;
                         }
                         
+                        // Récupérer la source LDAP actuelle
+                        var ldapSource = $('input[name="ldap_source"]').val() || 'meta';
+                        
                         // Ajouter une variable pour stocker la requête AJAX en cours
                         if (this.xhr) {
                             this.xhr.abort();
@@ -383,7 +386,8 @@
                         
                         // Effectuer la requête AJAX avec un délai
                         this.xhr = $.getJSON("{{ url_for('autocomplete.autocomplete_fullName') }}", {
-                            term: request.term
+                            term: request.term,
+                            source: ldapSource
                         }, function(data) {
                             response(data);
                         });

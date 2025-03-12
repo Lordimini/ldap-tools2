@@ -1,13 +1,13 @@
 import csv, time
 from ldap3 import Server, Connection, ALL, MODIFY_ADD, SUBTREE
-from flask_app.models.ldap import LDAPModel
+from flask_app.models.meta_model import METAModel
 
 def validate_entries(csv_file_path, group_dn_structure):
     valid_entries = []
     invalid_entries = []
 
     # Connect to the eDirectory server
-    ldap_model = LDAPModel()
+    ldap_model = METAModel()
     #ldap_model.authenticate(self.bind_dn, self.password)
     conn = ldap_model.authenticate_admin(ldap_model.bind_dn, ldap_model.password) 
 
@@ -46,7 +46,7 @@ def apply_changes(valid_entries, group_dn_structure):
     failures = []
 
    # Connect to the eDirectory server
-    ldap_model = LDAPModel()
+    ldap_model = METAModel()
     #ldap_model.authenticate(self.bind_dn, self.password)
     conn = ldap_model.authenticate_admin(ldap_model.bind_dn, ldap_model.password) 
 

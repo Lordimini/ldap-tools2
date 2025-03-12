@@ -16,7 +16,7 @@ class METAGroupMixin(METABase):
 
         if group_dn:
             # Fetch the group's members
-            conn.search(group_dn, '(objectClass=*)', attributes=['member'])
+            conn.search(group_dn, '(objectClass=groupOfNames)', attributes=['member'])
             if conn.entries and conn.entries[0].member:
                 members = conn.entries[0].member.values
                 users = []
@@ -68,7 +68,7 @@ class METAGroupMixin(METABase):
             conn = Connection(self.meta_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Vérifier si le groupe existe
-            conn.search(group_dn, '(objectClass=*)', search_scope='BASE', attributes=['cn'])
+            conn.search(group_dn, '(objectClass=groupOfNames)', search_scope='BASE', attributes=['cn'])
             
             if not conn.entries:
                 print(f"Group with DN '{group_dn}' not found")
@@ -79,7 +79,7 @@ class METAGroupMixin(METABase):
                 group_name = conn.entries[0].cn.value
             
             # Récupérer les membres du groupe
-            conn.search(group_dn, '(objectClass=*)', attributes=['member'])
+            conn.search(group_dn, '(objectClass=groupOfNames)', attributes=['member'])
             
             users = []
             if conn.entries and hasattr(conn.entries[0], 'member') and conn.entries[0].member:

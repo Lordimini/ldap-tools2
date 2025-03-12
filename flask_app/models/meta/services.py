@@ -1,6 +1,6 @@
 # flask_app/models/ldap/services.py
 from .base import METABase
-from ldap3 import Connection
+from ldap3 import Connection, SUBTREE
 
 class METAServiceMixin(METABase):
     def get_service_users(self, service_name):

@@ -4,6 +4,7 @@
 
 
 {% block content %}
+    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
     <h1 class="text-center mb-4">Operation Results</h1>
     {% if success_count > 0 %}
     <div class="alert alert-success" role="alert">

@@ -2,6 +2,7 @@
 {% block title %}View Object - LDAP Manager{% endblock %}
 {% block content %}
 <div class="container mt-5">
+    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
     <h1 class="text-center mb-4">Object Details</h1>
     <div class="card p-4 shadow">
         <h2 class="mb-4">{{ dn }}</h2>

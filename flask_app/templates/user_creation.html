@@ -7,7 +7,7 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">Create User Account</h1>
-    
+    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
     <!-- Flash messages for any errors/warnings -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}

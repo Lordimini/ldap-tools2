@@ -3,6 +3,7 @@
 {% block title %}Service Users - LDAP Manager{% endblock %}
 
 {% block content %}
+<input type="hidden" name="ldap_source" value="{{ ldap_source }}">
 <div class="container mt-5">
     <h1 class="text-center mb-4">Service Users</h1>
     <form method="POST" action="{{ url_for('service.service_users') }}" class="card p-4 shadow mb-4">

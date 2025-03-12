@@ -5,6 +5,7 @@
 
     {% block content %}
     <h1 class="text-center mb-4">CSV bulk groups populate</h1>
+    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
     <form method="POST" enctype="multipart/form-data" class="card p-4 shadow">
         <div class="mb-3">
             <label for="group_dn" class="form-label">Select the application for which you wish to populate groups:</label>

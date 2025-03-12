@@ -3,6 +3,7 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">Role Browser</h1>
+    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
     <!-- Back Button -->
     {% if parent_dn %}
     <div class="mb-4">

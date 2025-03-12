@@ -3,20 +3,7 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">User Browser</h1>
-
-    <!-- Breadcrumb Navigation 
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            {% set parts = current_dn.split(',') %}
-            {% for i in range(parts|length) %}
-                {% set dn = ','.join(parts[:i+1]) %}
-                <li class="breadcrumb-item">
-                    <a href="{{ url_for('user_browser') }}?dn={{ dn }}">{{ parts[i] }}</a>
-                </li>
-            {% endfor %}
-        </ol>
-    </nav> -->
-
+    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
     <!-- Child Entries -->
     <div class="card p-4 shadow">
         <!-- <h2 class="mb-4">Contents of {{ current_dn }}</h2> -->

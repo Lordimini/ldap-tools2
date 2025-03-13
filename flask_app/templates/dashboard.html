@@ -5,7 +5,22 @@
 {% block content %}
     <div class="container-fluid px-4">
         <h1 class="mt-2 mb-4">Dashboard</h1>
-        <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
+        
+        <!-- Store the current LDAP source to be included in any form submissions -->
+        <input type="hidden" id="current_ldap_source" name="ldap_source" value="{{ ldap_source }}">
+        
+        <!-- LDAP Source Indicator -->
+        <div class="alert alert-info d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Current LDAP Source:</strong> {{ ldap_name }} ({{ ldap_source }})
+            </div>
+            <div>
+                <a href="{{ url_for('dashboard.dashboard', source=ldap_source) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-arrow-repeat"></i> Refresh Stats
+                </a>
+            </div>
+        </div>
+        
         <!-- Summary Stats Row -->
         <div class="row mb-4">
             <div class="col-xl-3 col-md-6">
@@ -121,28 +136,28 @@
                     </div>
                     <div class="card-body">
                         <div class="list-group">
-                            <a href="{{ url_for('search.search_user') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                            <a href="{{ url_for('search.search_user', source=ldap_source) }}" class="list-group-item list-group-item-action d-flex align-items-center">
                                 <i class="bi bi-search me-3 text-primary"></i>
                                 <div>
                                     <div class="fw-bold">Search User</div>
                                     <small class="text-muted">Find a user in the directory</small>
                                 </div>
                             </a>
-                            <a href="{{ url_for('usercreation.create_user') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                            <a href="{{ url_for('usercreation.create_user', source=ldap_source) }}" class="list-group-item list-group-item-action d-flex align-items-center">
                                 <i class="bi bi-person-plus me-3 text-success"></i>
                                 <div>
                                     <div class="fw-bold">Create User</div>
                                     <small class="text-muted">Add a new user to the directory</small>
                                 </div>
                             </a>
-                            <a href="{{ url_for('group.group_users') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                            <a href="{{ url_for('group.group_users', source=ldap_source) }}" class="list-group-item list-group-item-action d-flex align-items-center">
                                 <i class="bi bi-people me-3 text-info"></i>
                                 <div>
                                     <div class="fw-bold">Manage Groups</div>
                                     <small class="text-muted">View and edit group memberships</small>
                                 </div>
                             </a>
-                            <a href="{{ url_for('upload.upload_file') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                            <a href="{{ url_for('upload.upload_file', source=ldap_source) }}" class="list-group-item list-group-item-action d-flex align-items-center">
                                 <i class="bi bi-upload me-3 text-warning"></i>
                                 <div>
                                     <div class="fw-bold">Upload CSV</div>
@@ -164,7 +179,7 @@
                         <i class="bi bi-upload dashboard-icon"></i>
                         <h5 class="card-title">Upload CSV</h5>
                         <p class="card-text">Upload a CSV file to manage user-group assignments in bulk.</p>
-                        <a href="{{ url_for('upload.upload_file') }}" class="btn btn-primary">Go to Upload</a>
+                        <a href="{{ url_for('upload.upload_file', source=ldap_source) }}" class="btn btn-primary">Go to Upload</a>
                     </div>
                 </div>
             </div>
@@ -174,7 +189,7 @@
                         <i class="bi bi-search dashboard-icon"></i>
                         <h5 class="card-title">Search User</h5>
                         <p class="card-text">Search for a user in the LDAP directory and manage their profile.</p>
-                        <a href="{{ url_for('search.search_user') }}" class="btn btn-primary">Search User</a>
+                        <a href="{{ url_for('search.search_user', source=ldap_source) }}" class="btn btn-primary">Search User</a>
                     </div>
                 </div>
             </div>
@@ -184,7 +199,7 @@
                         <i class="bi bi-person-plus dashboard-icon"></i>
                         <h5 class="card-title">Create User</h5>
                         <p class="card-text">Create a new user in the Active directory with custom attributes.</p>
-                        <a href="{{ url_for('usercreation.create_user') }}" class="btn btn-primary">Create User</a>
+                        <a href="{{ url_for('usercreation.create_user', source=ldap_source) }}" class="btn btn-primary">Create User</a>
                     </div>
                 </div>
             </div>
@@ -194,7 +209,7 @@
                         <i class="bi bi-people dashboard-icon"></i>
                         <h5 class="card-title">Search Group</h5>
                         <p class="card-text">Search groups and view associated users and permissions.</p>
-                        <a href="{{ url_for('group.group_users') }}" class="btn btn-primary">Search Group</a>
+                        <a href="{{ url_for('group.group_users', source=ldap_source) }}" class="btn btn-primary">Search Group</a>
                     </div>
                 </div>
             </div>
@@ -204,7 +219,7 @@
                         <i class="bi bi-person-badge dashboard-icon"></i>
                         <h5 class="card-title">Search Role</h5>
                         <p class="card-text">Search roles and manage role-based access control.</p>
-                        <a href="{{ url_for('role.role_users') }}" class="btn btn-primary">Search Role</a>
+                        <a href="{{ url_for('role.role_users', source=ldap_source) }}" class="btn btn-primary">Search Role</a>
                     </div>
                 </div>
             </div>
@@ -214,7 +229,7 @@
                         <i class="bi bi-diagram-3 dashboard-icon"></i>
                         <h5 class="card-title">Role Groups</h5>
                         <p class="card-text">List and manage groups associated with specific roles.</p>
-                        <a href="{{ url_for('role.role_groups') }}" class="btn btn-primary">View Role Groups</a>
+                        <a href="{{ url_for('role.role_groups', source=ldap_source) }}" class="btn btn-primary">View Role Groups</a>
                     </div>
                 </div>
             </div>
@@ -224,7 +239,7 @@
                         <i class="bi bi-pencil dashboard-icon"></i>
                         <h5 class="card-title">Update User</h5>
                         <p class="card-text">Modify existing users with full group and attribute management.</p>
-                        <a href="{{ url_for('userupdate.update_user_page') }}" class="btn btn-primary">Update User</a>
+                        <a href="{{ url_for('userupdate.update_user_page', source=ldap_source) }}" class="btn btn-primary">Update User</a>
                     </div>
                 </div>
             </div>
@@ -234,10 +249,47 @@
                         <i class="bi bi-pencil-square dashboard-icon"></i>
                         <h5 class="card-title">Complete User Creation</h5>
                         <p class="card-text">Complete the creation process for pending users in the to-process container.</p>
-                        <a href="{{ url_for('postcreation.post_creation') }}" class="btn btn-primary">Complete Users</a>
+                        <a href="{{ url_for('postcreation.post_creation', source=ldap_source) }}" class="btn btn-primary">Complete Users</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+    // Make sure all links and forms include the current LDAP source
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentLdapSource = document.getElementById('current_ldap_source').value;
+        
+        // Add LDAP source to all links that don't already have it
+        document.querySelectorAll('a[href]').forEach(function(link) {
+            if (!link.href.includes('source=') && link.href.includes(window.location.hostname)) {
+                const url = new URL(link.href);
+                url.searchParams.set('source', currentLdapSource);
+                link.href = url.toString();
+            }
+        });
+        
+        // Add LDAP source to all forms
+        document.querySelectorAll('form').forEach(function(form) {
+            // Check if the form already has an ldap_source input
+            let hasLdapSource = false;
+            form.querySelectorAll('input').forEach(function(input) {
+                if (input.name === 'ldap_source') {
+                    hasLdapSource = true;
+                    input.value = currentLdapSource;
+                }
+            });
+            
+            // If not, add a hidden input for ldap_source
+            if (!hasLdapSource) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ldap_source';
+                input.value = currentLdapSource;
+                form.appendChild(input);
+            }
+        });
+    });
+    </script>
 {% endblock %}

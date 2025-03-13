@@ -4,12 +4,16 @@ from flask_app.config.meta_config import meta_login_config
 from flask_app.config.idme_config import idme_login_config
 
 class LDAPConfigManager:
+    # Class-level configs dictionary to be accessible from static methods
+    configs = {
+        'meta': meta_login_config,
+        'idme': idme_login_config
+    }
+    default_source = 'meta'
+    
     def __init__(self):
-        self.configs = {
-            'meta': meta_login_config,
-            'idme': idme_login_config
-        }
-        self.default_source = 'meta'
+        # Instance initialization can remain empty as we're using class variables
+        pass
     
     def init_app(self, app):
         """
@@ -18,7 +22,8 @@ class LDAPConfigManager:
         # Rien de spécial à faire ici pour l'instant
         pass
     
-    def get_config(self, source=None):
+    @classmethod
+    def get_config(cls, source=None):
         """
         Retourne la configuration LDAP appropriée selon la source demandée.
         Si source est None, utilise la source active.
@@ -30,35 +35,38 @@ class LDAPConfigManager:
             dict: Configuration LDAP correspondante
         """
         if source is None:
-            source = self.get_active_config_name()
+            source = cls.get_active_config_name()
         
         source = source.lower()
         
-        if source in self.configs:
-            return self.configs[source]
+        if source in cls.configs:
+            return cls.configs[source]
         else:
             # Par défaut, retourner la source par défaut
-            return self.configs[self.default_source]
+            return cls.configs[cls.default_source]
     
-    def get_available_configs(self):
+    @classmethod
+    def get_available_configs(cls):
         """
         Retourne la liste des configurations LDAP disponibles
         
         Returns:
             list: Liste des identifiants de configurations disponibles
         """
-        return list(self.configs.keys())
+        return list(cls.configs.keys())
     
-    def get_active_config_name(self):
+    @classmethod
+    def get_active_config_name(cls):
         """
         Retourne l'identifiant de la configuration LDAP active
         
         Returns:
             str: Identifiant de la configuration active
         """
-        return session.get('ldap_source', self.default_source)
+        return session.get('ldap_source', cls.default_source)
     
-    def set_active_config(self, source):
+    @classmethod
+    def set_active_config(cls, source):
         """
         Définit la configuration LDAP active
         
@@ -68,7 +76,7 @@ class LDAPConfigManager:
         Returns:
             bool: True si la source existe, False sinon
         """
-        if source in self.configs:
+        if source in cls.configs:
             session['ldap_source'] = source
             return True
         return False

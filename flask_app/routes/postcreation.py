@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, json
 from flask_app.models.edir_model import EDIRModel
 from flask_app.utils.ldap_utils import login_required
+from flask_app.models.ldap_config_manager import LDAPConfigManager
 
 postcreation_bp = Blueprint('postcreation', __name__)
 
@@ -11,7 +12,18 @@ def post_creation():
     Display the list of pending users in the to-process container
     and allow selection for completion.
     """
-    ldap_model = EDIRModel()
+    # Récupérer la source LDAP depuis les paramètres de requête
+    ldap_source = request.args.get('source', 'meta')
+    if request.method == 'POST':
+        ldap_source = request.form.get('ldap_source', ldap_source)
+    
+    # Créer une instance du modèle LDAP avec la source spécifiée
+    ldap_model = EDIRModel(source=ldap_source)
+    
+    # Récupérer le nom de la directory depuis la configuration
+    config = LDAPConfigManager.get_config(ldap_source)
+    ldap_name = config.get('LDAP_name', 'META')
+    
     pending_users = ldap_model.get_pending_users()
     
     selected_user = None
@@ -30,7 +42,9 @@ def post_creation():
     
     return render_template('post-creation.html', 
                           pending_users=pending_users,
-                          selected_user=selected_user)
+                          selected_user=selected_user,
+                          ldap_source=ldap_source,
+                          ldap_name=ldap_name)
 
 @postcreation_bp.route('/select_user', methods=['POST'])
 @login_required
@@ -39,7 +53,11 @@ def select_user():
     Handle the user selection from the dropdown and redirect back to the main form
     """
     user_dn = request.form.get('user_dn', '')
-    return redirect(url_for('postcreation.post_creation', user_dn=user_dn))
+    
+    # Récupérer la source LDAP depuis le formulaire
+    ldap_source = request.form.get('ldap_source', 'meta')
+    
+    return redirect(url_for('postcreation.post_creation', user_dn=user_dn, source=ldap_source))
 
 @postcreation_bp.route('/complete_user', methods=['POST'])
 @login_required
@@ -51,6 +69,9 @@ def complete_user():
     if request.method == 'POST':
         user_dn = request.form.get('user_dn')
         target_container = request.form.get('target_container')
+        
+        # Récupérer la source LDAP depuis le formulaire
+        ldap_source = request.form.get('ldap_source', 'meta')
         
         # Collect form data for attributes
         attributes = {
@@ -89,13 +110,13 @@ def complete_user():
             
         except json.JSONDecodeError as e:
             flash(f'Error parsing group data: {str(e)}', 'error')
-            return redirect(url_for('postcreation.post_creation'))
+            return redirect(url_for('postcreation.post_creation', source=ldap_source))
         
         # Set password flag
         set_password = request.form.get('set_password') == 'true'
         
         # Complete the user creation process
-        ldap_model = EDIRModel()
+        ldap_model = EDIRModel(source=ldap_source)
         success, message = ldap_model.complete_user_creation(
             user_dn=user_dn,
             target_container=target_container,
@@ -109,7 +130,7 @@ def complete_user():
         else:
             flash(message, 'error')
         
-        return redirect(url_for('postcreation.post_creation'))
+        return redirect(url_for('postcreation.post_creation', source=ldap_source))
     
     return redirect(url_for('postcreation.post_creation'))
 
@@ -122,8 +143,11 @@ def delete_user():
     if request.method == 'POST':
         user_dn = request.form.get('user_dn')
         
+        # Récupérer la source LDAP depuis le formulaire
+        ldap_source = request.form.get('ldap_source', 'meta')
+        
         if user_dn:
-            ldap_model = EDIRModel()
+            ldap_model = EDIRModel(source=ldap_source)
             success, message = ldap_model.delete_user(user_dn)
             
             if success:
@@ -131,6 +155,6 @@ def delete_user():
             else:
                 flash(message, 'error')
         
-        return redirect(url_for('postcreation.post_creation'))
+        return redirect(url_for('postcreation.post_creation', source=ldap_source))
     
     return redirect(url_for('postcreation.post_creation'))

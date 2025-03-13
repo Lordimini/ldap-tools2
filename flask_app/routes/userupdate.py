@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, json
 from flask_app.models.edir_model import EDIRModel
 from flask_app.utils.ldap_utils import login_required
+from flask_app.models.ldap_config_manager import LDAPConfigManager
 from ldap3 import MODIFY_REPLACE, MODIFY_DELETE, MODIFY_ADD
 
 userupdate_bp = Blueprint('userupdate', __name__)
@@ -11,16 +12,25 @@ def update_user_page():
     """
     Main route for the Update User page
     """
+    # Récupérer la source LDAP depuis les paramètres de requête
+    ldap_source = request.args.get('source', 'meta')
+    
     # Render the form initially without any data
     search_type = None
     search_term = None
     search_results = None
     selected_user = None
 
+    # Créer une instance du modèle LDAP avec la source spécifiée
+    ldap_model = EDIRModel(source=ldap_source)
+    
+    # Récupérer le nom de la directory depuis la configuration
+    config = LDAPConfigManager.get_config(ldap_source)
+    ldap_name = config.get('LDAP_name', 'META')
+
     # Check if a user_dn parameter is provided in the URL (after redirecting from search results)
     if request.args.get('user_dn'):
         user_dn = request.args.get('user_dn')
-        ldap_model = EDIRModel()
         user_info = ldap_model.search_user_final(user_dn)
         if user_info:
             selected_user = user_info
@@ -29,7 +39,9 @@ def update_user_page():
                            search_type=search_type,
                            search_term=search_term,
                            search_results=search_results,
-                           selected_user=selected_user)
+                           selected_user=selected_user,
+                           ldap_source=ldap_source,
+                           ldap_name=ldap_name)
 
 @userupdate_bp.route('/search_user', methods=['POST'])
 @login_required
@@ -41,18 +53,29 @@ def search_user():
         search_type = request.form.get('search_type')
         search_term = request.form.get('search_term')
         
+        # Récupérer la source LDAP depuis le formulaire
+        ldap_source = request.form.get('ldap_source', 'meta')
+        
         if not search_term or not search_type:
             flash('Please provide a search term and type', 'error')
-            return redirect(url_for('userupdate.update_user_page'))
+            return redirect(url_for('userupdate.update_user_page', source=ldap_source))
         
-        ldap_model = EDIRModel()
+        # Créer une instance du modèle LDAP avec la source spécifiée
+        ldap_model = EDIRModel(source=ldap_source)
+        
+        # Récupérer le nom de la directory depuis la configuration
+        config = LDAPConfigManager.get_config(ldap_source)
+        ldap_name = config.get('LDAP_name', 'META')
+        
         search_results = ldap_model.search_user_final(search_term, search_type, return_list=True)
         
         return render_template('update-user.html', 
                               search_type=search_type,
                               search_term=search_term,
                               search_results=search_results,
-                              selected_user=None)
+                              selected_user=None,
+                              ldap_source=ldap_source,
+                              ldap_name=ldap_name)
     
     return redirect(url_for('userupdate.update_user_page'))
 
@@ -64,20 +87,31 @@ def select_user():
     """
     user_dn = request.args.get('user_dn')
     
+    # Récupérer la source LDAP depuis les paramètres de requête
+    ldap_source = request.args.get('source', 'meta')
+    
     if not user_dn:
         flash('No user selected', 'error')
-        return redirect(url_for('userupdate.update_user_page'))
+        return redirect(url_for('userupdate.update_user_page', source=ldap_source))
     
-    ldap_model = EDIRModel()
+    # Créer une instance du modèle LDAP avec la source spécifiée
+    ldap_model = EDIRModel(source=ldap_source)
+    
+    # Récupérer le nom de la directory depuis la configuration
+    config = LDAPConfigManager.get_config(ldap_source)
+    ldap_name = config.get('LDAP_name', 'META')
+    
     user_info = ldap_model.search_user_final(user_dn)
     
     if not user_info:
         flash('User not found', 'error')
-        return redirect(url_for('userupdate.update_user_page'))
+        return redirect(url_for('userupdate.update_user_page', source=ldap_source))
     
     return render_template('update-user.html',
                            search_results=None,
-                           selected_user=user_info)
+                           selected_user=user_info,
+                           ldap_source=ldap_source,
+                           ldap_name=ldap_name)
 
 @userupdate_bp.route('/update_user', methods=['POST'])
 @login_required
@@ -89,9 +123,13 @@ def update_user():
         return redirect(url_for('userupdate.update_user_page'))
     
     user_dn = request.form.get('user_dn')
+    
+    # Récupérer la source LDAP depuis le formulaire
+    ldap_source = request.form.get('ldap_source', 'meta')
+    
     if not user_dn:
         flash('No user DN provided', 'error')
-        return redirect(url_for('userupdate.update_user_page'))
+        return redirect(url_for('userupdate.update_user_page', source=ldap_source))
     
     # Collect form data for user attributes
     attributes = {}
@@ -150,7 +188,7 @@ def update_user():
     change_reason = request.form.get('change_reason', '')
     
     # Call the LDAP model to update the user
-    ldap_model = EDIRModel()
+    ldap_model = EDIRModel(source=ldap_source)
     success, message = ldap_model.update_user(
         user_dn=user_dn,
         attributes=attributes,
@@ -168,11 +206,11 @@ def update_user():
         # If the user was moved to a different container, redirect to the base page
         # since the original DN is no longer valid
         if target_container:
-            return redirect(url_for('userupdate.update_user_page'))
+            return redirect(url_for('userupdate.update_user_page', source=ldap_source))
         
         # Otherwise, refresh the user's information with the new values
-        return redirect(url_for('userupdate.select_user', user_dn=user_dn))
+        return redirect(url_for('userupdate.select_user', user_dn=user_dn, source=ldap_source))
     else:
         flash(message, 'error')
         # Return to the form with the previously selected user
-        return redirect(url_for('userupdate.select_user', user_dn=user_dn))
+        return redirect(url_for('userupdate.select_user', user_dn=user_dn, source=ldap_source))

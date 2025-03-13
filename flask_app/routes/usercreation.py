@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from flask_app.models.edir_model import EDIRModel
 from flask_app.utils.ldap_utils import login_required
+from flask_app.models.ldap_config_manager import LDAPConfigManager
 from flask_wtf import FlaskForm
 from wtforms import SelectField, StringField, HiddenField
 from wtforms.validators import DataRequired
@@ -19,18 +20,34 @@ class UserCreationForm(FlaskForm):
 
 @usercreation_bp.route('/fetch_user_types')
 def fetch_user_types():
-    ldap_model = EDIRModel()
+    # Récupérer la source LDAP
+    ldap_source = request.args.get('source', 'meta')
+    
+    # Créer une instance du modèle LDAP avec la source spécifiée
+    ldap_model = EDIRModel(source=ldap_source)
+    
     user_types = ldap_model.get_user_types_from_ldap('ou=tpl,ou=sync,o=copy')  # Adjust the DN as needed
     return jsonify(user_types)
 
 @usercreation_bp.route('/user_creation', methods=['GET', 'POST'])
 @login_required
 def create_user():
+    # Récupérer la source LDAP
+    ldap_source = request.args.get('source', 'meta')
+    if request.method == 'POST':
+        ldap_source = request.form.get('ldap_source', ldap_source)
+    
+    # Créer une instance du modèle LDAP avec la source spécifiée
+    ldap_model = EDIRModel(source=ldap_source)
+    
+    # Récupérer le nom de la directory depuis la configuration
+    config = LDAPConfigManager.get_config(ldap_source)
+    ldap_name = config.get('LDAP_name', 'META')
+    
     # Initialiser la forme
     form = UserCreationForm()
     
     # Récupérer les types d'utilisateurs pour le formulaire
-    ldap_model = EDIRModel()
     user_types = ldap_model.get_user_types_from_ldap('ou=tpl,ou=sync,o=copy')
     form.user_type.choices = [(ut['value'], ut['label']) for ut in user_types]
     
@@ -71,23 +88,27 @@ def create_user():
         # Valider les champs obligatoires
         if not given_name or not sn:
             flash("Les champs Prénom et Nom sont obligatoires.", 'error')
-            return render_template('user_creation.html', form=form, form_data=form_data)
+            return render_template('user_creation.html', form=form, form_data=form_data, 
+                                  ldap_source=ldap_source, ldap_name=ldap_name)
         
         # Valider l'email (obligatoire sauf si override)
         if not email and not email_override:
             flash("L'adresse email est obligatoire.", 'error')
-            return render_template('user_creation.html', form=form, form_data=form_data)
+            return render_template('user_creation.html', form=form, form_data=form_data,
+                                  ldap_source=ldap_source, ldap_name=ldap_name)
         
         # Vérifier si un chef hiérarchique est requis pour ce type d'utilisateur
         is_stag = user_type == "STAG" 
         if is_stag and not manager and not manager_override:
             flash("Un chef hiérarchique est obligatoire pour les stagiaires.", 'error')
-            return render_template('user_creation.html', form=form, form_data=form_data)
+            return render_template('user_creation.html', form=form, form_data=form_data,
+                                  ldap_source=ldap_source, ldap_name=ldap_name)
         
         # Vérifier si le FavvNatNr est requis pour certains types d'utilisateurs
         if (user_type == "BOODOCI" or user_type == "OCI") and not favvnatnr and not favvnatnr_override:
             flash("Le numéro de registre national est obligatoire pour les utilisateurs de type OCI.", 'error')
-            return render_template('user_creation.html', form=form, form_data=form_data)
+            return render_template('user_creation.html', form=form, form_data=form_data,
+                                  ldap_source=ldap_source, ldap_name=ldap_name)
         
         # Obtenir les détails du modèle sélectionné
         template_details = ldap_model.get_template_details(user_type)
@@ -167,16 +188,19 @@ def create_user():
                 
                 flash(message, 'success')
                 # Rediriger vers une nouvelle page vide pour éviter la resoumission du formulaire en cas de rafraîchissement
-                return redirect(url_for('usercreation.create_user'))
+                return redirect(url_for('usercreation.create_user', source=ldap_source))
             else:
                 flash(f"Échec de la création de l'utilisateur.", 'error')
-                return render_template('user_creation.html', form=form, form_data=form_data)
+                return render_template('user_creation.html', form=form, form_data=form_data,
+                                      ldap_source=ldap_source, ldap_name=ldap_name)
         except Exception as e:
             flash(f"Une erreur est survenue: {str(e)}", 'error')
-            return render_template('user_creation.html', form=form, form_data=form_data)
+            return render_template('user_creation.html', form=form, form_data=form_data,
+                                  ldap_source=ldap_source, ldap_name=ldap_name)
 
     # Pour les requêtes GET, toujours retourner un formulaire vide
-    return render_template('user_creation.html', form=form, form_data=form_data)
+    return render_template('user_creation.html', form=form, form_data=form_data,
+                          ldap_source=ldap_source, ldap_name=ldap_name)
 
 @usercreation_bp.route('/preview_user_details', methods=['POST'])
 @login_required
@@ -190,12 +214,14 @@ def preview_user_details():
         given_name = request.json.get('givenName', '')
         sn = request.json.get('sn', '')
         user_type = request.json.get('user_type', '')
+        # Récupérer la source LDAP depuis les données JSON
+        ldap_source = request.json.get('ldap_source', 'meta')
         
         if not given_name or not sn or not user_type:
             return jsonify({'error': 'Given name, surname and user type are required'}), 400
         
         # Instantiate the LDAP model
-        ldap_model = EDIRModel()
+        ldap_model = EDIRModel(source=ldap_source)
         
         # Generate the CN
         cn = ldap_model.generate_unique_cn(given_name, sn)
@@ -260,11 +286,15 @@ def check_name_exists():
     """
     given_name = request.json.get('givenName', '')
     sn = request.json.get('sn', '')
+    # Récupérer la source LDAP depuis les données JSON
+    ldap_source = request.json.get('ldap_source', 'meta')
     
     if not given_name or not sn:
         return jsonify({'status': 'error', 'message': 'Prénom et nom sont requis'}), 400
     
-    ldap_model = EDIRModel()
+    # Créer une instance du modèle LDAP avec la source spécifiée
+    ldap_model = EDIRModel(source=ldap_source)
+    
     exists, existing_dn = ldap_model.check_name_combination_exists(given_name, sn)
     
     if exists:
@@ -285,6 +315,8 @@ def check_favvnatnr_exists():
     Route pour vérifier si un utilisateur avec le numéro de registre national donné existe déjà
     """
     favvnatnr = request.json.get('favvNatNr', '')
+    # Récupérer la source LDAP depuis les données JSON
+    ldap_source = request.json.get('ldap_source', 'meta')
     
     if not favvnatnr:
         return jsonify({'status': 'error', 'message': 'Numéro de registre national requis'}), 400
@@ -292,7 +324,9 @@ def check_favvnatnr_exists():
     # Normaliser le FavvNatNr
     normalized_favvnatnr = favvnatnr.replace(' ', '').replace('-', '')
     
-    ldap_model = EDIRModel()
+    # Créer une instance du modèle LDAP avec la source spécifiée
+    ldap_model = EDIRModel(source=ldap_source)
+    
     exists, existing_dn, fullname = ldap_model.check_favvnatnr_exists(normalized_favvnatnr)
     
     if exists:

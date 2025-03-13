@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">Add Users to Group</h1>
-    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
+    
     <!-- Flash messages for any errors/warnings -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -20,6 +20,7 @@
 
     <!-- Group Search Section -->
     <form method="POST" action="{{ url_for('group.add_users_to_group') }}" class="card p-4 shadow mb-4">
+        <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
         <h4 class="mb-3">Select Group</h4>
         <div class="mb-3">
             <label for="group_name" class="form-label">Search Group:</label>
@@ -47,6 +48,7 @@
                     </div>
                 </div>
                 <form id="userSearchForm" method="POST" action="{{ url_for('group.search_users_for_group') }}" class="mb-3">
+                    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
                     <input type="hidden" name="group_name" value="{{ group_info.group_name }}">
                     <input type="hidden" name="group_dn" value="{{ group_info.group_dn }}">
                     <input type="hidden" name="selected_users_json" id="hidden_selected_users">
@@ -113,6 +115,7 @@
                     </div>
                 </div>
                 <form id="addUsersForm" method="POST" action="{{ url_for('group.confirm_add_users') }}">
+                    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
                     <input type="hidden" name="group_name" value="{{ group_info.group_name }}">
                     <input type="hidden" name="group_dn" value="{{ group_info.group_dn }}">
                     <input type="hidden" id="selected_users_data" name="selected_users" value="[]">
@@ -144,7 +147,7 @@
                             {% for user in group_info.users %}
                             <tr 
                                 role="button" 
-                                onclick="window.location.href='{{ url_for('search.search_user') }}?cn={{ user.CN | urlencode }}'" 
+                                onclick="window.location.href='{{ url_for('search.search_user') }}?cn={{ user.CN | urlencode }}&source={{ ldap_source }}'" 
                                 style="cursor: pointer;"
                             >
                                 <td>{{ user.CN | default('N/A') }}</td>
@@ -187,10 +190,10 @@
             </div>
             <div class="col-md-6">
                 <div class="d-grid gap-2">
-                    <a href="{{ url_for('group.group_users') }}?group_name={{ group_info.group_name | urlencode }}&group_dn={{ group_info.group_dn | urlencode }}" class="btn btn-info">
+                    <a href="{{ url_for('group.group_users') }}?group_name={{ group_info.group_name | urlencode }}&group_dn={{ group_info.group_dn | urlencode }}&source={{ ldap_source }}" class="btn btn-info">
                         <i class="bi bi-eye"></i> View Group Details
                     </a>
-                    <a href="{{ url_for('group.export_group_users_csv') }}?group_name={{ group_info.group_name | urlencode }}&group_dn={{ group_info.group_dn | urlencode }}" class="btn btn-success">
+                    <a href="{{ url_for('group.export_group_users_csv') }}?group_name={{ group_info.group_name | urlencode }}&group_dn={{ group_info.group_dn | urlencode }}&source={{ ldap_source }}" class="btn btn-success">
                         <i class="bi bi-file-earmark-spreadsheet"></i> Export Group to CSV
                     </a>
                 </div>
@@ -256,6 +259,9 @@ $(document).ready(function () {
     // Initialize selectedUsers from passed data if available
     let selectedUsers = {% if selected_users %}{{ selected_users|tojson }}{% else %}[]{% endif %};
     
+    // Get the current LDAP source
+    const ldapSource = $('input[name="ldap_source"]').val() || 'meta';
+    
     // Initialize DataTables for current members table
     if ($.fn.DataTable.isDataTable('#currentMembersTable')) {
         $('#currentMembersTable').DataTable().destroy();
@@ -286,7 +292,8 @@ $(document).ready(function () {
     $('#group_name').autocomplete({
         source: function(request, response) {
             $.getJSON("{{ url_for('autocomplete.autocomplete_groups') }}", {
-                term: request.term
+                term: request.term,
+                source: ldapSource
             }, function(data) {
                 response(data);
             });
@@ -321,7 +328,8 @@ $(document).ready(function () {
                     }
                     
                     $.getJSON("{{ url_for('autocomplete.autocomplete_fullName') }}", {
-                        term: request.term
+                        term: request.term,
+                        source: ldapSource
                     }, function(data) {
                         response(data);
                     });
@@ -472,7 +480,8 @@ $(document).ready(function () {
             contentType: 'application/json',
             data: JSON.stringify({
                 cn_list: cnList,
-                group_dn: "{{ group_info.group_dn if group_info else '' }}"
+                group_dn: "{{ group_info.group_dn if group_info else '' }}",
+                ldap_source: ldapSource
             }),
             success: function(response) {
                 // Process valid users

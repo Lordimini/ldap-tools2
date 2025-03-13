@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">Update User</h1>
-    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
+    
     <!-- Flash messages for any errors/warnings -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -24,6 +24,7 @@
     <div class="card p-4 shadow mb-4">
         <h4 class="mb-3">Search Active User</h4>
         <form method="POST" action="{{ url_for('userupdate.search_user') }}" class="mb-3">
+            <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
             <div class="mb-3">
                 <div class="row">
                     <div class="col-md-3">
@@ -67,7 +68,7 @@
                             <td>{{ user.fullName }}</td>
                             <td>{{ user.mail }}</td>
                             <td>
-                                <a href="{{ url_for('userupdate.select_user', user_dn=user.dn) }}" class="btn btn-sm btn-primary">
+                                <a href="{{ url_for('userupdate.select_user') }}?user_dn={{ user.dn }}&source={{ ldap_source }}" class="btn btn-sm btn-primary">
                                     <i class="bi bi-pencil"></i> Select
                                 </a>
                             </td>
@@ -83,6 +84,7 @@
     {% if selected_user %}
     <form id="userUpdateForm" method="POST" action="{{ url_for('userupdate.update_user') }}" class="card p-4 shadow">
         <input type="hidden" name="user_dn" value="{{ selected_user.dn }}">
+        <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
         
         <div class="row">
             <!-- Left Column: User Information Summary -->
@@ -344,7 +346,7 @@
                 
                 <!-- Submit Button -->
                 <div class="mt-4 d-flex justify-content-between">
-                    <a href="{{ url_for('search.search_user') }}?cn={{ selected_user.CN }}" class="btn btn-secondary">
+                    <a href="{{ url_for('search.search_user') }}?cn={{ selected_user.CN }}&source={{ ldap_source }}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to Search
                     </a>
                     <button type="submit" class="btn btn-primary">
@@ -365,6 +367,9 @@
 
 <script>
     $(document).ready(function() {
+        // Get the current LDAP source
+        const ldapSource = $('input[name="ldap_source"]').val() || 'meta';
+        
         // Handle search type dropdown
         function initializeAutocomplete() {
             if ($('#search_type').val() === 'fullName') {
@@ -376,7 +381,8 @@
                         }
                         
                         $.getJSON("{{ url_for('autocomplete.autocomplete_fullName') }}", {
-                            term: request.term
+                            term: request.term,
+                            source: ldapSource
                         }, function(data) {
                             response(data);
                         });
@@ -410,7 +416,8 @@
         $('#hierarchical_manager').autocomplete({
             source: function(request, response) {
                 $.getJSON("{{ url_for('autocomplete.autocomplete_managers') }}", {
-                    term: request.term
+                    term: request.term,
+                    source: ldapSource
                 }, function(data) {
                     response(data);
                 });
@@ -431,7 +438,8 @@
         $('#ou').autocomplete({
             source: function(request, response) {
                 $.getJSON("{{ url_for('autocomplete.autocomplete_services') }}", {
-                    term: request.term
+                    term: request.term,
+                    source: ldapSource
                 }, function(data) {
                     response(data);
                 });
@@ -447,7 +455,8 @@
         $('#group_name').autocomplete({
             source: function(request, response) {
                 $.getJSON("{{ url_for('autocomplete.autocomplete_groups') }}", {
-                    term: request.term
+                    term: request.term,
+                    source: ldapSource
                 }, function(data) {
                     response(data);
                 });

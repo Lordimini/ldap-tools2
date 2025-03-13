@@ -28,7 +28,7 @@
                 </div>
             </div>
             <div>
-                <a href="{{ url_for('group.export_group_users_csv') }}?group_name={{ result.group_name | urlencode }}&group_dn={{ result.group_dn | urlencode }}" class="btn btn-success">
+                <a href="{{ url_for('group.export_group_users_csv') }}?group_name={{ result.group_name | urlencode }}&group_dn={{ result.group_dn | urlencode }}&source={{ ldap_source }}" class="btn btn-success">
                     <i class="fas fa-file-csv"></i> Export to CSV
                 </a>
             </div>
@@ -48,7 +48,7 @@
                     {% for user in result.users %}
                     <tr 
                         role="button" 
-                        onclick="window.location.href='{{ url_for('search.search_user') }}?cn={{ user.CN | urlencode }}'" 
+                        onclick="window.location.href='{{ url_for('search.search_user') }}?cn={{ user.CN | urlencode }}&source={{ ldap_source }}'" 
                         style="cursor: pointer;"
                     >
                         <td>{{ user.CN | default('N/A') }}</td>
@@ -132,11 +132,15 @@ $(document).ready(function () {
         }).appendTo('form');
     }
 
+    // Récupérer la source LDAP actuelle
+    var ldapSource = $('input[name="ldap_source"]').val() || 'meta';
+
     // Autocomplete pour group_name avec stockage du DN
     $('#group_name').autocomplete({
         source: function(request, response) {
             $.getJSON("{{ url_for('autocomplete.autocomplete_groups') }}", {
-                term: request.term
+                term: request.term,
+                source: ldapSource
             }, function(data) {
                 response(data);
             });

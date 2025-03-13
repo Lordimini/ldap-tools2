@@ -384,9 +384,11 @@
             <div class="p-3 border-bottom border-secondary">
                 <label for="ldap_source_selector" class="form-label text-light small mb-1">LDAP Source:</label>
                 <select id="ldap_source_selector" class="form-select form-select-sm bg-dark text-light">
-                    <option value="ldap" {% if session.ldap_source == 'ldap' or not session.ldap_source %}selected{% endif %}>LDAP Standard</option>
-                    <option value="meta" {% if session.ldap_source == 'meta' %}selected{% endif %}>META Directory</option>
-                    <option value="idme" {% if session.ldap_source == 'idme' %}selected{% endif %}>IDME Directory</option>
+                    {% for config in menu_service.get_available_sources() %}
+                    <option value="{{ config }}" {% if menu_service.get_active_source() == config %}selected{% endif %}>
+                        {{ config }}
+                    </option>
+                    {% endfor %}
                 </select>
             </div>
             {% endif %}

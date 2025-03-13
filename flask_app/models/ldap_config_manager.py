@@ -23,3 +23,4 @@ class LDAPConfigManager:
         else:
             # Par défaut, retourner META
             return meta_login_config
+    

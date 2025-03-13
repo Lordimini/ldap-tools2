@@ -14,12 +14,18 @@ from flask_app.routes.usercreation import usercreation_bp
 from flask_app.routes.postcreation import postcreation_bp
 from flask_app.routes.userupdate import userupdate_bp
 from flask_app.services.menu_service import MenuService
+from flask_app.models.ldap_config_manager import LDAPConfigManager  # Votre gestionnaire existant
+
 
 menu_service = MenuService()
+ldap_config_manager = LDAPConfigManager()
 
 def create_app():
     app = Flask(__name__,)
     app.secret_key = 'eyqscmnc'
+    # Initialize LDAP config manager
+    ldap_config_manager.init_app(app)
+    app.ldap_config_manager = ldap_config_manager
     
     # Initialize menu service
     menu_service.init_app(app)

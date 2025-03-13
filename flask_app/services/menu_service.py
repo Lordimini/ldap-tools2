@@ -1,7 +1,8 @@
+# flask_app/services/menu_service.py
 import json
 import os
 import re
-from flask import session, request
+from flask import session, request, current_app
 
 class MenuService:
     """
@@ -34,17 +35,24 @@ class MenuService:
     
     def get_menu_for_current_source(self):
         """Get menu items for the current LDAP source"""
-        # Get current source from session, default to 'ldap' if not set
-        current_source = session.get('ldap_source', 'ldap')
+        # Get current source from session or from ldap_config_manager
+        if hasattr(current_app, 'ldap_config_manager'):
+            current_source = current_app.ldap_config_manager.get_active_config_name()
+        else:
+            current_source = session.get('ldap_source', 'ldap')
+            
         return self.get_menu_for_source(current_source)
     
     def get_menu_for_source(self, source):
         """Get menu items for a specific source"""
-        if source not in self.menu_cache:
-            # Default to standard LDAP if source not found
-            source = 'ldap'
+        # Normalize the source name to match the menu config files
+        source_key = source.lower().replace(' ', '_')
         
-        return self.menu_cache.get(source, {}).get('menu_items', [])
+        if source_key not in self.menu_cache:
+            # Default to standard LDAP if source not found
+            source_key = 'ldap'
+        
+        return self.menu_cache.get(source_key, {}).get('menu_items', [])
     
     def render_menu(self):
         """Render the menu HTML for the current source"""
@@ -94,3 +102,18 @@ class MenuService:
             return re.search(item['active_pattern'], current_path) is not None
         else:
             return current_path == item['url']
+    
+    def get_available_sources(self):
+        """Get a list of available LDAP sources"""
+        if hasattr(current_app, 'ldap_config_manager'):
+            return current_app.ldap_config_manager.get_available_configs()
+        else:
+            # Return keys from menu_cache as fallback
+            return list(self.menu_cache.keys())
+    
+    def get_active_source(self):
+        """Get the currently active LDAP source"""
+        if hasattr(current_app, 'ldap_config_manager'):
+            return current_app.ldap_config_manager.get_active_config_name()
+        else:
+            return session.get('ldap_source', 'ldap')

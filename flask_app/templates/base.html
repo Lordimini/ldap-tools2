@@ -386,6 +386,7 @@
                 <select id="ldap_source_selector" class="form-select form-select-sm bg-dark text-light">
                     <option value="ldap" {% if session.ldap_source == 'ldap' or not session.ldap_source %}selected{% endif %}>LDAP Standard</option>
                     <option value="meta" {% if session.ldap_source == 'meta' %}selected{% endif %}>META Directory</option>
+                    <option value="idme" {% if session.ldap_source == 'idme' %}selected{% endif %}>IDME Directory</option>
                 </select>
             </div>
             {% endif %}

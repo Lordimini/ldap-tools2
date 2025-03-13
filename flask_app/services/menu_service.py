@@ -36,10 +36,14 @@ class MenuService:
     def get_menu_for_current_source(self):
         """Get menu items for the current LDAP source"""
         # Get current source from session or from ldap_config_manager
-        if hasattr(current_app, 'ldap_config_manager'):
-            current_source = current_app.ldap_config_manager.get_active_config_name()
-        else:
-            current_source = session.get('ldap_source', 'ldap')
+        try:
+            if hasattr(current_app, 'ldap_config_manager') and hasattr(current_app.ldap_config_manager, 'get_active_config_name'):
+                current_source = current_app.ldap_config_manager.get_active_config_name()
+            else:
+                current_source = session.get('ldap_source', 'ldap')
+        except Exception as e:
+            print(f"Error getting current source: {e}")
+            current_source = 'ldap'  # Fallback to default
             
         return self.get_menu_for_source(current_source)
     

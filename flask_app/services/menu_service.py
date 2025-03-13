@@ -1,0 +1,96 @@
+import json
+import os
+import re
+from flask import session, request
+
+class MenuService:
+    """
+    Service for managing dynamic menus based on LDAP source
+    """
+    
+    def __init__(self, app=None):
+        self.app = app
+        self.menu_cache = {}
+        if app is not None:
+            self.init_app(app)
+    
+    def init_app(self, app):
+        self.app = app
+        # Initialize cache with available menu configurations
+        self._load_menu_configs()
+    
+    def _load_menu_configs(self):
+        """Load all menu configuration files into the cache"""
+        config_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config')
+        
+        # Look for all menu_*.json files
+        for filename in os.listdir(config_dir):
+            if filename.startswith('menu_') and filename.endswith('.json'):
+                source_name = filename[5:-5]  # Extract name between 'menu_' and '.json'
+                file_path = os.path.join(config_dir, filename)
+                
+                with open(file_path, 'r') as f:
+                    self.menu_cache[source_name] = json.load(f)
+    
+    def get_menu_for_current_source(self):
+        """Get menu items for the current LDAP source"""
+        # Get current source from session, default to 'ldap' if not set
+        current_source = session.get('ldap_source', 'ldap')
+        return self.get_menu_for_source(current_source)
+    
+    def get_menu_for_source(self, source):
+        """Get menu items for a specific source"""
+        if source not in self.menu_cache:
+            # Default to standard LDAP if source not found
+            source = 'ldap'
+        
+        return self.menu_cache.get(source, {}).get('menu_items', [])
+    
+    def render_menu(self):
+        """Render the menu HTML for the current source"""
+        menu_items = self.get_menu_for_current_source()
+        current_path = request.path
+        
+        html = '<ul class="nav flex-column">'
+        
+        for item in menu_items:
+            if item.get('is_section'):
+                # Render section header
+                html += f'<div class="sidebar-heading">{item["label"]}</div>'
+                
+                # Render section items
+                for sub_item in item.get('items', []):
+                    is_active = self._is_active(sub_item, current_path)
+                    active_class = 'active' if is_active else ''
+                    
+                    html += f'''
+                    <li class="nav-item">
+                        <a class="nav-link {active_class}" href="{sub_item['url']}">
+                            <i class="{sub_item['icon']}"></i>
+                            <span>{sub_item['label']}</span>
+                        </a>
+                    </li>
+                    '''
+            else:
+                # Render regular menu item
+                is_active = self._is_active(item, current_path)
+                active_class = 'active' if is_active else ''
+                
+                html += f'''
+                <li class="nav-item">
+                    <a class="nav-link {active_class}" href="{item['url']}">
+                        <i class="{item['icon']}"></i>
+                        <span>{item['label']}</span>
+                    </a>
+                </li>
+                '''
+        
+        html += '</ul>'
+        return html
+    
+    def _is_active(self, item, current_path):
+        """Check if a menu item should be marked as active"""
+        if 'active_pattern' in item:
+            return re.search(item['active_pattern'], current_path) is not None
+        else:
+            return current_path == item['url']

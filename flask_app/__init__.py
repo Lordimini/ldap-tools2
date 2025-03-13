@@ -13,10 +13,21 @@ from flask_app.routes.autocomplete import autocomplete_bp
 from flask_app.routes.usercreation import usercreation_bp
 from flask_app.routes.postcreation import postcreation_bp
 from flask_app.routes.userupdate import userupdate_bp
+from flask_app.services.menu_service import MenuService
+
+menu_service = MenuService()
 
 def create_app():
     app = Flask(__name__,)
     app.secret_key = 'eyqscmnc'
+    
+    # Initialize menu service
+    menu_service.init_app(app)
+    
+    # Make menu_service available in templates
+    @app.context_processor
+    def inject_menu_service():
+        return dict(menu_service=menu_service)
     
     # Register blueprints
     #app.register_blueprint(auth_bp, url_prefix='/auth')

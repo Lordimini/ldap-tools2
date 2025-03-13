@@ -303,13 +303,38 @@
         .list-group-item small.text-muted {
             color: var(--text-light-gray) !important;
         }
+
+        /* LDAP Source Selector Styles */
+        #ldap_source_selector {
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
         
-        /* Style pour élément actif dans le menu déroulant LDAP */
-        .dropdown-item.active {
-            background-color: var(--accent-color);
-            color: var(--text-white);
+        #ldap_source_selector:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .source-indicator {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            margin-left: 0.5rem;
+            background-color: var(--dark-gray);
+        }
+        
+        /* Source specific indicators */
+        .source-ldap {
+            color: #4caf50;
+        }
+        
+        .source-meta {
+            color: #ff9800;
         }
     </style>
+    <meta name="csrf-token" content="{{ csrf_token() if csrf_token else '' }}">
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
@@ -318,22 +343,15 @@
             <button id="sidebarToggle" class="text-white">
                 <i class="bi bi-list"></i>
             </button>
-            <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
-            <a class="navbar-brand ms-2" href="/dashboard">LDAP Tools - <span id="current-ldap-name">{{ ldap_name|default('META') }}</span></a>
+            
+            <a class="navbar-brand ms-2" href="/dashboard">
+                LDAP Tools
+                {% if session.ldap_source %}
+                <span class="source-indicator source-{{ session.ldap_source }}">{{ session.ldap_source }}</span>
+                {% endif %}
+            </a>
             
             <div class="d-flex align-items-center ms-auto">
-                <!-- LDAP Directory Selector -->
-                <div class="dropdown me-3">
-                    <button class="btn btn-outline-light dropdown-toggle" type="button" id="ldapSourceDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-database"></i>
-                        <span>Directory</span>
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="ldapSourceDropdown">
-                        <li><a class="dropdown-item ldap-source-item {% if ldap_source == 'meta' %}active{% endif %}" href="#" data-source="meta">META</a></li>
-                        <li><a class="dropdown-item ldap-source-item {% if ldap_source == 'idme' %}active{% endif %}" href="#" data-source="idme">IDME</a></li>
-                    </ul>
-                </div>
-                
                 <!-- User Profile -->
                 {% if session.logged_in %}
                 <div class="dropdown">
@@ -361,116 +379,19 @@
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar bg-dark">
+            <!-- Source Selector (only shown when logged in) -->
+            {% if session.logged_in %}
+            <div class="p-3 border-bottom border-secondary">
+                <label for="ldap_source_selector" class="form-label text-light small mb-1">LDAP Source:</label>
+                <select id="ldap_source_selector" class="form-select form-select-sm bg-dark text-light">
+                    <option value="ldap" {% if session.ldap_source == 'ldap' or not session.ldap_source %}selected{% endif %}>LDAP Standard</option>
+                    <option value="meta" {% if session.ldap_source == 'meta' %}selected{% endif %}>META Directory</option>
+                </select>
+            </div>
+            {% endif %}
             
-            
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="{{ url_for('dashboard.dashboard', source=ldap_source|default('meta')) }}">
-                        <i class="bi bi-speedometer2"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                
-                <div class="sidebar-heading">User Management</div>
-                
-                <li class="nav-item">
-                    <a class="nav-link {% if '/search' in request.path %}active{% endif %}" href="{{ url_for('search.search_user', source=ldap_source|default('meta')) }}">
-                        <i class="bi bi-search"></i>
-                        <span>Search User</span>
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link {% if '/create' in request.path %}active{% endif %}" href="{{ url_for('usercreation.create_user', source=ldap_source|default('meta')) }}">
-                        <i class="bi bi-person-plus"></i>
-                        <span>Create User</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link {% if '/update_user' in request.path %}active{% endif %}" href="{{ url_for('userupdate.update_user_page', source=ldap_source|default('meta')) }}">
-                        <i class="bi bi-pencil"></i>
-                        <span>Update User</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link {% if '/post_creation' in request.path %}active{% endif %}" href="{{ url_for('postcreation.post_creation', source=ldap_source|default('meta')) }}">
-                        <i class="bi bi-pencil-square"></i>
-                        <span>Complete User Creation</span>
-                    </a>
-                </li>
-                
-                <div class="sidebar-heading">Role Management</div>
-                
-                <li class="nav-item">
-                    <a class="nav-link {% if '/role/users' in request.path %}active{% endif %}" href="{{ url_for('role.role_users', source=ldap_source|default('meta')) }}">
-                        <i class="bi bi-person-badge"></i>
-                        <span>List Role assigned members</span>
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link {% if '/role/groups' in request.path %}active{% endif %}" href="{{ url_for('role.role_groups', source=ldap_source|default('meta')) }}">
-                        <i class="bi bi-diagram-3"></i>
-                        <span>List Role ressources</span>
-                    </a>
-                </li>
-                
-                                
-                <li class="nav-item">
-                    <a class="nav-link {% if '/ldap' in request.path %}active{% endif %}" href="{{ url_for('ldap.ldap_browser', source=ldap_source|default('meta')) }}">
-                        <i class="bi bi-folder2-open"></i>
-                        <span>Role Browser</span>
-                    </a>
-                </li>
-                
-                <div class="sidebar-heading">Group Management</div>
-
-                <li class="nav-item">
-                    <a class="nav-link {% if '/group' in request.path %}active{% endif %}" href="{{ url_for('group.group_users', source=ldap_source|default('meta')) }}">
-                        <i class="bi bi-people"></i>
-                        <span>Group membership detail</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link {% if '/group' in request.path %}active{% endif %}" href="{{ url_for('group.add_users_to_group', source=ldap_source|default('meta')) }}">
-                        <i class="bi bi-people"></i>
-                        <span>Group populate</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link {% if '/service' in request.path %}active{% endif %}" href="{{ url_for('service.service_users', source=ldap_source|default('meta')) }}">
-                        <i class="bi bi-gear"></i>
-                        <span>List Services members</span>
-                    </a>
-                </li>
-
-                <div class="sidebar-heading">Tools</div>
-                
-                <li class="nav-item">
-                    <a class="nav-link {% if '/upload' in request.path %}active{% endif %}" href="{{ url_for('upload.upload_file', source=ldap_source|default('meta')) }}">
-                        <i class="bi bi-upload"></i>
-                        <span>Upload CSV</span>
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="bi bi-file-earmark-bar-graph"></i>
-                        <span>Reports</span>
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="bi bi-sliders"></i>
-                        <span>Settings</span>
-                    </a>
-                </li>
-            </ul>
+            <!-- Dynamic Menu from Service -->
+            {{ menu_service.render_menu()|safe }}
         </div>
 
         <!-- Main Content -->
@@ -507,49 +428,41 @@
                     window.location = this.dataset.href;
                 });
             });
-        });
-    </script>
-
-    <!-- Script pour le sélecteur de LDAP directory -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Récupérer la source LDAP actuelle depuis le stockage local ou utiliser 'meta' par défaut
-            const currentSource = localStorage.getItem('ldap_source') || 'meta';
             
-            // Ajouter un gestionnaire d'événements pour chaque élément du menu déroulant
-            document.querySelectorAll('.ldap-source-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const source = this.getAttribute('data-source');
+            // LDAP Source Selector functionality
+            const sourceSelector = document.getElementById('ldap_source_selector');
+            if (sourceSelector) {
+                sourceSelector.addEventListener('change', function() {
+                    // Get CSRF token if it exists
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
                     
-                    // Enregistrer la sélection dans le stockage local
-                    localStorage.setItem('ldap_source', source);
-                    
-                    // Mettre à jour l'URL avec le paramètre de source
-                    const url = new URL(window.location);
-                    url.searchParams.set('source', source);
-                    
-                    // Rediriger vers la nouvelle URL
-                    window.location.href = url.toString();
+                    fetch('/set_ldap_source', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({source: this.value})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Show loading state
+                            document.body.style.cursor = 'wait';
+                            sourceSelector.disabled = true;
+                            
+                            // Reload page after successful response
+                            window.location.reload();
+                        } else {
+                            console.error('Failed to change LDAP source:', data.error);
+                            alert('Failed to change LDAP source: ' + (data.error || 'Unknown error'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error changing LDAP source:', error);
+                        alert('An error occurred while changing LDAP source');
+                    });
                 });
-                
-                // Mettre en évidence l'élément actuellement sélectionné
-                if (item.getAttribute('data-source') === currentSource) {
-                    item.classList.add('active');
-                } else {
-                    item.classList.remove('active');
-                }
-            });
-            
-            // Mettre à jour le texte de la barre de navigation avec le nom de la directory
-            const currentLdapName = document.getElementById('current-ldap-name');
-            if (currentLdapName && !currentLdapName.textContent.trim()) {
-                // Si le texte n'est pas déjà défini par le backend, le définir en fonction de la source
-                if (currentSource === 'idme') {
-                    currentLdapName.textContent = 'IDME';
-                } else {
-                    currentLdapName.textContent = 'META';
-                }
             }
         });
     </script>

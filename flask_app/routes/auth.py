@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_app.models.edir_model import EDIRModel
+from flask_app.utils.ldap_utils import login_required
 
 
 auth_bp = Blueprint('auth', __name__)
@@ -50,3 +51,12 @@ def logout():
     session.clear()
     flash('You have been logged out.', 'success')
     return redirect(url_for('auth.login'))
+
+@auth_bp.route('/set_ldap_source', methods=['POST'])
+@login_required
+def set_ldap_source():
+    data = request.get_json()
+    if data and 'source' in data:
+        session['ldap_source'] = data['source']
+        return jsonify({'success': True})
+    return jsonify({'success': False, 'error': 'Invalid source'}), 400

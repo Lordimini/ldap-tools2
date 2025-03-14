@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, session
 from flask_app.models.edir_model import EDIRModel
 from flask_app.utils.ldap_utils import login_required
 from flask_app.models.ldap_config_manager import LDAPConfigManager
@@ -20,10 +20,18 @@ class UserCreationForm(FlaskForm):
 
 @usercreation_bp.route('/fetch_user_types')
 def fetch_user_types():
-    # Récupérer la source LDAP
-    ldap_source = request.args.get('source', 'meta')
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.args.get('source')
     
-    # Créer une instance du modèle LDAP avec la source spécifiée
+    # If not in query params, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
+    
+    # Create EDIR model with the appropriate source
     ldap_model = EDIRModel(source=ldap_source)
     
     user_types = ldap_model.get_user_types_from_ldap('ou=tpl,ou=sync,o=copy')  # Adjust the DN as needed
@@ -32,15 +40,23 @@ def fetch_user_types():
 @usercreation_bp.route('/user_creation', methods=['GET', 'POST'])
 @login_required
 def create_user():
-    # Récupérer la source LDAP
-    ldap_source = request.args.get('source', 'meta')
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.args.get('source')
     if request.method == 'POST':
         ldap_source = request.form.get('ldap_source', ldap_source)
     
-    # Créer une instance du modèle LDAP avec la source spécifiée
+    # If not in query or form params, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
+    
+    # Create EDIR model with the appropriate source
     ldap_model = EDIRModel(source=ldap_source)
     
-    # Récupérer le nom de la directory depuis la configuration
+    # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
     ldap_name = config.get('LDAP_name', 'META')
     
@@ -214,8 +230,17 @@ def preview_user_details():
         given_name = request.json.get('givenName', '')
         sn = request.json.get('sn', '')
         user_type = request.json.get('user_type', '')
-        # Récupérer la source LDAP depuis les données JSON
-        ldap_source = request.json.get('ldap_source', 'meta')
+        
+        # Get LDAP source with proper fallback sequence
+        ldap_source = request.json.get('ldap_source')
+        
+        # If not in JSON data, get from session with default fallback
+        if not ldap_source:
+            ldap_source = session.get('ldap_source', 'meta')
+        
+        # Make sure session is updated with current source
+        session['ldap_source'] = ldap_source
+        session.modified = True
         
         if not given_name or not sn or not user_type:
             return jsonify({'error': 'Given name, surname and user type are required'}), 400
@@ -286,8 +311,17 @@ def check_name_exists():
     """
     given_name = request.json.get('givenName', '')
     sn = request.json.get('sn', '')
-    # Récupérer la source LDAP depuis les données JSON
-    ldap_source = request.json.get('ldap_source', 'meta')
+    
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.json.get('ldap_source')
+    
+    # If not in JSON data, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
     
     if not given_name or not sn:
         return jsonify({'status': 'error', 'message': 'Prénom et nom sont requis'}), 400
@@ -315,8 +349,17 @@ def check_favvnatnr_exists():
     Route pour vérifier si un utilisateur avec le numéro de registre national donné existe déjà
     """
     favvnatnr = request.json.get('favvNatNr', '')
-    # Récupérer la source LDAP depuis les données JSON
-    ldap_source = request.json.get('ldap_source', 'meta')
+    
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.json.get('ldap_source')
+    
+    # If not in JSON data, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
     
     if not favvnatnr:
         return jsonify({'status': 'error', 'message': 'Numéro de registre national requis'}), 400

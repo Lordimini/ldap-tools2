@@ -12,8 +12,18 @@ def update_user_page():
     """
     Main route for the Update User page
     """
-    # Récupérer la source LDAP depuis les paramètres de requête
-    ldap_source = request.args.get('source', 'meta')
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.args.get('source')
+    if request.method == 'POST':
+        ldap_source = request.form.get('ldap_source', ldap_source)
+    
+    # If not in query or form params, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
     
     # Render the form initially without any data
     search_type = None
@@ -21,10 +31,10 @@ def update_user_page():
     search_results = None
     selected_user = None
 
-    # Créer une instance du modèle LDAP avec la source spécifiée
+    # Create EDIR model with the appropriate source
     ldap_model = EDIRModel(source=ldap_source)
     
-    # Récupérer le nom de la directory depuis la configuration
+    # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
     ldap_name = config.get('LDAP_name', 'META')
 
@@ -53,17 +63,25 @@ def search_user():
         search_type = request.form.get('search_type')
         search_term = request.form.get('search_term')
         
-        # Récupérer la source LDAP depuis le formulaire
-        ldap_source = request.form.get('ldap_source', 'meta')
+        # Get LDAP source with proper fallback sequence
+        ldap_source = request.form.get('ldap_source')
+        
+        # If not in form params, get from session with default fallback
+        if not ldap_source:
+            ldap_source = session.get('ldap_source', 'meta')
+        
+        # Make sure session is updated with current source
+        session['ldap_source'] = ldap_source
+        session.modified = True
         
         if not search_term or not search_type:
             flash('Please provide a search term and type', 'error')
             return redirect(url_for('userupdate.update_user_page', source=ldap_source))
         
-        # Créer une instance du modèle LDAP avec la source spécifiée
+        # Create EDIR model with the appropriate source
         ldap_model = EDIRModel(source=ldap_source)
         
-        # Récupérer le nom de la directory depuis la configuration
+        # Get LDAP name for display purposes
         config = LDAPConfigManager.get_config(ldap_source)
         ldap_name = config.get('LDAP_name', 'META')
         
@@ -87,17 +105,25 @@ def select_user():
     """
     user_dn = request.args.get('user_dn')
     
-    # Récupérer la source LDAP depuis les paramètres de requête
-    ldap_source = request.args.get('source', 'meta')
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.args.get('source')
+    
+    # If not in query params, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
     
     if not user_dn:
         flash('No user selected', 'error')
         return redirect(url_for('userupdate.update_user_page', source=ldap_source))
     
-    # Créer une instance du modèle LDAP avec la source spécifiée
+    # Create EDIR model with the appropriate source
     ldap_model = EDIRModel(source=ldap_source)
     
-    # Récupérer le nom de la directory depuis la configuration
+    # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
     ldap_name = config.get('LDAP_name', 'META')
     
@@ -124,8 +150,16 @@ def update_user():
     
     user_dn = request.form.get('user_dn')
     
-    # Récupérer la source LDAP depuis le formulaire
-    ldap_source = request.form.get('ldap_source', 'meta')
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.form.get('ldap_source')
+    
+    # If not in form params, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
     
     if not user_dn:
         flash('No user DN provided', 'error')

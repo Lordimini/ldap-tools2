@@ -9,17 +9,6 @@
         <!-- Store the current LDAP source to be included in any form submissions -->
         <input type="hidden" id="current_ldap_source" name="ldap_source" value="{{ ldap_source }}">
         
-        <!-- LDAP Source Indicator -->
-        <div class="alert alert-info d-flex justify-content-between align-items-center">
-            <div>
-                <strong>Current LDAP Source:</strong> {{ ldap_name }} ({{ ldap_source }})
-            </div>
-            <div>
-                <a href="{{ url_for('dashboard.dashboard', source=ldap_source) }}" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-arrow-repeat"></i> Refresh Stats
-                </a>
-            </div>
-        </div>
         
         <!-- Summary Stats Row -->
         <div class="row mb-4">

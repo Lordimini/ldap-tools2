@@ -4,17 +4,6 @@
 <div class="container mt-5">
     <h1 class="text-center mb-4">Group Users</h1>
     
-    <!-- LDAP Source Indicator -->
-    <div class="alert alert-info d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <strong>Current LDAP Source:</strong> {{ ldap_name }} ({{ ldap_source }})
-        </div>
-        <div>
-            <button type="button" class="btn btn-sm btn-outline-primary refresh-btn" data-source="{{ ldap_source }}">
-                <i class="bi bi-arrow-repeat"></i> Refresh with Current Source
-            </button>
-        </div>
-    </div>
     
     <!-- Store the current LDAP source for JS use -->
     <input type="hidden" id="current_ldap_source" name="ldap_source" value="{{ ldap_source }}">

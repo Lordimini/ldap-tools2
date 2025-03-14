@@ -66,12 +66,20 @@ class MenuService:
         html = '<ul class="nav flex-column">'
         
         for item in menu_items:
+            # Skip items that are explicitly set to not visible
+            if item.get('visible') is False:
+                continue
+                
             if item.get('is_section'):
                 # Render section header
                 html += f'<div class="sidebar-heading">{item["label"]}</div>'
                 
-                # Render section items
+                # Render section items (only if they're visible)
                 for sub_item in item.get('items', []):
+                    # Skip sub-items that are explicitly set to not visible
+                    if sub_item.get('visible') is False:
+                        continue
+                        
                     is_active = self._is_active(sub_item, current_path)
                     active_class = 'active' if is_active else ''
                     

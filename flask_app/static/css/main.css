@@ -671,3 +671,44 @@ table.table-dark tbody tr td.attribute-cell {
     background-color: #c0392b;
     border-color: #c0392b;
 }
+
+/* ===== Role Groups STYLES ===== */
+/* Styles from role_group.html */
+/* Style for autocomplete dropdown */
+.ui-autocomplete {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: var(--medium-gray);
+    border: 1px solid var(--dark-gray);
+}
+
+.ui-menu-item {
+    color: var(--text-white);
+}
+
+.ui-menu-item:hover,
+.ui-menu-item .ui-state-active {
+    background-color: var(--light-gray);
+}
+
+/* Style for the cards */
+.card {
+    border: none;
+    background-color: var(--medium-gray);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Style for table */
+.table {
+    color: var(--text-white);
+}
+
+.table thead th {
+    background-color: var(--dark-gray);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--light-gray);
+}

@@ -21,7 +21,7 @@ menu_service = MenuService()
 ldap_config_manager = LDAPConfigManager()
 
 def create_app():
-    app = Flask(__name__,)
+    app = Flask(__name__, static_folder='static')
     app.secret_key = 'eyqscmnc'
     # Initialize LDAP config manager
     ldap_config_manager.init_app(app)

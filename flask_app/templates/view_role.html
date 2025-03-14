@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block title %}View Role - LDAP Manager{% endblock %}
+{% block head %}
+{{ super() }}  <!-- Important pour conserver le contenu du bloc head du parent -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/search.css') }}">
+{% endblock %}
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">Role Details</h1>
@@ -168,47 +172,4 @@
     });
 </script>
 
-<style>
-    /* Style for table rows on hover */
-    .table tr:hover {
-        background-color: rgba(52, 152, 219, 0.1);
-    }
-    
-    /* Card styling */
-    .card {
-        border: none;
-        border-radius: 8px;
-    }
-    
-    /* Button styling */
-    .btn-primary {
-        background-color: #3498db;
-        border-color: #3498db;
-    }
-    
-    .btn-primary:hover {
-        background-color: #2980b9;
-        border-color: #2980b9;
-    }
-    
-    .btn-success {
-        background-color: #2ecc71;
-        border-color: #2ecc71;
-    }
-    
-    .btn-success:hover {
-        background-color: #27ae60;
-        border-color: #27ae60;
-    }
-    
-    .btn-danger {
-        background-color: #e74c3c;
-        border-color: #e74c3c;
-    }
-    
-    .btn-danger:hover {
-        background-color: #c0392b;
-        border-color: #c0392b;
-    }
-</style>
 {% endblock %}

@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 
 {% block title %}Complete User Creation - LDAP Manager{% endblock %}
-
+{% block head %}
+{{ super() }}  <!-- Important pour conserver le contenu du bloc head du parent -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/search.css') }}">
+{% endblock %}
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">Complete User Creation</h1>
@@ -455,64 +458,4 @@ $(document).ready(function() {
 });
 </script>
 
-<style>
-    /* Custom styles for attributes */
-    table.table-dark tbody tr td.attribute-cell {
-        background-color: #1a2533;
-        color: #23c7bf !important;
-        font-weight: 600 !important;
-        font-size: 1.05rem !important;
-        padding: 12px 15px;
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    /* Darker background for the card headers */
-    .card-header {
-        background-color: #0f1926;
-    }
-    
-    /* Style for group badges */
-    .badge {
-        font-size: 0.9rem;
-        font-weight: normal;
-    }
-    
-    /* Make buttons in the form more prominent */
-    .btn-primary {
-        background-color: #3498db;
-        border-color: #3498db;
-    }
-    
-    .btn-primary:hover {
-        background-color: #2980b9;
-        border-color: #2980b9;
-    }
-    
-    .btn-danger {
-        background-color: #e74c3c;
-        border-color: #e74c3c;
-    }
-    
-    .btn-danger:hover {
-        background-color: #c0392b;
-        border-color: #c0392b;
-    }
-
-    /* Style badges by type */
-    .badge.bg-info {
-        background-color: #3498db !important;
-    }
-
-    .badge.bg-success {
-        background-color: #2ecc71 !important;
-    }
-
-    .badge.bg-danger {
-        background-color: #e74c3c !important;
-    }
-
-    .badge.bg-secondary {
-        background-color: #7f8c8d !important;
-    }
-</style>
 {% endblock %}

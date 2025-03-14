@@ -1,0 +1,673 @@
+/* ===== BASE STYLES ===== */
+/* Styles from base.html */
+:root {
+    --primary-color: #0f1926;            /* Bleu très foncé */
+    --secondary-color: #1a2533;          /* Bleu foncé */
+    --accent-color: #3498db;             /* Bleu clair */
+    --dark-blue: #0f1926;                /* Bleu très foncé */
+    --darker-blue: #0a1017;              /* Bleu presque noir */
+    --medium-blue: #253545;              /* Bleu moyen */
+    --light-blue: #3498db;               /* Bleu clair */
+    --very-dark-gray: #111419;           /* Gris presque noir */
+    --dark-gray: #1a1d21;                /* Gris très foncé */
+    --medium-gray: #272b30;              /* Gris foncé */
+    --light-gray: #3d3d3d;               /* Gris moyen */
+    --text-white: #f8f9fa;               /* Blanc cassé */
+    --text-light-gray: #d0d0d0;          /* Gris clair */
+    --shadow-color: rgba(0, 0, 0, 0.5);  /* Ombre plus prononcée */
+    --nav-link-hover: rgba(52, 152, 219, 0.2); /* Couleur de survol */
+    --border-color: rgba(255, 255, 255, 0.05); /* Couleur de bordure subtile */
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--darker-blue);
+    color: var(--text-white);
+}
+
+.sidebar {
+    height: 100%;
+    min-height: calc(100vh - 60px);
+    position: fixed;
+    z-index: 100;
+    padding: 0;
+    box-shadow: 0 0 10px var(--shadow-color);
+    transition: all 0.3s;
+    background-color: var(--very-dark-gray);
+    color: var(--text-white);
+    width: 250px;
+}
+
+.sidebar-header {
+    padding: 15px;
+    background: var(--darker-blue);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-white);
+}
+
+.sidebar-header h3 {
+    color: var(--text-white);
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.sidebar .nav-link {
+    padding: 12px 15px;
+    color: var(--text-white);
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+.sidebar .nav-link:hover {
+    background: var(--nav-link-hover);
+    border-left: 3px solid var(--accent-color);
+}
+
+.sidebar .nav-link.active {
+    background: var(--dark-blue);
+    border-left: 3px solid var(--accent-color);
+    color: var(--text-white);
+}
+
+.sidebar .nav-link i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+    color: var(--accent-color);
+}
+
+.sidebar-heading {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    padding: 10px 15px;
+    color: var(--accent-color);
+    font-weight: bold;
+    margin-top: 10px;
+    background-color: var(--dark-gray);
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    letter-spacing: 1px;
+}
+
+.main-content {
+    margin-left: 250px;
+    padding: 20px;
+    flex: 1;
+    transition: all 0.3s;
+    background-color: var(--dark-blue);
+    color: var(--text-white);
+}
+
+.navbar {
+    padding: 0.5rem 1rem;
+    box-shadow: 0 2px 5px var(--shadow-color);
+    background: var(--darker-blue) !important;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    color: var(--text-light) !important;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin-right: 10px;
+    background-color: var(--accent-color);
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+footer {
+    margin-left: 250px;
+    padding: 1rem;
+    background-color: var(--darker-blue);
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s;
+    color: var(--text-light-gray);
+}
+
+/* Toggle sidebar button */
+#sidebarToggle {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0 15px;
+    color: var(--text-light);
+}
+
+/* When sidebar is collapsed */
+.sidebar-collapsed .sidebar {
+    width: 70px;
+}
+
+.sidebar-collapsed .sidebar .nav-link span,
+.sidebar-collapsed .sidebar .sidebar-heading,
+.sidebar-collapsed .sidebar-header h3 {
+    display: none;
+}
+
+.sidebar-collapsed .main-content,
+.sidebar-collapsed footer {
+    margin-left: 70px;
+}
+
+/* Card styles */
+.card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    background-color: var(--medium-gray);
+    color: var(--text-white);
+}
+
+.card-header {
+    background-color: var(--dark-gray);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-weight: 600;
+    color: var(--text-white);
+}
+
+/* Dashboard cards */
+.dashboard-card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    transition: transform 0.3s;
+    height: 100%;
+    background-color: var(--medium-gray);
+    color: var(--text-white);
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+.dashboard-icon {
+    font-size: 2rem;
+    margin-bottom: 15px;
+    color: var(--accent-color);
+}
+
+/* Summary stats */
+.stats-card {
+    border-left: 4px solid var(--accent-color);
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: var(--medium-gray);
+}
+
+.stats-icon {
+    float: right;
+    font-size: 2rem;
+    opacity: 0.5;
+    color: var(--light-blue);
+}
+
+/* Button styles */
+.btn-primary {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+.btn-outline-light {
+    color: var(--text-white);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-white);
+}
+
+/* Table styles */
+.table {
+    border-radius: 8px;
+    overflow: hidden;
+    color: var(--text-white);
+}
+
+.table thead th {
+    background-color: var(--dark-gray);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-white);
+}
+
+.table tbody tr {
+    background-color: var(--medium-gray);
+}
+
+.table tbody tr:hover {
+    background-color: var(--light-gray);
+}
+
+/* Dropdown menu */
+.dropdown-menu {
+    background-color: var(--dark-gray);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-item {
+    color: var(--text-white);
+}
+
+.dropdown-item:hover {
+    background-color: var(--medium-gray);
+    color: var(--text-white);
+}
+
+.dropdown-divider {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* List group styling for dark theme */
+.list-group-item {
+    background-color: var(--medium-gray);
+    color: var(--text-white);
+    border-color: rgba(255, 255, 255, 0.125);
+}
+
+.list-group-item:hover {
+    background-color: var(--light-gray);
+    color: var(--text-white);
+}
+
+.list-group-item small.text-muted {
+    color: var(--text-light-gray) !important;
+}
+
+/* LDAP Source Selector Styles */
+#ldap_source_selector {
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+}
+
+#ldap_source_selector:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+}
+
+.source-indicator {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+    background-color: var(--dark-gray);
+}
+
+/* Source specific indicators */
+.source-ldap {
+    color: #4caf50;
+}
+
+.source-meta {
+    color: #ff9800;
+}
+
+.source-idme {
+    color: #f1074d;
+}
+
+/* ===== SEARCH PAGE STYLES ===== */
+/* Styles from search.html */
+
+/* Custom styles for the search results table */
+table.table-dark tbody tr td.attribute-cell {
+    background-color: #1a2533;
+    color: #23c7bf !important;
+    font-weight: 600 !important;
+    font-size: 1.05rem !important;
+    padding: 12px 15px;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Make sure the table uses the correct text colors even when Bootstrap might override them */
+.table-dark {
+    --bs-table-color: #f8f9fa;
+    --bs-table-bg: #212529;
+    --bs-table-border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Add a subtle hover effect for the rows */
+.table-dark tbody tr:hover {
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
+/* Override the table-danger class for login disabled rows to keep our styling */
+.table-dark tbody tr.table-danger td.attribute-cell {
+    background-color: #1a2533 !important;
+    color: #23c7bf !important;
+}
+
+/* Make table headers stand out more */
+.table-dark thead th {
+    background-color: #0f1926;
+    color: #f8f9fa;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+    padding: 12px 15px;
+}
+
+/* Style for badges */
+.badge {
+    font-size: 0.9rem;
+    font-weight: normal;
+}
+
+/* Style badges by type */
+.badge.bg-info {
+    background-color: #3498db !important;
+}
+
+.badge.bg-secondary {
+    background-color: #7f8c8d !important;
+}
+
+/* Card styling */
+.card {
+    margin-bottom: 1rem;
+    border: none;
+    border-radius: 8px;
+}
+
+/* Style for the section headers */
+.card h5 {
+    margin-bottom: 1rem;
+    color: #f8f9fa;
+    font-weight: 600;
+}
+
+/* Button styling */
+.btn-primary {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+/* ===== Add User STYLES ===== */
+/* Styles from add_users_to_group.html */
+
+/* Style for badges */
+.badge {
+    font-size: 0.9rem;
+    font-weight: normal;
+}
+
+.badge.bg-primary {
+    background-color: #3498db !important;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+}
+
+/* Make table rows more compact for readability */
+.table td, .table th {
+    padding: 0.5rem;
+}
+
+/* Style the selected users list */
+#selected_users_list .list-group-item {
+    background-color: var(--medium-gray);
+    color: var(--text-white);
+    border-color: rgba(255, 255, 255, 0.125);
+}
+
+/* Fixed height for selected users container with scrolling */
+#selected_users_container {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Style for attribute cells in tables */
+table.table-dark tbody tr td.attribute-cell {
+    background-color: #1a2533;
+    color: #23c7bf !important;
+    font-weight: 600 !important;
+    font-size: 1.05rem !important;
+    padding: 12px 15px;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Style for code elements */
+code {
+    background-color: #192734;
+    color: #e2e2e2;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    word-break: break-all;
+}
+
+
+/* ===== Post-Creation STYLES ===== */
+/* Styles from post_creation.html */
+
+/* Custom styles for attributes */
+table.table-dark tbody tr td.attribute-cell {
+    background-color: #1a2533;
+    color: #23c7bf !important;
+    font-weight: 600 !important;
+    font-size: 1.05rem !important;
+    padding: 12px 15px;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Darker background for the card headers */
+.card-header {
+    background-color: #0f1926;
+}
+
+/* Style for group badges */
+.badge {
+    font-size: 0.9rem;
+    font-weight: normal;
+}
+
+/* Make buttons in the form more prominent */
+.btn-primary {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+.btn-danger {
+    background-color: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+    border-color: #c0392b;
+}
+
+/* Style badges by type */
+.badge.bg-info {
+    background-color: #3498db !important;
+}
+
+.badge.bg-success {
+    background-color: #2ecc71 !important;
+}
+
+.badge.bg-danger {
+    background-color: #e74c3c !important;
+}
+
+.badge.bg-secondary {
+    background-color: #7f8c8d !important;
+}
+
+/* ===== Services users STYLES ===== */
+/* Styles from services_users.html */
+
+/* Style for table rows on hover */
+.table tr:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+}
+
+/* Card styling */
+.card {
+    border: none;
+    border-radius: 8px;
+}
+
+/* Button styling */
+.btn-primary {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+.btn-success {
+    background-color: #2ecc71;
+    border-color: #2ecc71;
+}
+
+.btn-success:hover {
+    background-color: #27ae60;
+    border-color: #27ae60;
+}
+
+/* ===== Update User STYLES ===== */
+/* Styles from update_users.html */
+
+/* Custom styles for attributes */
+table.table-dark tbody tr td.attribute-cell {
+    background-color: #1a2533;
+    color: #23c7bf !important;
+    font-weight: 600 !important;
+    font-size: 1.05rem !important;
+    padding: 12px 15px;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Darker background for the card headers */
+.card-header {
+    background-color: #0f1926;
+}
+
+/* Style for badges */
+.badge {
+    font-size: 0.9rem;
+    font-weight: normal;
+}
+
+/* Style badges by type */
+.badge.bg-info {
+    background-color: #3498db !important;
+}
+
+.badge.bg-success {
+    background-color: #2ecc71 !important;
+}
+
+.badge.bg-danger {
+    background-color: #e74c3c !important;
+}
+
+.badge.bg-secondary {
+    background-color: #7f8c8d !important;
+}
+
+/* Make buttons in the form more prominent */
+.btn-primary {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+/* Style for section cards */
+.card {
+    margin-bottom: 1rem;
+    border: none;
+    border-radius: 8px;
+}
+
+/* Style for the form sections */
+.card h5 {
+    margin-bottom: 1rem;
+    color: #f8f9fa;
+    font-weight: 600;
+}
+
+/* ===== View Role STYLES ===== */
+/* Styles from view_role.html */
+
+/* Style for table rows on hover */
+.table tr:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+}
+
+/* Card styling */
+.card {
+    border: none;
+    border-radius: 8px;
+}
+
+/* Button styling */
+.btn-primary {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+.btn-success {
+    background-color: #2ecc71;
+    border-color: #2ecc71;
+}
+
+.btn-success:hover {
+    background-color: #27ae60;
+    border-color: #27ae60;
+}
+
+.btn-danger {
+    background-color: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+    border-color: #c0392b;
+}

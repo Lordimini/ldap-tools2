@@ -2,6 +2,11 @@
 
 {% block title %}Search User - LDAP Manager{% endblock %}
 
+{% block head %}
+{{ super() }}  <!-- Important pour conserver le contenu du bloc head du parent -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/search.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">User Lookup</h1>
@@ -284,88 +289,6 @@
 <!-- jQuery UI (for autocomplete) -->
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
-
-<style>
-    /* Custom styles for the search results table */
-    table.table-dark tbody tr td.attribute-cell {
-        background-color: #1a2533;
-        color: #23c7bf !important;
-        font-weight: 600 !important;
-        font-size: 1.05rem !important;
-        padding: 12px 15px;
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    
-    /* Make sure the table uses the correct text colors even when Bootstrap might override them */
-    .table-dark {
-        --bs-table-color: #f8f9fa;
-        --bs-table-bg: #212529;
-        --bs-table-border-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    /* Add a subtle hover effect for the rows */
-    .table-dark tbody tr:hover {
-        background-color: rgba(52, 152, 219, 0.05);
-    }
-    
-    /* Override the table-danger class for login disabled rows to keep our styling */
-    .table-dark tbody tr.table-danger td.attribute-cell {
-        background-color: #1a2533 !important;
-        color: #23c7bf !important;
-    }
-    
-    /* Make table headers stand out more */
-    .table-dark thead th {
-        background-color: #0f1926;
-        color: #f8f9fa;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 0.9rem;
-        padding: 12px 15px;
-    }
-    
-    /* Style for badges */
-    .badge {
-        font-size: 0.9rem;
-        font-weight: normal;
-    }
-    
-    /* Style badges by type */
-    .badge.bg-info {
-        background-color: #3498db !important;
-    }
-    
-    .badge.bg-secondary {
-        background-color: #7f8c8d !important;
-    }
-    
-    /* Card styling */
-    .card {
-        margin-bottom: 1rem;
-        border: none;
-        border-radius: 8px;
-    }
-    
-    /* Style for the section headers */
-    .card h5 {
-        margin-bottom: 1rem;
-        color: #f8f9fa;
-        font-weight: 600;
-    }
-    
-    /* Button styling */
-    .btn-primary {
-        background-color: #3498db;
-        border-color: #3498db;
-    }
-    
-    .btn-primary:hover {
-        background-color: #2980b9;
-        border-color: #2980b9;
-    }
-</style>
-
 <script>
 $(document).ready(function() {
         // Get the current LDAP source

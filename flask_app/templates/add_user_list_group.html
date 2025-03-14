@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Add Users to Group - LDAP Manager{% endblock %}
+{% block head %}
+{{ super() }}  <!-- Important pour conserver le contenu du bloc head du parent -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/search.css') }}">
+{% endblock %}
 {% block content %}
 <div class="container mt-5">
     <!-- <h1 class="text-center mb-4">Add Users to Group</h1> -->
@@ -566,56 +570,4 @@ $(document).ready(function () {
     });
 });
 </script>
-
-<style>
-    /* Style for badges */
-    .badge {
-        font-size: 0.9rem;
-        font-weight: normal;
-    }
-    
-    .badge.bg-primary {
-        background-color: #3498db !important;
-        padding: 8px 12px;
-        font-size: 0.85rem;
-    }
-    
-    /* Make table rows more compact for readability */
-    .table td, .table th {
-        padding: 0.5rem;
-    }
-    
-    /* Style the selected users list */
-    #selected_users_list .list-group-item {
-        background-color: var(--medium-gray);
-        color: var(--text-white);
-        border-color: rgba(255, 255, 255, 0.125);
-    }
-    
-    /* Fixed height for selected users container with scrolling */
-    #selected_users_container {
-        max-height: 300px;
-        overflow-y: auto;
-    }
-    
-    /* Style for attribute cells in tables */
-    table.table-dark tbody tr td.attribute-cell {
-        background-color: #1a2533;
-        color: #23c7bf !important;
-        font-weight: 600 !important;
-        font-size: 1.05rem !important;
-        padding: 12px 15px;
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    
-    /* Style for code elements */
-    code {
-        background-color: #192734;
-        color: #e2e2e2;
-        padding: 2px 5px;
-        border-radius: 3px;
-        font-size: 0.9em;
-        word-break: break-all;
-    }
-</style>
 {% endblock %}

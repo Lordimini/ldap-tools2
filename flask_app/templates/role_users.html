@@ -4,16 +4,32 @@
 
 {% block content %}
 <div class="container mt-5">
-    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
-    <h1 class="text-center mb-4">Role Users</h1>
-    <form method="POST" action="{{ url_for('role.role_users') }}" class="card p-4 shadow mb-4">
-        <div class="mb-3">
-            <label for="role_cn" class="form-label">Search Role:</label>
-            <input type="text" class="form-control" id="role_cn" name="role_cn" placeholder="Start typing a role name..." value="{{ prefill_role_name }}" required>
+    <!-- Store the current LDAP source to be included in all forms -->
+    <input type="hidden" id="current_ldap_source" name="ldap_source" value="{{ ldap_source }}">
+    
+    <!-- LDAP Source Indicator -->
+    <div class="alert alert-info d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <strong>Current LDAP Source:</strong> {{ ldap_name }} ({{ ldap_source }})
         </div>
-        <button type="submit" class="btn btn-primary">Search</button>
-    </form>
+        <div>
+            <a href="{{ url_for('search.search_user', source=ldap_source) }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-arrow-repeat"></i> Refresh Data
+            </a>
+        </div>
+    </div>
 
+    <div class="card p-4 shadow">
+        <h2 class="mb-4">Search Users assigned to a role</h2>
+        <!-- <h1 class="text-center mb-4">Role Users</h1> -->
+        <form method="POST" action="{{ url_for('role.role_users') }}" class="card p-4 shadow mb-4">
+            <div class="mb-3">
+                <label for="role_cn" class="form-label">Role Name:</label>
+                <input type="text" class="form-control" id="role_cn" name="role_cn" placeholder="Start typing a role name..." value="{{ prefill_role_name }}" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    </div>    
     <!-- Search Results (only shown when multiple results are found) -->
     {% if search_results %}
     <div class="card p-4 shadow mb-4">

@@ -1,5 +1,4 @@
-/* ===== BASE STYLES ===== */
-/* Styles from base.html */
+/* ===== VARIABLES ===== */
 :root {
     --primary-color: #0f1926;            /* Bleu très foncé */
     --secondary-color: #1a2533;          /* Bleu foncé */
@@ -17,8 +16,18 @@
     --shadow-color: rgba(0, 0, 0, 0.5);  /* Ombre plus prononcée */
     --nav-link-hover: rgba(52, 152, 219, 0.2); /* Couleur de survol */
     --border-color: rgba(255, 255, 255, 0.05); /* Couleur de bordure subtile */
+    
+    /* Couleurs des badges et boutons */
+    --blue: #3498db;
+    --blue-dark: #2980b9;
+    --green: #2ecc71;
+    --green-dark: #27ae60;
+    --red: #e74c3c;
+    --red-dark: #c0392b;
+    --gray: #7f8c8d;
 }
 
+/* ===== BASE LAYOUT ===== */
 body {
     min-height: 100vh;
     display: flex;
@@ -27,6 +36,56 @@ body {
     color: var(--text-white);
 }
 
+.main-content {
+    margin-left: 250px;
+    padding: 20px;
+    flex: 1;
+    transition: all 0.3s;
+    background-color: var(--dark-blue);
+    color: var(--text-white);
+}
+
+footer {
+    margin-left: 250px;
+    padding: 1rem;
+    background-color: var(--darker-blue);
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+    transition: all 0.3s;
+    color: var(--text-light-gray);
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+    padding: 0.5rem 1rem;
+    box-shadow: 0 2px 5px var(--shadow-color);
+    background: var(--darker-blue) !important;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    color: var(--text-white) !important;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin-right: 10px;
+    background-color: var(--accent-color);
+    color: var(--text-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* ===== SIDEBAR ===== */
 .sidebar {
     height: 100%;
     min-height: calc(100vh - 60px);
@@ -91,54 +150,6 @@ body {
     letter-spacing: 1px;
 }
 
-.main-content {
-    margin-left: 250px;
-    padding: 20px;
-    flex: 1;
-    transition: all 0.3s;
-    background-color: var(--dark-blue);
-    color: var(--text-white);
-}
-
-.navbar {
-    padding: 0.5rem 1rem;
-    box-shadow: 0 2px 5px var(--shadow-color);
-    background: var(--darker-blue) !important;
-}
-
-.navbar-brand {
-    font-weight: bold;
-    color: var(--text-light) !important;
-}
-
-.user-profile {
-    display: flex;
-    align-items: center;
-}
-
-.user-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    margin-right: 10px;
-    background-color: var(--accent-color);
-    color: var(--text-light);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-}
-
-footer {
-    margin-left: 250px;
-    padding: 1rem;
-    background-color: var(--darker-blue);
-    text-align: center;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.3s;
-    color: var(--text-light-gray);
-}
-
 /* Toggle sidebar button */
 #sidebarToggle {
     background: none;
@@ -146,7 +157,7 @@ footer {
     font-size: 1.5rem;
     cursor: pointer;
     padding: 0 15px;
-    color: var(--text-light);
+    color: var(--text-white);
 }
 
 /* When sidebar is collapsed */
@@ -165,136 +176,7 @@ footer {
     margin-left: 70px;
 }
 
-/* Card styles */
-.card {
-    border: none;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px var(--shadow-color);
-    background-color: var(--medium-gray);
-    color: var(--text-white);
-}
-
-.card-header {
-    background-color: var(--dark-gray);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    font-weight: 600;
-    color: var(--text-white);
-}
-
-/* Dashboard cards */
-.dashboard-card {
-    border-radius: 10px;
-    box-shadow: 0 4px 6px var(--shadow-color);
-    transition: transform 0.3s;
-    height: 100%;
-    background-color: var(--medium-gray);
-    color: var(--text-white);
-}
-
-.dashboard-card:hover {
-    transform: translateY(-5px);
-}
-
-.dashboard-icon {
-    font-size: 2rem;
-    margin-bottom: 15px;
-    color: var(--accent-color);
-}
-
-/* Summary stats */
-.stats-card {
-    border-left: 4px solid var(--accent-color);
-    border-radius: 4px;
-    padding: 15px;
-    margin-bottom: 20px;
-    background-color: var(--medium-gray);
-}
-
-.stats-icon {
-    float: right;
-    font-size: 2rem;
-    opacity: 0.5;
-    color: var(--light-blue);
-}
-
-/* Button styles */
-.btn-primary {
-    background-color: var(--accent-color);
-    border-color: var(--accent-color);
-}
-
-.btn-primary:hover {
-    background-color: #2980b9;
-    border-color: #2980b9;
-}
-
-.btn-outline-light {
-    color: var(--text-white);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.btn-outline-light:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--text-white);
-}
-
-/* Table styles */
-.table {
-    border-radius: 8px;
-    overflow: hidden;
-    color: var(--text-white);
-}
-
-.table thead th {
-    background-color: var(--dark-gray);
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-white);
-}
-
-.table tbody tr {
-    background-color: var(--medium-gray);
-}
-
-.table tbody tr:hover {
-    background-color: var(--light-gray);
-}
-
-/* Dropdown menu */
-.dropdown-menu {
-    background-color: var(--dark-gray);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.dropdown-item {
-    color: var(--text-white);
-}
-
-.dropdown-item:hover {
-    background-color: var(--medium-gray);
-    color: var(--text-white);
-}
-
-.dropdown-divider {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* List group styling for dark theme */
-.list-group-item {
-    background-color: var(--medium-gray);
-    color: var(--text-white);
-    border-color: rgba(255, 255, 255, 0.125);
-}
-
-.list-group-item:hover {
-    background-color: var(--light-gray);
-    color: var(--text-white);
-}
-
-.list-group-item small.text-muted {
-    color: var(--text-light-gray) !important;
-}
-
-/* LDAP Source Selector Styles */
+/* ===== LDAP SOURCE SELECTOR ===== */
 #ldap_source_selector {
     border: 1px solid var(--border-color);
     transition: all 0.2s;
@@ -328,41 +210,77 @@ footer {
     color: #f1074d;
 }
 
-/* ===== SEARCH PAGE STYLES ===== */
-/* Styles from search.html */
-
-/* Custom styles for the search results table */
-table.table-dark tbody tr td.attribute-cell {
-    background-color: #1a2533;
-    color: #23c7bf !important;
-    font-weight: 600 !important;
-    font-size: 1.05rem !important;
-    padding: 12px 15px;
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
+/* ===== CARDS ===== */
+.card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    background-color: var(--medium-gray);
+    color: var(--text-white);
+    margin-bottom: 1rem;
 }
 
-/* Make sure the table uses the correct text colors even when Bootstrap might override them */
-.table-dark {
-    --bs-table-color: #f8f9fa;
-    --bs-table-bg: #212529;
-    --bs-table-border-color: rgba(255, 255, 255, 0.1);
+.card-header {
+    background-color: var(--dark-gray);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    color: var(--text-white);
 }
 
-/* Add a subtle hover effect for the rows */
-.table-dark tbody tr:hover {
-    background-color: rgba(52, 152, 219, 0.05);
+.card h5 {
+    margin-bottom: 1rem;
+    color: var(--text-white);
+    font-weight: 600;
 }
 
-/* Override the table-danger class for login disabled rows to keep our styling */
-.table-dark tbody tr.table-danger td.attribute-cell {
-    background-color: #1a2533 !important;
-    color: #23c7bf !important;
+/* Dashboard cards */
+.dashboard-card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    transition: transform 0.3s;
+    height: 100%;
 }
 
-/* Make table headers stand out more */
-.table-dark thead th {
-    background-color: #0f1926;
-    color: #f8f9fa;
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+.dashboard-icon {
+    font-size: 2rem;
+    margin-bottom: 15px;
+    color: var(--accent-color);
+}
+
+/* Stats card */
+.stats-card {
+    border-left: 4px solid var(--accent-color);
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.stats-icon {
+    float: right;
+    font-size: 2rem;
+    opacity: 0.5;
+    color: var(--light-blue);
+}
+
+/* ===== TABLES ===== */
+.table {
+    border-radius: 8px;
+    overflow: hidden;
+    color: var(--text-white);
+}
+
+.table td, .table th {
+    padding: 0.5rem;
+}
+
+.table thead th {
+    background-color: var(--dark-gray);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-white);
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -370,81 +288,22 @@ table.table-dark tbody tr td.attribute-cell {
     padding: 12px 15px;
 }
 
-/* Style for badges */
-.badge {
-    font-size: 0.9rem;
-    font-weight: normal;
-}
-
-/* Style badges by type */
-.badge.bg-info {
-    background-color: #3498db !important;
-}
-
-.badge.bg-secondary {
-    background-color: #7f8c8d !important;
-}
-
-/* Card styling */
-.card {
-    margin-bottom: 1rem;
-    border: none;
-    border-radius: 8px;
-}
-
-/* Style for the section headers */
-.card h5 {
-    margin-bottom: 1rem;
-    color: #f8f9fa;
-    font-weight: 600;
-}
-
-/* Button styling */
-.btn-primary {
-    background-color: #3498db;
-    border-color: #3498db;
-}
-
-.btn-primary:hover {
-    background-color: #2980b9;
-    border-color: #2980b9;
-}
-
-/* ===== Add User STYLES ===== */
-/* Styles from add_users_to_group.html */
-
-/* Style for badges */
-.badge {
-    font-size: 0.9rem;
-    font-weight: normal;
-}
-
-.badge.bg-primary {
-    background-color: #3498db !important;
-    padding: 8px 12px;
-    font-size: 0.85rem;
-}
-
-/* Make table rows more compact for readability */
-.table td, .table th {
-    padding: 0.5rem;
-}
-
-/* Style the selected users list */
-#selected_users_list .list-group-item {
+.table tbody tr {
     background-color: var(--medium-gray);
-    color: var(--text-white);
-    border-color: rgba(255, 255, 255, 0.125);
 }
 
-/* Fixed height for selected users container with scrolling */
-#selected_users_container {
-    max-height: 300px;
-    overflow-y: auto;
+.table tbody tr:hover {
+    background-color: var(--light-gray);
 }
 
-/* Style for attribute cells in tables */
-table.table-dark tbody tr td.attribute-cell {
+.table-dark {
+    --bs-table-color: #f8f9fa;
+    --bs-table-bg: #212529;
+    --bs-table-border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Attribute cells styling */
+.table-dark tbody tr td.attribute-cell {
     background-color: #1a2533;
     color: #23c7bf !important;
     font-weight: 600 !important;
@@ -453,7 +312,122 @@ table.table-dark tbody tr td.attribute-cell {
     border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Style for code elements */
+.table-dark tbody tr.table-danger td.attribute-cell {
+    background-color: #1a2533 !important;
+    color: #23c7bf !important;
+}
+
+/* ===== BUTTONS ===== */
+.btn-primary {
+    background-color: var(--blue);
+    border-color: var(--blue);
+}
+
+.btn-primary:hover {
+    background-color: var(--blue-dark);
+    border-color: var(--blue-dark);
+}
+
+.btn-success {
+    background-color: var(--green);
+    border-color: var(--green);
+}
+
+.btn-success:hover {
+    background-color: var(--green-dark);
+    border-color: var(--green-dark);
+}
+
+.btn-danger {
+    background-color: var(--red);
+    border-color: var(--red);
+}
+
+.btn-danger:hover {
+    background-color: var(--red-dark);
+    border-color: var(--red-dark);
+}
+
+.btn-outline-light {
+    color: var(--text-white);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-white);
+}
+
+/* ===== BADGES ===== */
+.badge {
+    font-size: 0.9rem;
+    font-weight: normal;
+}
+
+.badge.bg-primary, .badge.bg-info {
+    background-color: var(--blue) !important;
+}
+
+.badge.bg-success {
+    background-color: var(--green) !important;
+}
+
+.badge.bg-danger {
+    background-color: var(--red) !important;
+}
+
+.badge.bg-secondary {
+    background-color: var(--gray) !important;
+}
+
+/* Specific badge for add_users */
+.badge.bg-primary {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+}
+
+/* ===== DROPDOWNS ===== */
+.dropdown-menu {
+    background-color: var(--dark-gray);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-item {
+    color: var(--text-white);
+}
+
+.dropdown-item:hover {
+    background-color: var(--medium-gray);
+    color: var(--text-white);
+}
+
+.dropdown-divider {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ===== LIST GROUPS ===== */
+.list-group-item {
+    background-color: var(--medium-gray);
+    color: var(--text-white);
+    border-color: rgba(255, 255, 255, 0.125);
+}
+
+.list-group-item:hover {
+    background-color: var(--light-gray);
+    color: var(--text-white);
+}
+
+.list-group-item small.text-muted {
+    color: var(--text-light-gray) !important;
+}
+
+/* Selected users container */
+#selected_users_container {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* ===== CODE BLOCKS ===== */
 code {
     background-color: #192734;
     color: #e2e2e2;
@@ -463,218 +437,7 @@ code {
     word-break: break-all;
 }
 
-
-/* ===== Post-Creation STYLES ===== */
-/* Styles from post_creation.html */
-
-/* Custom styles for attributes */
-table.table-dark tbody tr td.attribute-cell {
-    background-color: #1a2533;
-    color: #23c7bf !important;
-    font-weight: 600 !important;
-    font-size: 1.05rem !important;
-    padding: 12px 15px;
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* Darker background for the card headers */
-.card-header {
-    background-color: #0f1926;
-}
-
-/* Style for group badges */
-.badge {
-    font-size: 0.9rem;
-    font-weight: normal;
-}
-
-/* Make buttons in the form more prominent */
-.btn-primary {
-    background-color: #3498db;
-    border-color: #3498db;
-}
-
-.btn-primary:hover {
-    background-color: #2980b9;
-    border-color: #2980b9;
-}
-
-.btn-danger {
-    background-color: #e74c3c;
-    border-color: #e74c3c;
-}
-
-.btn-danger:hover {
-    background-color: #c0392b;
-    border-color: #c0392b;
-}
-
-/* Style badges by type */
-.badge.bg-info {
-    background-color: #3498db !important;
-}
-
-.badge.bg-success {
-    background-color: #2ecc71 !important;
-}
-
-.badge.bg-danger {
-    background-color: #e74c3c !important;
-}
-
-.badge.bg-secondary {
-    background-color: #7f8c8d !important;
-}
-
-/* ===== Services users STYLES ===== */
-/* Styles from services_users.html */
-
-/* Style for table rows on hover */
-.table tr:hover {
-    background-color: rgba(52, 152, 219, 0.1);
-}
-
-/* Card styling */
-.card {
-    border: none;
-    border-radius: 8px;
-}
-
-/* Button styling */
-.btn-primary {
-    background-color: #3498db;
-    border-color: #3498db;
-}
-
-.btn-primary:hover {
-    background-color: #2980b9;
-    border-color: #2980b9;
-}
-
-.btn-success {
-    background-color: #2ecc71;
-    border-color: #2ecc71;
-}
-
-.btn-success:hover {
-    background-color: #27ae60;
-    border-color: #27ae60;
-}
-
-/* ===== Update User STYLES ===== */
-/* Styles from update_users.html */
-
-/* Custom styles for attributes */
-table.table-dark tbody tr td.attribute-cell {
-    background-color: #1a2533;
-    color: #23c7bf !important;
-    font-weight: 600 !important;
-    font-size: 1.05rem !important;
-    padding: 12px 15px;
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* Darker background for the card headers */
-.card-header {
-    background-color: #0f1926;
-}
-
-/* Style for badges */
-.badge {
-    font-size: 0.9rem;
-    font-weight: normal;
-}
-
-/* Style badges by type */
-.badge.bg-info {
-    background-color: #3498db !important;
-}
-
-.badge.bg-success {
-    background-color: #2ecc71 !important;
-}
-
-.badge.bg-danger {
-    background-color: #e74c3c !important;
-}
-
-.badge.bg-secondary {
-    background-color: #7f8c8d !important;
-}
-
-/* Make buttons in the form more prominent */
-.btn-primary {
-    background-color: #3498db;
-    border-color: #3498db;
-}
-
-.btn-primary:hover {
-    background-color: #2980b9;
-    border-color: #2980b9;
-}
-
-/* Style for section cards */
-.card {
-    margin-bottom: 1rem;
-    border: none;
-    border-radius: 8px;
-}
-
-/* Style for the form sections */
-.card h5 {
-    margin-bottom: 1rem;
-    color: #f8f9fa;
-    font-weight: 600;
-}
-
-/* ===== View Role STYLES ===== */
-/* Styles from view_role.html */
-
-/* Style for table rows on hover */
-.table tr:hover {
-    background-color: rgba(52, 152, 219, 0.1);
-}
-
-/* Card styling */
-.card {
-    border: none;
-    border-radius: 8px;
-}
-
-/* Button styling */
-.btn-primary {
-    background-color: #3498db;
-    border-color: #3498db;
-}
-
-.btn-primary:hover {
-    background-color: #2980b9;
-    border-color: #2980b9;
-}
-
-.btn-success {
-    background-color: #2ecc71;
-    border-color: #2ecc71;
-}
-
-.btn-success:hover {
-    background-color: #27ae60;
-    border-color: #27ae60;
-}
-
-.btn-danger {
-    background-color: #e74c3c;
-    border-color: #e74c3c;
-}
-
-.btn-danger:hover {
-    background-color: #c0392b;
-    border-color: #c0392b;
-}
-
-/* ===== Role Groups STYLES ===== */
-/* Styles from role_group.html */
-/* Style for autocomplete dropdown */
+/* ===== AUTOCOMPLETE ===== */
 .ui-autocomplete {
     max-height: 300px;
     overflow-y: auto;
@@ -689,26 +452,5 @@ table.table-dark tbody tr td.attribute-cell {
 
 .ui-menu-item:hover,
 .ui-menu-item .ui-state-active {
-    background-color: var(--light-gray);
-}
-
-/* Style for the cards */
-.card {
-    border: none;
-    background-color: var(--medium-gray);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-}
-
-/* Style for table */
-.table {
-    color: var(--text-white);
-}
-
-.table thead th {
-    background-color: var(--dark-gray);
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.table-hover tbody tr:hover {
     background-color: var(--light-gray);
 }

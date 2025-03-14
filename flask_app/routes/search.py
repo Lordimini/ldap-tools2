@@ -19,15 +19,23 @@ def search_user():
     prefill_FavvNatNr = request.args.get('FavvNatNr', '')
     prefill_fullName = request.args.get('fullName', '')
     
-    # Récupérer la source LDAP
-    ldap_source = request.args.get('source', 'meta')
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.args.get('source')
     if request.method == 'POST':
         ldap_source = request.form.get('ldap_source', ldap_source)
     
-    # Créer une instance du modèle LDAP avec la source spécifiée
+    # If not in query or form params, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
+    
+    # Create EDIR model with the appropriate source
     ldap_model = EDIRModel(source=ldap_source)
     
-    # Récupérer le nom de la directory depuis la configuration
+    # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
     ldap_name = config.get('LDAP_name', 'META')
     

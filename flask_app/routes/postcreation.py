@@ -12,15 +12,23 @@ def post_creation():
     Display the list of pending users in the to-process container
     and allow selection for completion.
     """
-    # Récupérer la source LDAP depuis les paramètres de requête
-    ldap_source = request.args.get('source', 'meta')
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.args.get('source')
     if request.method == 'POST':
         ldap_source = request.form.get('ldap_source', ldap_source)
     
-    # Créer une instance du modèle LDAP avec la source spécifiée
+    # If not in query or form params, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
+    
+    # Create EDIR model with the appropriate source
     ldap_model = EDIRModel(source=ldap_source)
     
-    # Récupérer le nom de la directory depuis la configuration
+    # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
     ldap_name = config.get('LDAP_name', 'META')
     
@@ -28,13 +36,13 @@ def post_creation():
     
     selected_user = None
     
-    # Vérifier si un user_dn est fourni dans le formulaire POST
+    # Check if a user_dn is provided in the POST form
     if request.method == 'POST' and 'user_dn' in request.form:
         user_dn = request.form['user_dn']
         if user_dn:
             selected_user = ldap_model.search_user_final(user_dn, simplified=True)
     
-    # Vérifier si un user_dn est fourni dans l'URL (après redirection)
+    # Check if a user_dn is provided in the URL (after redirect)
     elif request.method == 'GET' and 'user_dn' in request.args:
         user_dn = request.args.get('user_dn')
         if user_dn:
@@ -54,8 +62,12 @@ def select_user():
     """
     user_dn = request.form.get('user_dn', '')
     
-    # Récupérer la source LDAP depuis le formulaire
-    ldap_source = request.form.get('ldap_source', 'meta')
+    # Get LDAP source from form with fallback
+    ldap_source = request.form.get('ldap_source', session.get('ldap_source', 'meta'))
+    
+    # Update session
+    session['ldap_source'] = ldap_source
+    session.modified = True
     
     return redirect(url_for('postcreation.post_creation', user_dn=user_dn, source=ldap_source))
 
@@ -70,8 +82,12 @@ def complete_user():
         user_dn = request.form.get('user_dn')
         target_container = request.form.get('target_container')
         
-        # Récupérer la source LDAP depuis le formulaire
-        ldap_source = request.form.get('ldap_source', 'meta')
+        # Get LDAP source from form with fallback
+        ldap_source = request.form.get('ldap_source', session.get('ldap_source', 'meta'))
+        
+        # Update session
+        session['ldap_source'] = ldap_source
+        session.modified = True
         
         # Collect form data for attributes
         attributes = {
@@ -132,7 +148,9 @@ def complete_user():
         
         return redirect(url_for('postcreation.post_creation', source=ldap_source))
     
-    return redirect(url_for('postcreation.post_creation'))
+    # Default LDAP source from session
+    ldap_source = session.get('ldap_source', 'meta')
+    return redirect(url_for('postcreation.post_creation', source=ldap_source))
 
 @postcreation_bp.route('/delete_user', methods=['POST'])
 @login_required
@@ -143,8 +161,12 @@ def delete_user():
     if request.method == 'POST':
         user_dn = request.form.get('user_dn')
         
-        # Récupérer la source LDAP depuis le formulaire
-        ldap_source = request.form.get('ldap_source', 'meta')
+        # Get LDAP source from form with fallback
+        ldap_source = request.form.get('ldap_source', session.get('ldap_source', 'meta'))
+        
+        # Update session
+        session['ldap_source'] = ldap_source
+        session.modified = True
         
         if user_dn:
             ldap_model = EDIRModel(source=ldap_source)
@@ -157,4 +179,6 @@ def delete_user():
         
         return redirect(url_for('postcreation.post_creation', source=ldap_source))
     
-    return redirect(url_for('postcreation.post_creation'))
+    # Default LDAP source from session
+    ldap_source = session.get('ldap_source', 'meta')
+    return redirect(url_for('postcreation.post_creation', source=ldap_source))

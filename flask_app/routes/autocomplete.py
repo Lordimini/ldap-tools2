@@ -4,7 +4,6 @@ from flask_app.utils.ldap_utils import login_required
 from functools import lru_cache
 from flask_app.models.ldap_config_manager import LDAPConfigManager
 
-
 autocomplete_bp = Blueprint('autocomplete', __name__)
 
 # Cache pour les résultats d'autocomplétion
@@ -31,8 +30,17 @@ def set_cached_result(ldap_source, search_type, search_term, result):
 @login_required
 def autocomplete_groups():
     search_term = request.args.get('term', '')
-    # Récupérer la source LDAP
-    ldap_source = request.args.get('source', 'meta')
+    
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.args.get('source')
+    
+    # If not in query params, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
     
     try:
         # Créer une instance du modèle LDAP avec la source spécifiée
@@ -47,8 +55,17 @@ def autocomplete_groups():
 @login_required
 def autocomplete_fullName():
     search_term = request.args.get('term', '')
-    # Récupérer la source LDAP
-    ldap_source = request.args.get('source', 'meta')
+    
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.args.get('source')
+    
+    # If not in query params, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
     
     # Ne pas effectuer de recherche si moins de 3 caractères
     if len(search_term) < 3:
@@ -79,8 +96,17 @@ def autocomplete_fullName():
 @login_required
 def autocomplete_roles():
     search_term = request.args.get('term', '')
-    # Récupérer la source LDAP
-    ldap_source = request.args.get('source', 'meta')
+    
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.args.get('source')
+    
+    # If not in query params, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
     
     print(f"Recherche de rôles avec le terme: '{search_term}' (source: {ldap_source})")
     
@@ -102,8 +128,17 @@ def autocomplete_roles():
 @login_required
 def autocomplete_services():
     search_term = request.args.get('term', '')
-    # Récupérer la source LDAP
-    ldap_source = request.args.get('source', 'meta')
+    
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.args.get('source')
+    
+    # If not in query params, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
     
     print(f"Recherche de services avec le terme: '{search_term}' (source: {ldap_source})")
     
@@ -135,8 +170,17 @@ def autocomplete_services():
 @login_required
 def autocomplete_managers():
     search_term = request.args.get('term', '')
-    # Récupérer la source LDAP
-    ldap_source = request.args.get('source', 'meta')
+    
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.args.get('source')
+    
+    # If not in query params, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
     
     try:
         # Créer une instance du modèle LDAP avec la source spécifiée
@@ -164,8 +208,17 @@ def unified_autocomplete():
     """
     search_type = request.args.get('type', '')
     search_term = request.args.get('term', '')
-    # Récupérer la source LDAP
-    ldap_source = request.args.get('source', 'meta')
+    
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.args.get('source')
+    
+    # If not in query params, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
     
     # Validation des paramètres
     if not search_type or not search_term:

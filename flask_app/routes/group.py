@@ -9,31 +9,40 @@ group_bp = Blueprint('group', __name__)
 @group_bp.route('/group_users', methods=['GET', 'POST'])
 @login_required
 def group_users():
+    # Get prefill values from query parameters
     prefill_group_name = request.args.get('group_name', '')
     prefill_group_dn = request.args.get('group_dn', '')
     
-    # Récupérer la source LDAP depuis les paramètres de requête ou du formulaire
-    ldap_source = request.args.get('source', 'meta')
+    # Get LDAP source with proper fallback sequence
+    ldap_source = request.args.get('source')
     if request.method == 'POST':
         ldap_source = request.form.get('ldap_source', ldap_source)
     
-    # Créer une instance du modèle LDAP avec la source spécifiée
+    # If not in query or form params, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
+    
+    # Create EDIR model with the appropriate source
     ldap_model = EDIRModel(source=ldap_source)
     
-    # Récupérer le nom de la directory depuis la configuration
+    # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
     ldap_name = config.get('LDAP_name', 'META')
     
     if request.method == 'POST' or prefill_group_name:
-        # Récupérer les données du formulaire ou des paramètres de requête
+        # Get data from form or request parameters
         group_name = request.form.get('group_name', '') or prefill_group_name
         group_dn = request.form.get('group_dn', '') or prefill_group_dn
         
-        # Si nous avons un DN spécifique, l'utiliser pour la recherche
+        # If we have a specific DN, use it for the search
         if group_dn:
             result = ldap_model.get_group_users_by_dn(group_dn, group_name)
         else:
-            # Sinon, utiliser la méthode existante basée sur le CN
+            # Otherwise, use the existing method based on the CN
             result = ldap_model.get_group_users(group_name)
         
         return render_template('group_users.html', 
@@ -56,17 +65,19 @@ def export_group_users_csv():
     group_name = request.args.get('group_name', '')
     group_dn = request.args.get('group_dn', '')
     
-    # Récupérer la source LDAP
-    ldap_source = request.args.get('source', 'meta')
+    # Get LDAP source with proper fallback
+    ldap_source = request.args.get('source')
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
     
-    # Créer une instance du modèle LDAP avec la source spécifiée
+    # Create EDIR model with the appropriate source
     ldap_model = EDIRModel(source=ldap_source)
     
-    # Si nous avons un DN spécifique, l'utiliser
+    # If we have a specific DN, use it
     if group_dn:
         result = ldap_model.get_group_users_by_dn(group_dn, group_name)
     else:
-        # Sinon, utiliser la méthode existante basée sur le CN
+        # Otherwise, use the existing method based on the CN
         result = ldap_model.get_group_users(group_name)
     
     if result and result['users']:
@@ -81,15 +92,23 @@ def add_users_to_group():
     prefill_group_name = request.args.get('group_name', '')
     prefill_group_dn = request.args.get('group_dn', '')
     
-    # Récupérer la source LDAP
-    ldap_source = request.args.get('source', 'meta')
+    # Get LDAP source with proper fallback
+    ldap_source = request.args.get('source')
     if request.method == 'POST':
         ldap_source = request.form.get('ldap_source', ldap_source)
     
-    # Créer une instance du modèle LDAP avec la source spécifiée
+    # If not in query or form params, get from session with default fallback
+    if not ldap_source:
+        ldap_source = session.get('ldap_source', 'meta')
+    
+    # Make sure session is updated with current source
+    session['ldap_source'] = ldap_source
+    session.modified = True
+    
+    # Create EDIR model with the appropriate source
     ldap_model = EDIRModel(source=ldap_source)
     
-    # Récupérer le nom de la directory depuis la configuration
+    # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
     ldap_name = config.get('LDAP_name', 'META')
     
@@ -97,11 +116,11 @@ def add_users_to_group():
     selected_users = []
     
     if request.method == 'POST':
-        # Récupérer les informations du groupe depuis le formulaire
+        # Get group information from the form
         group_name = request.form.get('group_name', '')
         group_dn = request.form.get('group_dn', '')
         
-        # Récupérer les utilisateurs sélectionnés, si présents
+        # Get selected users, if any
         selected_users_json = request.form.get('selected_users_json', '[]')
         try:
             import json
@@ -111,11 +130,11 @@ def add_users_to_group():
             print(f"Error parsing selected_users_json: {e}")
             selected_users = []
         
-        # Si nous avons un DN spécifique, l'utiliser pour la recherche
+        # If we have a specific DN, use it for the search
         if group_dn:
             group_info = ldap_model.get_group_users_by_dn(group_dn, group_name)
         else:
-            # Sinon, utiliser la méthode existante basée sur le CN
+            # Otherwise, use the existing method based on the CN
             group_info = ldap_model.get_group_users(group_name)
         
         if not group_info:
@@ -126,13 +145,13 @@ def add_users_to_group():
                                   ldap_source=ldap_source,
                                   ldap_name=ldap_name)
         
-        # Stocker les informations du groupe en session pour les futures requêtes
+        # Store group information in session for future requests
         session['current_group'] = {
             'name': group_info['group_name'],
             'dn': group_info['group_dn']
         }
         
-        # Stocker également les utilisateurs sélectionnés et la source LDAP
+        # Also store selected users and LDAP source
         session['selected_users'] = selected_users
         session['ldap_source'] = ldap_source
         
@@ -144,15 +163,15 @@ def add_users_to_group():
                               ldap_source=ldap_source,
                               ldap_name=ldap_name)
     
-    # En cas de GET, si on a des informations en session, les restaurer
+    # In case of GET, if we have information in session, restore it
     if 'current_group' in session:
-        # Récupérer la source LDAP de la session si disponible
+        # Get LDAP source from session if available
         ldap_source = session.get('ldap_source', ldap_source)
         
-        # Réinitialiser le modèle avec la source correcte
+        # Reinitialize the model with the correct source
         ldap_model = EDIRModel(source=ldap_source)
         
-        # Récupérer le nom de la directory depuis la configuration
+        # Get LDAP name for display purposes
         config = LDAPConfigManager.get_config(ldap_source)
         ldap_name = config.get('LDAP_name', 'META')
         
@@ -178,17 +197,21 @@ def search_users_for_group():
     search_type = request.form.get('search_type', 'fullName')
     search_term = request.form.get('search_term', '')
     
-    # Récupérer la source LDAP
+    # Get LDAP source from form with fallback
     ldap_source = request.form.get('ldap_source', 'meta')
     
-    # Créer une instance du modèle LDAP avec la source spécifiée
+    # Make sure session is updated
+    session['ldap_source'] = ldap_source
+    session.modified = True
+    
+    # Create EDIR model with the appropriate source
     ldap_model = EDIRModel(source=ldap_source)
     
-    # Récupérer le nom de la directory depuis la configuration
+    # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
     ldap_name = config.get('LDAP_name', 'META')
     
-    # Récupérer les utilisateurs déjà sélectionnés du formulaire
+    # Get already selected users from the form
     selected_users_json = request.form.get('selected_users_json', '[]')
     
     import json
@@ -198,7 +221,7 @@ def search_users_for_group():
         print(f"Error parsing selected_users_json: {e}")
         selected_users = []
     
-    # Sauvegarder dans la session
+    # Save in session
     session['selected_users'] = selected_users
     session['ldap_source'] = ldap_source
     
@@ -206,25 +229,25 @@ def search_users_for_group():
         flash('Missing required parameters.', 'danger')
         return redirect(url_for('group.add_users_to_group', source=ldap_source))
     
-    # Récupérer les informations du groupe
+    # Get group information
     group_info = ldap_model.get_group_users_by_dn(group_dn, group_name)
     
     if not group_info:
         flash('Group not found.', 'danger')
         return redirect(url_for('group.add_users_to_group', source=ldap_source))
     
-    # Rechercher les utilisateurs actifs
+    # Search active users
     search_results = ldap_model.search_user_final(search_term, search_type, search_active_only=True, return_list=True)
     
     if not search_results:
         flash('No users found matching your search criteria.', 'info')
     
-    # Filtrer les utilisateurs qui sont déjà membres du groupe
+    # Filter users who are already members of the group
     if search_results and group_info and 'users' in group_info:
         existing_users_cn = [user['CN'] for user in group_info['users']]
         search_results = [user for user in search_results if user['cn'] not in existing_users_cn]
     
-    # Filtrer également les utilisateurs déjà sélectionnés
+    # Also filter users who are already selected
     if search_results and selected_users:
         selected_users_dn = [user.get('dn') for user in selected_users]
         search_results = [user for user in search_results if user['dn'] not in selected_users_dn]
@@ -248,10 +271,14 @@ def confirm_add_users():
     group_dn = request.form.get('group_dn', '')
     selected_users_json = request.form.get('selected_users', '[]')
     
-    # Récupérer la source LDAP
+    # Get LDAP source from form with fallback
     ldap_source = request.form.get('ldap_source', 'meta')
     
-    # Créer une instance du modèle LDAP avec la source spécifiée
+    # Make sure session is updated
+    session['ldap_source'] = ldap_source
+    session.modified = True
+    
+    # Create EDIR model with the appropriate source
     ldap_model = EDIRModel(source=ldap_source)
     
     import json
@@ -262,18 +289,18 @@ def confirm_add_users():
         print(f"Error parsing selected_users: {e}")
         selected_users = []
     
-    # Vider la liste des utilisateurs sélectionnés dans la session
+    # Clear selected users list in session
     session.pop('selected_users', None)
     
     if not group_name or not group_dn or not selected_users:
         flash('No users selected or group information missing.', 'warning')
         return redirect(url_for('group.add_users_to_group', source=ldap_source))
     
-    # Compter les succès et les échecs
+    # Count successes and failures
     success_count = 0
     failures = []
     
-    # Ajouter chaque utilisateur au groupe
+    # Add each user to the group
     for user in selected_users:
         user_dn = user.get('dn')
         if user_dn:
@@ -283,7 +310,7 @@ def confirm_add_users():
             else:
                 failures.append(f"Failed to add user {user.get('cn')} ({user.get('fullName')})")
     
-    # Construire un message de succès/échec
+    # Build success/failure message
     if success_count > 0:
         flash(f'Successfully added {success_count} users to group {group_name}.', 'success')
     
@@ -291,14 +318,14 @@ def confirm_add_users():
         for failure in failures:
             flash(failure, 'danger')
     
-    # Rediriger vers la page du groupe pour voir les changements
+    # Redirect to group page to see changes
     return redirect(url_for('group.group_users', group_name=group_name, group_dn=group_dn, source=ldap_source))
 
 @group_bp.route('/validate_bulk_cns', methods=['POST'])
 @login_required
 def validate_bulk_cns():
     """Valide une liste de CNs et retourne les utilisateurs trouvés"""
-    # Récupérer les données JSON de la requête
+    # Get JSON data from request
     data = request.get_json()
     if not data or 'cn_list' not in data or 'group_dn' not in data:
         return jsonify({'error': 'Missing required parameters'}), 400
@@ -306,16 +333,20 @@ def validate_bulk_cns():
     cn_list = data.get('cn_list', [])
     group_dn = data.get('group_dn', '')
     
-    # Récupérer la source LDAP depuis les données JSON
+    # Get LDAP source from JSON data with fallback
     ldap_source = data.get('ldap_source', 'meta')
     
-    # Créer une instance du modèle LDAP avec la source spécifiée
+    # Make sure session is updated
+    session['ldap_source'] = ldap_source
+    session.modified = True
+    
+    # Create EDIR model with the appropriate source
     ldap_model = EDIRModel(source=ldap_source)
     
     if not cn_list or not group_dn:
         return jsonify({'error': 'Empty CN list or group DN'}), 400
     
-    # Récupérer les informations du groupe pour vérifier les membres existants
+    # Get group information to check existing members
     group_info = ldap_model.get_group_users_by_dn(group_dn)
     existing_cns = []
     if group_info and 'users' in group_info:
@@ -324,28 +355,28 @@ def validate_bulk_cns():
     valid_users = []
     invalid_users = []
     
-    # Pour chaque CN dans la liste, vérifier s'il existe
+    # For each CN in the list, check if it exists
     for cn in cn_list:
-        # Convertir le CN en majuscules pour être cohérent avec le format LDAP
+        # Convert CN to uppercase to be consistent with LDAP format
         cn = cn.strip().upper()
         
-        # Vérifier si l'utilisateur est déjà membre du groupe
+        # Check if user is already a member of the group
         if cn in existing_cns:
             invalid_users.append(cn)
             continue
         
-        # Rechercher l'utilisateur dans le LDAP
+        # Search for user in LDAP
         user_info = ldap_model.search_user_final(cn, 'cn', simplified=True)
         
         if user_info:
-            # Utilisateur trouvé, ajouter aux utilisateurs valides
+            # User found, add to valid users
             valid_users.append({
                 'dn': user_info['dn'],
                 'cn': user_info['cn'],
                 'fullName': user_info['fullName']
             })
         else:
-            # Utilisateur non trouvé, ajouter aux CNs invalides
+            # User not found, add to invalid CNs
             invalid_users.append(cn)
     
     return jsonify({

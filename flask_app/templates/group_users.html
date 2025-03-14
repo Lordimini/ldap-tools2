@@ -4,12 +4,27 @@
 <div class="container mt-5">
     <h1 class="text-center mb-4">Group Users</h1>
     
+    <!-- LDAP Source Indicator -->
+    <div class="alert alert-info d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <strong>Current LDAP Source:</strong> {{ ldap_name }} ({{ ldap_source }})
+        </div>
+        <div>
+            <button type="button" class="btn btn-sm btn-outline-primary refresh-btn" data-source="{{ ldap_source }}">
+                <i class="bi bi-arrow-repeat"></i> Refresh with Current Source
+            </button>
+        </div>
+    </div>
+    
+    <!-- Store the current LDAP source for JS use -->
+    <input type="hidden" id="current_ldap_source" name="ldap_source" value="{{ ldap_source }}">
+    
     <form method="POST" action="{{ url_for('group.group_users') }}" class="card p-4 shadow mb-4">
         <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
         <div class="mb-3">
             <label for="group_name" class="form-label">Search Group:</label>
             <input type="text" class="form-control" id="group_name" name="group_name" placeholder="Start typing a group name..." value="{{ prefill_group_name }}" required>
-            <!-- Champ caché pour stocker le DN complet -->
+            <!-- Hidden field to store the complete DN -->
             <input type="hidden" id="group_dn" name="group_dn" value="{{ prefill_group_dn }}">
         </div>
         <button type="submit" class="btn btn-primary">Search</button>
@@ -28,6 +43,9 @@
                 </div>
             </div>
             <div>
+                <a href="{{ url_for('group.add_users_to_group') }}?group_name={{ result.group_name | urlencode }}&group_dn={{ result.group_dn | urlencode }}&source={{ ldap_source }}" class="btn btn-primary me-2">
+                    <i class="bi bi-person-plus"></i> Add Users
+                </a>
                 <a href="{{ url_for('group.export_group_users_csv') }}?group_name={{ result.group_name | urlencode }}&group_dn={{ result.group_dn | urlencode }}&source={{ ldap_source }}" class="btn btn-success">
                     <i class="fas fa-file-csv"></i> Export to CSV
                 </a>
@@ -85,6 +103,9 @@
 
 <script>
 $(document).ready(function () {
+    // Get the current LDAP source
+    const ldapSource = $('input[name="ldap_source"]').val() || 'meta';
+    
     // Initialize DataTables on the table
     if ($.fn.DataTable.isDataTable('#usersTable')) {
         $('#usersTable').DataTable().destroy();
@@ -123,7 +144,7 @@ $(document).ready(function () {
     $('.dataTables_length select').addClass('form-select form-select-sm');
     $('.dataTables_length select').css('width', 'auto');
     
-    // Champ caché pour stocker le DN du groupe
+    // Hidden field for storing the group DN
     if (!$('#group_dn').length) {
         $('<input>').attr({
             type: 'hidden',
@@ -132,10 +153,7 @@ $(document).ready(function () {
         }).appendTo('form');
     }
 
-    // Récupérer la source LDAP actuelle
-    var ldapSource = $('input[name="ldap_source"]').val() || 'meta';
-
-    // Autocomplete pour group_name avec stockage du DN
+    // Autocomplete for group_name with DN storage
     $('#group_name').autocomplete({
         source: function(request, response) {
             $.getJSON("{{ url_for('autocomplete.autocomplete_groups') }}", {
@@ -146,10 +164,10 @@ $(document).ready(function () {
             });
         },
         select: function(event, ui) {
-            // Définir la valeur visible (CN)
+            // Set the visible value (CN)
             $('#group_name').val(ui.item.value);
             
-            // Stocker le DN complet
+            // Store the complete DN
             const dnMatch = ui.item.label.match(/\((.*?)\)$/);
             if (dnMatch && dnMatch[1]) {
                 $('#group_dn').val(dnMatch[1]);
@@ -162,6 +180,21 @@ $(document).ready(function () {
             .append(`<div>${item.label}</div>`)
             .appendTo(ul);
     };
+    
+    // Make sure all links include the LDAP source
+    $('a[href]').each(function() {
+        const url = new URL(this.href, window.location.origin);
+        if (!url.searchParams.has('source') && url.origin === window.location.origin) {
+            url.searchParams.set('source', ldapSource);
+            this.href = url.toString();
+        }
+    });
+    
+    // Handle refresh button
+    $('.refresh-btn').click(function() {
+        const source = $(this).data('source');
+        window.location.href = window.location.pathname + '?source=' + source;
+    });
 });
 </script>
 {% endblock %}

@@ -5,7 +5,22 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">Complete User Creation</h1>
-    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
+    
+    <!-- LDAP Source Indicator -->
+    <div class="alert alert-info d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <strong>Current LDAP Source:</strong> {{ ldap_name }} ({{ ldap_source }})
+        </div>
+        <div>
+            <button type="button" class="btn btn-sm btn-outline-primary refresh-btn" data-source="{{ ldap_source }}">
+                <i class="bi bi-arrow-repeat"></i> Refresh Data
+            </button>
+        </div>
+    </div>
+    
+    <!-- Store the current LDAP source to be included in all forms -->
+    <input type="hidden" id="current_ldap_source" name="ldap_source" value="{{ ldap_source }}">
+    
     <!-- Flash messages for any errors/warnings -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -24,6 +39,7 @@
     <div class="card p-4 shadow mb-4">
         <h4 class="mb-3">Select User to Process</h4>
         <form id="userSelectionForm" method="POST" action="{{ url_for('postcreation.select_user') }}">
+            <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
             <div class="mb-3">
                 <label for="user_dn" class="form-label">User:</label>
                 <select id="user_dn" name="user_dn" class="form-select" onchange="this.form.submit()">
@@ -42,6 +58,7 @@
     {% if selected_user %}
     <form id="userCompletionForm" method="POST" action="{{ url_for('postcreation.complete_user') }}" class="card p-4 shadow">
         <input type="hidden" name="user_dn" value="{{ selected_user.dn }}">
+        <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
         
         <div class="row">
             <!-- Left Column: User Information Summary -->
@@ -252,6 +269,7 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <form action="{{ url_for('postcreation.delete_user') }}" method="POST" style="display: inline;">
                         <input type="hidden" name="user_dn" value="{{ selected_user.dn }}">
+                        <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
                         <button type="submit" class="btn btn-danger">Delete User</button>
                     </form>
                 </div>
@@ -269,8 +287,10 @@
 
 <script>
 // Updated JavaScript code for the post-creation page
-
 $(document).ready(function() {
+    // Get the current LDAP source
+    const ldapSource = $('#current_ldap_source').val();
+    
     // Initialize the selected groups array
     let selectedGroups = [];
     
@@ -284,7 +304,8 @@ $(document).ready(function() {
     $('#hierarchical_manager').autocomplete({
         source: function(request, response) {
             $.getJSON("{{ url_for('autocomplete.autocomplete_managers') }}", {
-                term: request.term
+                term: request.term,
+                source: ldapSource
             }, function(data) {
                 response(data);
             });
@@ -305,7 +326,8 @@ $(document).ready(function() {
     $('#group_name').autocomplete({
         source: function(request, response) {
             $.getJSON("{{ url_for('autocomplete.autocomplete_groups') }}", {
-                term: request.term
+                term: request.term,
+                source: ldapSource
             }, function(data) {
                 response(data);
             });
@@ -317,6 +339,23 @@ $(document).ready(function() {
             if (dnMatch && dnMatch[1]) {
                 $('#group_name').data('dn', dnMatch[1]);
             }
+            return false;
+        },
+        minLength: 2
+    });
+    
+    // Service (OU) Autocomplete
+    $('#ou').autocomplete({
+        source: function(request, response) {
+            $.getJSON("{{ url_for('autocomplete.autocomplete_services') }}", {
+                term: request.term,
+                source: ldapSource
+            }, function(data) {
+                response(data);
+            });
+        },
+        select: function(event, ui) {
+            $('#ou').val(ui.item.value);
             return false;
         },
         minLength: 2
@@ -395,12 +434,8 @@ $(document).ready(function() {
             });
         }
         
-        // Log for debugging
-        console.log("Selected groups updated:", selectedGroups);
-        
         // Update hidden field with JSON data
         $('#selected_groups_data').val(JSON.stringify(selectedGroups));
-        console.log("Hidden field value:", $('#selected_groups_data').val());
     }
     
     // Expose removeGroup function to global scope for the onclick handlers
@@ -410,20 +445,23 @@ $(document).ready(function() {
         updateSelectedGroupsDisplay();
     };
     
-    // Service (OU) Autocomplete
-    $('#ou').autocomplete({
-        source: function(request, response) {
-            $.getJSON("{{ url_for('autocomplete.autocomplete_services') }}", {
-                term: request.term
-            }, function(data) {
-                response(data);
-            });
-        },
-        select: function(event, ui) {
-            $('#ou').val(ui.item.value);
-            return false;
-        },
-        minLength: 2
+    // Make sure all links include the LDAP source parameter
+    $('a[href]').each(function() {
+        // Only process internal links
+        if (this.href.startsWith(window.location.origin)) {
+            const url = new URL(this.href);
+            // Only add source parameter if it doesn't already exist
+            if (!url.searchParams.has('source')) {
+                url.searchParams.set('source', ldapSource);
+                this.href = url.toString();
+            }
+        }
+    });
+    
+    // Handle refresh button
+    $('.refresh-btn').click(function() {
+        const source = $(this).data('source');
+        window.location.href = "{{ url_for('postcreation.post_creation') }}?source=" + source;
     });
 });
 </script>
@@ -469,12 +507,6 @@ $(document).ready(function() {
     .btn-danger:hover {
         background-color: #c0392b;
         border-color: #c0392b;
-    }
-
-    /* Style for badges */
-    .badge {
-        font-size: 0.9rem;
-        font-weight: normal;
     }
 
     /* Style badges by type */

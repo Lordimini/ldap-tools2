@@ -1,36 +1,65 @@
 {% extends "base.html" %}
 {% block title %}Role Groups - LDAP Manager{% endblock %}
 {% block content %}
-<div class="card p-4 shadow">
-    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
-    <h2 class="text-center mb-4">Search Role Groups</h2>
-    <form method="POST" action="{{ url_for('role.role_groups') }}" class="card p-4 shadow mb-4">
-        <div class="mb-3">
-            <label for="role_cn" class="form-label">Enter Role CN:</label>
-            <input type="text" class="form-control" id="role_cn" name="role_cn" value="{{ request.args.get('role_cn', prefill_role_cn) }}" required>
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Role Groups</h1>
+    
+    <!-- LDAP Source Indicator -->
+    <div class="alert alert-info d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <strong>Current LDAP Source:</strong> {{ ldap_name }} ({{ ldap_source }})
         </div>
-        <button type="submit" class="btn btn-primary">Search</button>
-    </form>
+        <div>
+            <button type="button" class="btn btn-sm btn-outline-primary refresh-btn" data-source="{{ ldap_source }}">
+                <i class="bi bi-arrow-repeat"></i> Refresh Data
+            </button>
+        </div>
+    </div>
+    
+    <!-- Store the current LDAP source to be included in all forms -->
+    <input type="hidden" id="current_ldap_source" name="ldap_source" value="{{ ldap_source }}">
+    
+    <div class="card p-4 shadow">
+        <h2 class="mb-4">Search Role Groups</h2>
+        <form method="POST" action="{{ url_for('role.role_groups') }}" class="card p-4 shadow mb-4">
+            <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
+            <div class="mb-3">
+                <label for="role_cn" class="form-label">Enter Role CN:</label>
+                <input type="text" class="form-control" id="role_cn" name="role_cn" value="{{ request.args.get('role_cn', prefill_role_cn) }}" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
 
-    {% if result and result.groups %}
-    <h3 class="mt-4">Groups Linked to Role: {{ result.role_cn }}</h3>
-    <table class="table table-bordered table-hover">
-        <thead>
-            <tr>
-                <th>Group Name (CN)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for group in result.groups %}
-            <tr onclick="window.location.href='{{ url_for('group.group_users') }}?group_name={{ group.nrfResource }}'" style="cursor: pointer;">
-                <td>{{ group.nrfResource }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% elif result is none %}
-    <p class="text-center text-danger">No groups found for this role.</p>
-    {% endif %}
+        {% if result and result.groups %}
+        <h3 class="mt-4">Groups Linked to Role: {{ result.role_cn }}</h3>
+        <div class="table-responsive">
+            <table id="groupsTable" class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Group Name (CN)</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for group in result.groups %}
+                    <tr>
+                        <td>{{ group.nrfResource }}</td>
+                        <td>
+                            <a href="{{ url_for('group.group_users') }}?group_name={{ group.nrfResource }}&source={{ ldap_source }}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-people"></i> View Users
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% elif result is none and prefill_role_cn %}
+        <div class="alert alert-warning mt-4">
+            <i class="bi bi-exclamation-triangle-fill"></i> No groups found for role "{{ prefill_role_cn }}".
+        </div>
+        {% endif %}
+    </div>
 </div>
 
 <!-- jQuery (required for autocomplete) -->
@@ -39,12 +68,22 @@
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
 
+<!-- DataTables CSS and JS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
 <script>
     $(function() {
+        // Get the current LDAP source
+        const ldapSource = $('#current_ldap_source').val();
+        
+        // Role CN autocomplete
         $('#role_cn').autocomplete({
             source: function(request, response) {
                 $.getJSON("{{ url_for('autocomplete.autocomplete_roles') }}", {
-                    term: request.term
+                    term: request.term,
+                    source: ldapSource
                 }, function(data) {
                     response(data);
                 });
@@ -52,12 +91,128 @@
             select: function(event, ui) {
                 $('#role_cn').val(ui.item.value);
                 return false;
-            }
+            },
+            minLength: 2
         }).data('ui-autocomplete')._renderItem = function(ul, item) {
             return $('<li>')
                 .append(`<div>${item.label}</div>`)
                 .appendTo(ul);
         };
+        
+        // Initialize DataTables for groups table if it exists
+        if ($.fn.DataTable.isDataTable('#groupsTable')) {
+            $('#groupsTable').DataTable().destroy();
+        }
+        
+        if ($('#groupsTable').length) {
+            $('#groupsTable').DataTable({
+                responsive: true,
+                paging: true,
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                searching: true,
+                info: true,
+                order: [[0, 'asc']], // Default sorting by Group Name
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search groups...",
+                    zeroRecords: "No matching groups found",
+                    info: "Showing _START_ to _END_ of _TOTAL_ groups",
+                    infoEmpty: "No groups found",
+                    infoFiltered: "(filtered from _MAX_ total groups)"
+                }
+            });
+        }
+        
+        // Make DataTables search box more Bootstrap-like
+        $('.dataTables_filter input').addClass('form-control');
+        $('.dataTables_filter input').css('margin-left', '0.5em');
+        
+        // Search tip for wildcard search
+        const wildcardTip = `
+            <div class="alert alert-info mt-2">
+                <i class="bi bi-info-circle-fill"></i> 
+                <strong>Search tip:</strong> You can use the asterisk (*) as a wildcard. 
+            </div>
+        `;
+        $('.card form').append(wildcardTip);
+        
+        // Make sure all links include the LDAP source parameter
+        $('a[href]').each(function() {
+            // Only process internal links
+            if (this.href.startsWith(window.location.origin)) {
+                const url = new URL(this.href);
+                // Only add source parameter if it doesn't already exist
+                if (!url.searchParams.has('source')) {
+                    url.searchParams.set('source', ldapSource);
+                    this.href = url.toString();
+                }
+            }
+        });
+        
+        // Handle refresh button
+        $('.refresh-btn').click(function() {
+            const source = $(this).data('source');
+            // Determine current URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Create new URL with current parameters plus the source
+            const url = new URL(window.location.pathname, window.location.origin);
+            
+            // Copy over all existing parameters except source
+            for (const [key, value] of urlParams.entries()) {
+                if (key !== 'source') {
+                    url.searchParams.append(key, value);
+                }
+            }
+            
+            // Add the source parameter
+            url.searchParams.set('source', source);
+            
+            // Navigate to the URL
+            window.location.href = url.toString();
+        });
     });
 </script>
+
+<style>
+    /* Style for autocomplete dropdown */
+    .ui-autocomplete {
+        max-height: 300px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background-color: var(--medium-gray);
+        border: 1px solid var(--dark-gray);
+    }
+    
+    .ui-menu-item {
+        color: var(--text-white);
+    }
+    
+    .ui-menu-item:hover,
+    .ui-menu-item .ui-state-active {
+        background-color: var(--light-gray);
+    }
+    
+    /* Style for the cards */
+    .card {
+        border: none;
+        background-color: var(--medium-gray);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Style for table */
+    .table {
+        color: var(--text-white);
+    }
+    
+    .table thead th {
+        background-color: var(--dark-gray);
+        border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: var(--light-gray);
+    }
+</style>
 {% endblock %}

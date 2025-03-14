@@ -6,6 +6,21 @@
 <div class="container mt-5">
     <h1 class="text-center mb-4">User Lookup</h1>
     
+    <!-- Store the current LDAP source to be included in all forms -->
+    <input type="hidden" id="current_ldap_source" name="ldap_source" value="{{ ldap_source }}">
+    
+    <!-- LDAP Source Indicator -->
+    <div class="alert alert-info d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <strong>Current LDAP Source:</strong> {{ ldap_name }} ({{ ldap_source }})
+        </div>
+        <div>
+            <a href="{{ url_for('search.search_user', source=ldap_source) }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-arrow-repeat"></i> Refresh Data
+            </a>
+        </div>
+    </div>
+    
     <!-- Flash messages for any errors/warnings -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -364,7 +379,55 @@
 </style>
 
 <script>
-    $(document).ready(function() {
+$(document).ready(function() {
+        // Get the current LDAP source
+        const currentLdapSource = $('#current_ldap_source').val() || 'meta';
+        
+        // Add LDAP source to all links that don't already have it
+        $('a[href]').each(function() {
+            // Only process internal links
+            if ($(this).attr('href') && $(this).attr('href').startsWith('/')) {
+                if (!$(this).attr('href').includes('source=')) {
+                    let url;
+                    try {
+                        url = new URL($(this).attr('href'), window.location.origin);
+                        url.searchParams.set('source', currentLdapSource);
+                        $(this).attr('href', url.toString());
+                    } catch (e) {
+                        // Handle edge cases for malformed URLs
+                        const href = $(this).attr('href');
+                        if (href.includes('?')) {
+                            $(this).attr('href', href + '&source=' + currentLdapSource);
+                        } else {
+                            $(this).attr('href', href + '?source=' + currentLdapSource);
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Add LDAP source to all forms that don't already have it
+        $('form').each(function() {
+            // Check if the form already has an ldap_source input
+            let hasLdapSource = false;
+            $(this).find('input').each(function() {
+                if ($(this).attr('name') === 'ldap_source') {
+                    hasLdapSource = true;
+                    $(this).val(currentLdapSource);
+                }
+            });
+            
+            // If not, add a hidden input for ldap_source
+            if (!hasLdapSource) {
+                const input = $('<input>').attr({
+                    type: 'hidden',
+                    name: 'ldap_source',
+                    value: currentLdapSource
+                });
+                $(this).append(input);
+            }
+        });
+        
         // Function to initialize autocomplete
         function initializeAutocomplete() {
             if ($('#search_type').val() === 'fullName') {
@@ -377,7 +440,7 @@
                         }
                         
                         // Récupérer la source LDAP actuelle
-                        var ldapSource = $('input[name="ldap_source"]').val() || 'meta';
+                        var ldapSource = currentLdapSource;
                         
                         // Ajouter une variable pour stocker la requête AJAX en cours
                         if (this.xhr) {

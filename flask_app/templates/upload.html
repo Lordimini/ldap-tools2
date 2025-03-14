@@ -2,36 +2,136 @@
 
 {% block title %}Upload CSV - LDAP Manager{% endblock %}
 
-
-    {% block content %}
+{% block content %}
+<div class="container mt-5">
     <h1 class="text-center mb-4">CSV bulk groups populate</h1>
-    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
-    <form method="POST" enctype="multipart/form-data" class="card p-4 shadow">
-        <div class="mb-3">
-            <label for="group_dn" class="form-label">Select the application for which you wish to populate groups:</label>
-            <select id="group_dn" name="group_dn" class="form-select" required>
-                {% for option in group_dn_options %}
-                <option value="{{ option.value }}">{{ option.label }}</option>
+    
+    <!-- Store the current LDAP source to be included in all forms -->
+    <input type="hidden" id="current_ldap_source" name="ldap_source" value="{{ ldap_source }}">
+    
+    <!-- LDAP Source Indicator -->
+    <div class="alert alert-info d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <strong>Current LDAP Source:</strong> {{ ldap_name }} ({{ ldap_source }})
+        </div>
+        <div>
+            <a href="{{ url_for('upload.upload_file', source=ldap_source) }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-arrow-repeat"></i> Refresh Data
+            </a>
+        </div>
+    </div>
+    
+    <!-- Flash messages for any errors/warnings -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert-messages mb-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'success' %}success{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
                 {% endfor %}
-            </select>
-        </div>
-        <div class="mb-3">
-            <label for="file" class="form-label">Choose CSV File:</label>
-            <input type="file" name="file" class="form-control" accept=".csv" required>
-        </div>
-		<button type="submit" class="btn btn-primary" id="uploadButton">
-			<span id="uploadText">Validate</span>
-			<span id="uploadSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
-		</button>
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <div class="card p-4 shadow">
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
+            <div class="mb-3">
+                <label for="group_dn" class="form-label">Select the application for which you wish to populate groups:</label>
+                <select id="group_dn" name="group_dn" class="form-select" required>
+                    {% for option in group_dn_options %}
+                    <option value="{{ option.value }}">{{ option.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="file" class="form-label">Choose CSV File:</label>
+                <input type="file" name="file" class="form-control" accept=".csv" required>
+            </div>
+            <button type="submit" class="btn btn-primary" id="uploadButton">
+                <span id="uploadText">Validate</span>
+                <span id="uploadSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+            </button>
+        </form>
+    </div>
+</div>
 
-		<script>
-		document.querySelector('form').addEventListener('submit', function() {
-        document.getElementById('uploadText').classList.add('d-none');
-        document.getElementById('uploadSpinner').classList.remove('d-none');
-        document.getElementById('uploadButton').disabled = true;
-			});
-		</script>
-        <!-- <button type="submit" class="btn btn-primary">Upload</button> -->
-    </form>
-	{% endblock %}
-	
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get the current LDAP source
+        const currentLdapSource = document.getElementById('current_ldap_source').value || 'meta';
+        
+        // Add LDAP source to all links that don't already have it
+        document.querySelectorAll('a[href]').forEach(function(link) {
+            // Only process internal links
+            if (link.href && link.href.startsWith(window.location.origin)) {
+                if (!link.href.includes('source=')) {
+                    try {
+                        const url = new URL(link.href);
+                        url.searchParams.set('source', currentLdapSource);
+                        link.href = url.toString();
+                    } catch (e) {
+                        // Handle edge cases for malformed URLs
+                        const href = link.href;
+                        if (href.includes('?')) {
+                            link.href = href + '&source=' + currentLdapSource;
+                        } else {
+                            link.href = href + '?source=' + currentLdapSource;
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Add LDAP source to all forms that don't already have it
+        document.querySelectorAll('form').forEach(function(form) {
+            // Check if the form already has an ldap_source input
+            let hasLdapSource = false;
+            form.querySelectorAll('input').forEach(function(input) {
+                if (input.name === 'ldap_source') {
+                    hasLdapSource = true;
+                    input.value = currentLdapSource;
+                }
+            });
+            
+            // If not, add a hidden input for ldap_source
+            if (!hasLdapSource) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ldap_source';
+                input.value = currentLdapSource;
+                form.appendChild(input);
+            }
+        });
+        
+        // Handle form submission - show loading spinner
+        document.querySelector('form').addEventListener('submit', function() {
+            document.getElementById('uploadText').classList.add('d-none');
+            document.getElementById('uploadSpinner').classList.remove('d-none');
+            document.getElementById('uploadButton').disabled = true;
+        });
+    });
+</script>
+
+<style>
+    /* Style for card */
+    .card {
+        border: none;
+        border-radius: 8px;
+    }
+    
+    /* Button styling */
+    .btn-primary {
+        background-color: #3498db;
+        border-color: #3498db;
+    }
+    
+    .btn-primary:hover {
+        background-color: #2980b9;
+        border-color: #2980b9;
+    }
+</style>
+{% endblock %}

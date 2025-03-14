@@ -2,24 +2,53 @@
 {% block title %}View Role - LDAP Manager{% endblock %}
 {% block content %}
 <div class="container mt-5">
-    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
     <h1 class="text-center mb-4">Role Details</h1>
+    
+    <!-- Store the current LDAP source to be included in all forms -->
+    <input type="hidden" id="current_ldap_source" name="ldap_source" value="{{ ldap_source }}">
+    
+    <!-- LDAP Source Indicator -->
+    <div class="alert alert-info d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <strong>Current LDAP Source:</strong> {{ ldap_name }} ({{ ldap_source }})
+        </div>
+        <div>
+            <a href="{{ url_for('role.view_role', role_cn=role_cn, source=ldap_source) }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-arrow-repeat"></i> Refresh Data
+            </a>
+        </div>
+    </div>
+    
+    <!-- Flash messages for any errors/warnings -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert-messages mb-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'success' %}success{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
     <div class="card p-4 shadow">
         <!-- Role Name and User Count -->
         <h2>{{ role_cn }}</h2>
         <p class="text-muted">{{ user_count }} user(s) assigned to this role.</p>
 
         <!-- Back Button -->
-        <a href="{{ url_for('ldap.ldap_browser') }}?dn={{ parent_dn }}" class="btn btn-secondary mb-4">
+        <a href="{{ url_for('ldap.ldap_browser') }}?dn={{ parent_dn }}&source={{ ldap_source }}" class="btn btn-secondary mb-4">
             <i class="fas fa-arrow-left"></i> Back to Parent Container
         </a>
 
         <!-- Export Buttons -->
         <div class="text-end mb-3">
-            <a href="{{ url_for('role.export_role_users_csv', role_cn=role_cn) }}" class="btn btn-success me-2">
+            <a href="{{ url_for('role.export_role_users_csv', role_cn=role_cn, source=ldap_source) }}" class="btn btn-success me-2">
                 <i class="fas fa-file-csv"></i> Export to CSV
             </a>
-            <a href="{{ url_for('role.export_role_users_pdf', role_cn=role_cn) }}" class="btn btn-danger">
+            <a href="{{ url_for('role.export_role_users_pdf', role_cn=role_cn, source=ldap_source) }}" class="btn btn-danger">
                 <i class="fas fa-file-pdf"></i> Export to PDF
             </a>
         </div>
@@ -65,7 +94,55 @@
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-    $(document).ready(function () {
+    $(document).ready(function() {
+        // Get the current LDAP source
+        const currentLdapSource = $('#current_ldap_source').val() || 'meta';
+        
+        // Add LDAP source to all links that don't already have it
+        $('a[href]').each(function() {
+            // Only process internal links
+            if ($(this).attr('href') && $(this).attr('href').startsWith('/')) {
+                if (!$(this).attr('href').includes('source=')) {
+                    let url;
+                    try {
+                        url = new URL($(this).attr('href'), window.location.origin);
+                        url.searchParams.set('source', currentLdapSource);
+                        $(this).attr('href', url.toString());
+                    } catch (e) {
+                        // Handle edge cases for malformed URLs
+                        const href = $(this).attr('href');
+                        if (href.includes('?')) {
+                            $(this).attr('href', href + '&source=' + currentLdapSource);
+                        } else {
+                            $(this).attr('href', href + '?source=' + currentLdapSource);
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Add LDAP source to all forms that don't already have it
+        $('form').each(function() {
+            // Check if the form already has an ldap_source input
+            let hasLdapSource = false;
+            $(this).find('input').each(function() {
+                if ($(this).attr('name') === 'ldap_source') {
+                    hasLdapSource = true;
+                    $(this).val(currentLdapSource);
+                }
+            });
+            
+            // If not, add a hidden input for ldap_source
+            if (!hasLdapSource) {
+                const input = $('<input>').attr({
+                    type: 'hidden',
+                    name: 'ldap_source',
+                    value: currentLdapSource
+                });
+                $(this).append(input);
+            }
+        });
+    
         // Initialize DataTables on the table
         $('#usersTable').DataTable({
             paging: true, // Enable pagination
@@ -81,21 +158,68 @@
 
 <!-- Add this script at the bottom of your HTML file -->
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get the current LDAP source
+        const currentLdapSource = document.getElementById('current_ldap_source').value || 'meta';
+        
         // Attach a click event listener to the table
         const table = document.getElementById('usersTable');
-        table.addEventListener('click', function (event) {
+        table.addEventListener('click', function(event) {
             // Find the closest <tr> element that was clicked
             const row = event.target.closest('tr');
             if (row && row.tagName === 'TR') {
                 // Get the CN value from the data-cn attribute
                 const cn = row.getAttribute('data-cn');
                 if (cn) {
-                    // Redirect to the search_user page with the CN parameter
-                    window.location.href = `{{ url_for('search.search_user') }}?cn=${encodeURIComponent(cn)}`;
+                    // Redirect to the search_user page with the CN parameter and source parameter
+                    window.location.href = `{{ url_for('search.search_user') }}?cn=${encodeURIComponent(cn)}&source=${currentLdapSource}`;
                 }
             }
         });
     });
 </script>
+
+<style>
+    /* Style for table rows on hover */
+    .table tr:hover {
+        background-color: rgba(52, 152, 219, 0.1);
+    }
+    
+    /* Card styling */
+    .card {
+        border: none;
+        border-radius: 8px;
+    }
+    
+    /* Button styling */
+    .btn-primary {
+        background-color: #3498db;
+        border-color: #3498db;
+    }
+    
+    .btn-primary:hover {
+        background-color: #2980b9;
+        border-color: #2980b9;
+    }
+    
+    .btn-success {
+        background-color: #2ecc71;
+        border-color: #2ecc71;
+    }
+    
+    .btn-success:hover {
+        background-color: #27ae60;
+        border-color: #27ae60;
+    }
+    
+    .btn-danger {
+        background-color: #e74c3c;
+        border-color: #e74c3c;
+    }
+    
+    .btn-danger:hover {
+        background-color: #c0392b;
+        border-color: #c0392b;
+    }
+</style>
 {% endblock %}

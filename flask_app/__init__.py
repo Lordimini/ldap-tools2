@@ -1,4 +1,5 @@
 from flask import Flask
+from flask import current_app, render_template
 from flask_app.routes.auth import auth_bp
 from flask_app.routes.dashboard import dashboard_bp
 from flask_app.routes.search import search_bp
@@ -48,6 +49,10 @@ def create_app():
     
     # Register error handlers
     register_error_handlers(app)
+    
+    @app.context_processor
+    def inject_current_app():
+        return dict(current_app=current_app)
     
     return app
 

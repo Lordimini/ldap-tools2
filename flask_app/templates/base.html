@@ -33,10 +33,7 @@
             <div class="d-flex align-items-center ms-auto">
                 <!-- User Profile -->
                 {% if current_user.is_authenticated %}
-                <div style="color: white; padding: 10px; background: red;">
-                    Debug: Authenticated as {{ current_user.username }} 
-                    Roles: {{ current_user.roles|join(', ') }}
-                  </div>
+                
                 <div class="dropdown">
                     <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="user-avatar">
@@ -64,10 +61,18 @@
 
     <!-- Sidebar and Main Content -->
     <div class="d-flex">
+        <div style="color: white; padding: 10px; background: red;">
+            Debug: Authenticated as {{ current_user.username }} 
+            Roles: {{ current_user.roles|join(', ') }}
+          </div>
         <!-- Sidebar -->
         <div class="sidebar bg-dark">
             <!-- Source Selector (only shown when logged in) -->
             {% if current_user.is_authenticated %}
+            <div style="color: white; padding: 10px; background: red;">
+                Debug: Authenticated as {{ current_user.username }} 
+                Roles: {{ current_user.roles|join(', ') }}
+              </div>
             <div class="p-3 border-bottom border-secondary">
                 <label for="ldap_source_selector" class="form-label text-light small mb-1">LDAP Source:</label>
                 <select id="ldap_source_selector" class="form-select form-select-sm bg-dark text-light">

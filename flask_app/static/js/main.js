@@ -1,3 +1,6 @@
+//used by base.html template
+////////////////////////////
+
 // Sidebar Toggle
 document.getElementById('sidebarToggle').addEventListener('click', function() {
     document.body.classList.toggle('sidebar-collapsed');

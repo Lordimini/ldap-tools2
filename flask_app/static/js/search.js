@@ -101,16 +101,16 @@ $(document).ready(function() {
     initializeAutocomplete();
     
     // Astuce pour la recherche avec caractères génériques
-    const cardForm = $('.card form');
-    if (cardForm.length > 0) {
-        var wildcardTip = `
-            <div class="alert alert-info mt-2">
-                <i class="bi bi-info-circle-fill"></i> 
-                <strong>Search tip:</strong> You can use the asterisk (*) as a wildcard.
-            </div>
-        `;
-        cardForm.append(wildcardTip);
-    }
+    // const cardForm = $('.card form');
+    // if (cardForm.length > 0) {
+    //     var wildcardTip = `
+    //         <div class="alert alert-info mt-2">
+    //             <i class="bi bi-info-circle-fill"></i> 
+    //             <strong>Search tip:</strong> You can use the asterisk (*) as a wildcard.
+    //         </div>
+    //     `;
+    //     cardForm.append(wildcardTip);
+    // }
     
     // Groupes - Filtrer
     $('#group-filter').on('keyup', function() {

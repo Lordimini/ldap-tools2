@@ -18,9 +18,9 @@ class User(UserMixin):
         self.roles = roles or []
         self.permissions = permissions or set()
         self.groups = groups or []
-        self.is_authenticated = True
-        self.is_active = True
-        self.is_anonymous = False
+        # self.is_authenticated = True
+        # self.is_active = True
+        # self.is_anonymous = False
         self._profile_data = {}
     
     def has_role(self, role):

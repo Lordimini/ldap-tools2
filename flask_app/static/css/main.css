@@ -439,18 +439,26 @@ code {
 
 /* ===== AUTOCOMPLETE ===== */
 .ui-autocomplete {
+    background-color: var(--medium-gray) !important;
+    border: 1px solid var(--dark-gray) !important;
+    color: var(--text-white) !important;
     max-height: 300px;
     overflow-y: auto;
     overflow-x: hidden;
-    background-color: var(--medium-gray);
-    border: 1px solid var(--dark-gray);
+    z-index: 9999 !important;
 }
 
 .ui-menu-item {
-    color: var(--text-white);
+    color: var(--text-white) !important;
 }
 
-.ui-menu-item:hover,
-.ui-menu-item .ui-state-active {
-    background-color: var(--light-gray);
+.ui-menu-item-wrapper {
+    padding: 5px 10px !important;
+}
+
+.ui-menu-item-wrapper.ui-state-active {
+    background-color: var(--accent-color) !important;
+    border-color: var(--accent-color) !important;
+    color: var(--text-white) !important;
+    margin: 0 !important;
 }

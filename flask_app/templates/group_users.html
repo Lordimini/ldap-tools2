@@ -1,5 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Group Users - LDAP Manager{% endblock %}
+{% block head %}
+{{ super() }}  <!-- Important pour conserver le contenu du bloc head du parent -->
+
+<!-- Include DataTables CSS with extensions for better styling -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css">
+
+<!-- jQuery UI CSS -->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+{% endblock %}
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">Group Users</h1>
@@ -74,15 +84,11 @@
     {% endif %}
 </div>
 
-<!-- Include DataTables CSS with extensions for better styling -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css">
 
 <!-- jQuery (required for DataTables and autocomplete) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- jQuery UI (for autocomplete) -->
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
 
 <!-- Include DataTables JS with pagination and responsive extensions -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -90,100 +96,12 @@
 <script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap5.min.js"></script>
 
+{% block scripts %}
+<!-- URLs for JavaScript -->
 <script>
-$(document).ready(function () {
-    // Get the current LDAP source
-    const ldapSource = $('input[name="ldap_source"]').val() || 'meta';
-    
-    // Initialize DataTables on the table
-    if ($.fn.DataTable.isDataTable('#usersTable')) {
-        $('#usersTable').DataTable().destroy();
-    }
-    
-    // Initialize DataTable with pagination and responsive features
-    var table = $('#usersTable').DataTable({
-        responsive: true,
-        paging: true,
-        pageLength: 10,
-        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        searching: true,
-        info: true,
-        order: [[1, 'asc']], // Default sorting by Full Name
-        columnDefs: [
-            { orderable: true, targets: [0, 1, 2, 3] }
-        ],
-        language: {
-            search: "",
-            searchPlaceholder: "Search in all columns...",
-            zeroRecords: "No matching records found",
-            info: "Showing _START_ to _END_ of _TOTAL_ users",
-            infoEmpty: "No users found",
-            infoFiltered: "(filtered from _MAX_ total users)"
-        }
-    });
-    
-    // Custom filtering for Service column (index 3)
-    $('#serviceFilter').on('keyup', function() {
-        table.column(3).search(this.value).draw();
-    });
-
-    // Make DataTables search box more Bootstrap-like
-    $('.dataTables_filter input').addClass('form-control');
-    $('.dataTables_filter input').css('margin-left', '0.5em');
-    $('.dataTables_length select').addClass('form-select form-select-sm');
-    $('.dataTables_length select').css('width', 'auto');
-    
-    // Hidden field for storing the group DN
-    if (!$('#group_dn').length) {
-        $('<input>').attr({
-            type: 'hidden',
-            id: 'group_dn',
-            name: 'group_dn'
-        }).appendTo('form');
-    }
-
-    // Autocomplete for group_name with DN storage
-    $('#group_name').autocomplete({
-        source: function(request, response) {
-            $.getJSON("{{ url_for('autocomplete.autocomplete_groups') }}", {
-                term: request.term,
-                source: ldapSource
-            }, function(data) {
-                response(data);
-            });
-        },
-        select: function(event, ui) {
-            // Set the visible value (CN)
-            $('#group_name').val(ui.item.value);
-            
-            // Store the complete DN
-            const dnMatch = ui.item.label.match(/\((.*?)\)$/);
-            if (dnMatch && dnMatch[1]) {
-                $('#group_dn').val(dnMatch[1]);
-            }
-            
-            return false;
-        }
-    }).data('ui-autocomplete')._renderItem = function(ul, item) {
-        return $('<li>')
-            .append(`<div>${item.label}</div>`)
-            .appendTo(ul);
-    };
-    
-    // Make sure all links include the LDAP source
-    $('a[href]').each(function() {
-        const url = new URL(this.href, window.location.origin);
-        if (!url.searchParams.has('source') && url.origin === window.location.origin) {
-            url.searchParams.set('source', ldapSource);
-            this.href = url.toString();
-        }
-    });
-    
-    // Handle refresh button
-    $('.refresh-btn').click(function() {
-        const source = $(this).data('source');
-        window.location.href = window.location.pathname + '?source=' + source;
-    });
-});
+    // Passing URL values to JavaScript
+    window.autocompleteGroupsUrl = "{{ url_for('autocomplete.autocomplete_groups') }}";
 </script>
+<script src="{{ url_for('static', filename='js/group_users.js') }}"></script>
+{% endblock %}
 {% endblock %}

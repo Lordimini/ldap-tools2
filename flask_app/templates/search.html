@@ -285,7 +285,7 @@
     </div>
     {% endif %}
 </div>
-
+{% endblock %}
 
 {% block scripts %}
 <!-- jQuery (required for autocomplete) -->
@@ -299,6 +299,4 @@
     window.autocompleteFullNameUrl = "{{ url_for('autocomplete.autocomplete_fullName') }}";
 </script>
 <script src="{{ url_for('static', filename='js/search.js') }}"></script>
-{% endblock %}
-
 {% endblock %}

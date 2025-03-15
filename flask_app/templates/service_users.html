@@ -71,9 +71,8 @@
 </div>
 {% endif %}
 </div>
+{% endblock %}
 
-
- 
 {% block scripts %}
 <!-- jQuery (required for autocomplete) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -86,5 +85,4 @@
     window.autocompleteServicesUrl = "{{ url_for('autocomplete.autocomplete_services') }}";
 </script>
 <script src="{{ url_for('static', filename='js/service_users.js') }}"></script>
-{% endblock %}
 {% endblock %}

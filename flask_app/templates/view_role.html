@@ -76,7 +76,7 @@
         {% endif %}
     </div>
 </div>
-
+{% endblock %}
 
 {% block scripts %}
 <!-- Include jQuery -->
@@ -91,6 +91,4 @@
     window.searchUserUrl = "{{ url_for('search.search_user') }}";
 </script>
 <script src="{{ url_for('static', filename='js/view_role.js') }}"></script>
-{% endblock %}
-
 {% endblock %}

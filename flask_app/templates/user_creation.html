@@ -207,9 +207,10 @@
         <input type="hidden" name="manager_override" id="hidden_manager_override">
         <input type="hidden" name="ldap_source" id="hidden_ldap_source">
     </form>
+</div>
+{% endblock %}
 
-    
-    {% block scripts %}
+{% block scripts %}
     <!-- Include jQuery and jQuery UI -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
@@ -223,6 +224,4 @@
         window.previewUserDetailsUrl = "{{ url_for('usercreation.preview_user_details') }}";
     </script>
     <script src="{{ url_for('static', filename='js/user_creation.js') }}"></script>
-{% endblock %}
-</div>
 {% endblock %}

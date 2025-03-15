@@ -111,6 +111,7 @@
     </div>
     {% endif %}
 </div>
+{% endblock %}
 
 {% block scripts %}
 <!-- jQuery (required for DataTables and autocomplete) -->
@@ -129,5 +130,4 @@
     window.autocompleteRolesUrl = "{{ url_for('autocomplete.autocomplete_roles') }}";
 </script>
 <script src="{{ url_for('static', filename='js/role_users.js') }}"></script>
-{% endblock %}
 {% endblock %}

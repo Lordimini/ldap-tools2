@@ -85,6 +85,7 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
 
 {% block scripts %}
 <!-- Include jQuery -->
@@ -94,5 +95,4 @@
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script src="{{ url_for('static', filename='js/ldap_browser.js') }}"></script>
-{% endblock %}
 {% endblock %}

@@ -41,13 +41,13 @@
             border: none;
         }
         
-        .form-control, .form-select {
+        .form-control {
             background-color: var(--medium-gray);
             color: var(--text-white);
             border-color: var(--light-gray);
         }
         
-        .form-control:focus, .form-select:focus {
+        .form-control:focus {
             background-color: var(--medium-gray);
             color: var(--text-white);
             border-color: var(--accent-color);
@@ -87,16 +87,9 @@
             </div>
             <div class="card-body p-4">
                 <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next', '')) }}">
-                    <div class="mb-3">
-                        <label for="ldap_source" class="form-label">LDAP Source</label>
-                        <select class="form-select" id="ldap_source" name="ldap_source">
-                            {% for source in available_sources %}
-                            <option value="{{ source }}" {% if ldap_source == source %}selected{% endif %}>
-                                {{ source.upper() }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                    <!-- LDAP source is fixed to "meta" -->
+                    <input type="hidden" name="ldap_source" value="meta">
+                    
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
                         <div class="input-group">

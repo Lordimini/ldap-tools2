@@ -3,6 +3,11 @@
 {% block head %}
 {{ super() }}  <!-- Important pour conserver le contenu du bloc head du parent -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<!-- Include DataTables CSS with extensions for better styling -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css">
+<!-- jQuery UI (for autocomplete) -->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
 {% endblock %}
 {% block content %}
 <div class="container mt-5">
@@ -245,23 +250,17 @@ SEDRET</pre>
     {% endif %}
 </div>
 
-<!-- Include DataTables CSS with extensions for better styling -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css">
 
+{% block scripts %}
 <!-- jQuery (required for DataTables and autocomplete) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- jQuery UI (for autocomplete) -->
-<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
-
 <!-- Include DataTables JS with pagination and responsive extensions -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap5.min.js"></script>
-
-{% block scripts %}
+<!-- jQuery UI (for autocomplete) -->
+<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
 <!-- URLs for JavaScript -->
 <script>
     // Passing URL values and initial data to JavaScript

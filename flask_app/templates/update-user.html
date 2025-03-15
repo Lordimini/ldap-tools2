@@ -4,6 +4,8 @@
 {% block head %}
 {{ super() }}  <!-- Important pour conserver le contenu du bloc head du parent -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<!-- jQuery UI CSS -->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
 {% endblock %}
 {% block content %}
 <div class="container mt-5">
@@ -366,323 +368,36 @@
     {% endif %}
 </div>
 
+{% block scripts %}
 <!-- Include jQuery for ajax calls -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- jQuery UI for autocomplete -->
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
 
+<!-- URLs for JavaScript -->
 <script>
-    $(document).ready(function() {
-        // Get the current LDAP source
-        const currentLdapSource = $('input[name="ldap_source"]').val() || 'meta';
-        // Add LDAP source to all links that don't already have it
-        $('a[href]').each(function() {
-            // Only process internal links
-            if ($(this).attr('href') && $(this).attr('href').startsWith('/')) {
-                if (!$(this).attr('href').includes('source=')) {
-                    // Code pour ajouter le paramètre source
-                }
-            }
-        });
-
-        // Handle search type dropdown
-        function initializeAutocomplete() {
-            if ($('#search_type').val() === 'fullName') {
-                $('#search_term').autocomplete({
-                    source: function(request, response) {
-                        if (request.term.length < 3) {
-                            response([]);
-                            return;
-                        }
-                        
-                        $.getJSON("{{ url_for('autocomplete.autocomplete_fullName') }}", {
-                            term: request.term,
-                            source: currentLdapSource
-                        }, function(data) {
-                            response(data);
-                        });
-                    },
-                    minLength: 3,
-                    delay: 300,
-                    select: function(event, ui) {
-                        $('#search_term').val(ui.item.value);
-                        return false;
-                    }
-                }).data('ui-autocomplete')._renderItem = function(ul, item) {
-                    return $('<li>')
-                        .append(`<div>${item.label}</div>`)
-                        .appendTo(ul);
-                };
-            } else {
-                // Unbind existing autocomplete if any
-                $('#search_term').autocomplete('destroy');
-            }
-        }
-
-        // Initialize autocomplete on page load
-        initializeAutocomplete();
-        
-        // Re-initialize when search type changes
-        $('#search_type').change(function() {
-            initializeAutocomplete();
-        });
-        
-        // Manager Autocomplete
-        $('#hierarchical_manager').autocomplete({
-            source: function(request, response) {
-                $.getJSON("{{ url_for('autocomplete.autocomplete_managers') }}", {
-                    term: request.term,
-                    source: ldapSource
-                }, function(data) {
-                    response(data);
-                });
-            },
-            select: function(event, ui) {
-                $('#hierarchical_manager').val(ui.item.value);
-                // Extract DN from label
-                const dnMatch = ui.item.label.match(/\((.*?)\)$/);
-                if (dnMatch && dnMatch[1]) {
-                    $('#manager_dn').val(dnMatch[1]);
-                }
-                return false;
-            },
-            minLength: 2
-        });
-        
-        // Service (OU) Autocomplete
-        $('#ou').autocomplete({
-            source: function(request, response) {
-                $.getJSON("{{ url_for('autocomplete.autocomplete_services') }}", {
-                    term: request.term,
-                    source: ldapSource
-                }, function(data) {
-                    response(data);
-                });
-            },
-            select: function(event, ui) {
-                $('#ou').val(ui.item.value);
-                return false;
-            },
-            minLength: 2
-        });
-        
-        // Group Add Autocomplete
-        $('#group_name').autocomplete({
-            source: function(request, response) {
-                $.getJSON("{{ url_for('autocomplete.autocomplete_groups') }}", {
-                    term: request.term,
-                    source: ldapSource
-                }, function(data) {
-                    response(data);
-                });
-            },
-            select: function(event, ui) {
-                $('#group_name').val(ui.item.value);
-                return false;
-            },
-            minLength: 2
-        });
-        
-        // Group Remove Autocomplete - Only show groups the user is a member of
-        $('#group_remove').autocomplete({
-            source: function(request, response) {
-                const term = request.term.toLowerCase();
-                
-                // Filter current groups based on input
-                {% if selected_user and selected_user.groupMembership %}
-                const groups = [
-                    {% for group in selected_user.groupMembership %}
-                    {
-                        label: "{{ group.cn }}",
-                        value: "{{ group.cn }}",
-                        dn: "{{ group.dn }}"
-                    },
-                    {% endfor %}
-                ];
-                
-                const filteredGroups = groups.filter(group => 
-                    group.label.toLowerCase().includes(term)
-                );
-                
-                response(filteredGroups);
-                {% else %}
-                response([]);
-                {% endif %}
-            },
-            minLength: 1
-        });
-        
-        // Groups to Add Management
-        let groupsToAdd = [];
-        
-        $('#add_group_btn').click(function() {
-            const groupName = $('#group_name').val().trim();
-            if (groupName) {
-                // Check if group already exists in the selection
-                if (!groupsToAdd.some(g => g.name === groupName)) {
-                    groupsToAdd.push({
-                        name: groupName,
-                        dn: ""
-                    });
-                    updateGroupsToAddDisplay();
-                    $('#group_name').val('');
-                }
-            }
-        });
-        
-        function updateGroupsToAddDisplay() {
-            const container = $('#groups_to_add');
-            container.empty();
-            
-            if (groupsToAdd.length === 0) {
-                container.append('<div class="text-muted">No groups selected to add</div>');
-            } else {
-                groupsToAdd.forEach((group, index) => {
-                    container.append(`
-                        <div class="badge bg-success me-2 mb-2 p-2">
-                            ${group.name}
-                            <button type="button" class="btn-close btn-close-white ms-2" 
-                                    style="font-size: 0.5rem;" 
-                                    onclick="removeAddGroup(${index})"></button>
-                        </div>
-                    `);
-                });
-            }
-            
-            // Update hidden field with JSON data
-            $('#groups_to_add_data').val(JSON.stringify(groupsToAdd));
-        }
-        
-        // Groups to Remove Management
-        let groupsToRemove = [];
-        
-        $('#remove_group_btn').click(function() {
-            const groupName = $('#group_remove').val().trim();
-            if (groupName) {
-                // Check if group already exists in the selection
-                if (!groupsToRemove.some(g => g.name === groupName)) {
-                    // Find the group DN if it exists in current groups
-                    let groupDn = "";
-                    {% if selected_user and selected_user.groupMembership %}
-                    {% for group in selected_user.groupMembership %}
-                    if ("{{ group.cn }}" === groupName) {
-                        groupDn = "{{ group.dn }}";
-                    }
-                    {% endfor %}
-                    {% endif %}
-                    
-                    groupsToRemove.push({
-                        name: groupName,
-                        dn: groupDn
-                    });
-                    updateGroupsToRemoveDisplay();
-                    $('#group_remove').val('');
-                }
-            }
-        });
-        
-        function updateGroupsToRemoveDisplay() {
-            const container = $('#groups_to_remove');
-            container.empty();
-            
-            if (groupsToRemove.length === 0) {
-                container.append('<div class="text-muted">No groups selected to remove</div>');
-            } else {
-                groupsToRemove.forEach((group, index) => {
-                    container.append(`
-                        <div class="badge bg-danger me-2 mb-2 p-2">
-                            ${group.name}
-                            <button type="button" class="btn-close btn-close-white ms-2" 
-                                    style="font-size: 0.5rem;" 
-                                    onclick="removeRemoveGroup(${index})"></button>
-                        </div>
-                    `);
-                });
-            }
-            
-            // Update hidden field with JSON data
-            $('#groups_to_remove_data').val(JSON.stringify(groupsToRemove));
-        }
-        
-        // Initialize displays
-        updateGroupsToAddDisplay();
-        updateGroupsToRemoveDisplay();
-        
-        // Expose remove functions to global scope for the onclick handlers
-        window.removeAddGroup = function(index) {
-            groupsToAdd.splice(index, 1);
-            updateGroupsToAddDisplay();
-        };
-        
-        window.removeRemoveGroup = function(index) {
-            groupsToRemove.splice(index, 1);
-            updateGroupsToRemoveDisplay();
-        };
-        
-        // Groupes - Filtrer
-        $('#group-filter').on('keyup', function() {
-            let filter = $(this).val().toLowerCase();
-            $('.group-badge').each(function() {
-                let text = $(this).text().toLowerCase();
-                $(this).toggle(text.indexOf(filter) > -1);
-            });
-        });
-        
-        // Rôles - Filtrer
-        $('#role-filter').on('keyup', function() {
-            let filter = $(this).val().toLowerCase();
-            $('.role-badge').each(function() {
-                let text = $(this).text().toLowerCase();
-                $(this).toggle(text.indexOf(filter) > -1);
-            });
-        });
-        
-        // Variables pour le tri
-        let groupSortAsc = true;
-        let roleSortAsc = true;
-        
-        // Groupes - Trier
-        $('#sort-groups').click(function() {
-            let groups = $('#current_groups .group-badge').get();
-            groups.sort(function(a, b) {
-                let textA = $(a).text().trim().toLowerCase();
-                let textB = $(b).text().trim().toLowerCase();
-                return groupSortAsc ? (textA > textB ? 1 : -1) : (textA < textB ? 1 : -1);
-            });
-            
-            // Changer l'icône
-            $(this).find('i').toggleClass('bi-sort-alpha-down bi-sort-alpha-up');
-            
-            // Inverser pour le prochain clic
-            groupSortAsc = !groupSortAsc;
-            
-            // Réinsérer les éléments triés
-            $.each(groups, function(index, group) {
-                $('#current_groups').append(group);
-            });
-        });
-        
-        // Rôles - Trier
-        $('#sort-roles').click(function() {
-            let roles = $('#current_roles .role-badge').get();
-            roles.sort(function(a, b) {
-                let textA = $(a).text().trim().toLowerCase();
-                let textB = $(b).text().trim().toLowerCase();
-                return roleSortAsc ? (textA > textB ? 1 : -1) : (textA < textB ? 1 : -1);
-            });
-            
-            // Changer l'icône
-            $(this).find('i').toggleClass('bi-sort-alpha-down bi-sort-alpha-up');
-            
-            // Inverser pour le prochain clic
-            roleSortAsc = !roleSortAsc;
-            
-            // Réinsérer les éléments triés
-            $.each(roles, function(index, role) {
-                $('#current_roles').append(role);
-            });
-        });
-    });
+    // Passing URL values and user data to JavaScript
+    window.autocompleteFullNameUrl = "{{ url_for('autocomplete.autocomplete_fullName') }}";
+    window.autocompleteManagersUrl = "{{ url_for('autocomplete.autocomplete_managers') }}";
+    window.autocompleteServicesUrl = "{{ url_for('autocomplete.autocomplete_services') }}";
+    window.autocompleteGroupsUrl = "{{ url_for('autocomplete.autocomplete_groups') }}";
+    
+    // User's group memberships for autocomplete
+    {% if selected_user and selected_user.groupMembership %}
+    window.userGroups = [
+        {% for group in selected_user.groupMembership %}
+        {
+            label: "{{ group.cn }}",
+            value: "{{ group.cn }}",
+            dn: "{{ group.dn }}"
+        },
+        {% endfor %}
+    ];
+    {% else %}
+    window.userGroups = [];
+    {% endif %}
 </script>
+<script src="{{ url_for('static', filename='js/update_user.js') }}"></script>
+{% endblock %}
+
 {% endblock %}

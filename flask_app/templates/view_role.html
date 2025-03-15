@@ -3,6 +3,10 @@
 {% block head %}
 {{ super() }}  <!-- Important pour conserver le contenu du bloc head du parent -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<!-- Include DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<!-- Include Font Awesome for Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 {% endblock %}
 {% block content %}
 <div class="container mt-5">
@@ -73,103 +77,20 @@
     </div>
 </div>
 
-<!-- Include DataTables CSS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 
-<!-- Include Font Awesome for Icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
+{% block scripts %}
 <!-- Include jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
 <!-- Include DataTables JS -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
+<!-- URLs for JavaScript -->
 <script>
-    $(document).ready(function() {
-        // Get the current LDAP source
-        const currentLdapSource = $('#current_ldap_source').val() || 'meta';
-        
-        // Add LDAP source to all links that don't already have it
-        $('a[href]').each(function() {
-            // Only process internal links
-            if ($(this).attr('href') && $(this).attr('href').startsWith('/')) {
-                if (!$(this).attr('href').includes('source=')) {
-                    let url;
-                    try {
-                        url = new URL($(this).attr('href'), window.location.origin);
-                        url.searchParams.set('source', currentLdapSource);
-                        $(this).attr('href', url.toString());
-                    } catch (e) {
-                        // Handle edge cases for malformed URLs
-                        const href = $(this).attr('href');
-                        if (href.includes('?')) {
-                            $(this).attr('href', href + '&source=' + currentLdapSource);
-                        } else {
-                            $(this).attr('href', href + '?source=' + currentLdapSource);
-                        }
-                    }
-                }
-            }
-        });
-        
-        // Add LDAP source to all forms that don't already have it
-        $('form').each(function() {
-            // Check if the form already has an ldap_source input
-            let hasLdapSource = false;
-            $(this).find('input').each(function() {
-                if ($(this).attr('name') === 'ldap_source') {
-                    hasLdapSource = true;
-                    $(this).val(currentLdapSource);
-                }
-            });
-            
-            // If not, add a hidden input for ldap_source
-            if (!hasLdapSource) {
-                const input = $('<input>').attr({
-                    type: 'hidden',
-                    name: 'ldap_source',
-                    value: currentLdapSource
-                });
-                $(this).append(input);
-            }
-        });
-    
-        // Initialize DataTables on the table
-        $('#usersTable').DataTable({
-            paging: true, // Enable pagination
-            searching: true, // Enable search bar
-            info: true, // Show "Showing X of Y entries" text
-            order: [[0, 'asc']], // Default sorting by the first column (CN) in ascending order
-            columnDefs: [
-                { orderable: true, targets: '_all' } // Enable sorting for all columns
-            ]
-        });
-    });
+    // Passing URL values to JavaScript
+    window.searchUserUrl = "{{ url_for('search.search_user') }}";
 </script>
-
-<!-- Add this script at the bottom of your HTML file -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Get the current LDAP source
-        const currentLdapSource = document.getElementById('current_ldap_source').value || 'meta';
-        
-        // Attach a click event listener to the table
-        const table = document.getElementById('usersTable');
-        table.addEventListener('click', function(event) {
-            // Find the closest <tr> element that was clicked
-            const row = event.target.closest('tr');
-            if (row && row.tagName === 'TR') {
-                // Get the CN value from the data-cn attribute
-                const cn = row.getAttribute('data-cn');
-                if (cn) {
-                    // Redirect to the search_user page with the CN parameter and source parameter
-                    window.location.href = `{{ url_for('search.search_user') }}?cn=${encodeURIComponent(cn)}&source=${currentLdapSource}`;
-                }
-            }
-        });
-    });
-</script>
+<script src="{{ url_for('static', filename='js/view_role.js') }}"></script>
+{% endblock %}
 
 {% endblock %}

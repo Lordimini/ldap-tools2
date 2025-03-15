@@ -4,6 +4,8 @@
 {% block head %}
 {{ super() }}  <!-- Important pour conserver le contenu du bloc head du parent -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<!-- jQuery UI CSS -->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
 {% endblock %}
 
 {% block content %}
@@ -70,82 +72,19 @@
 {% endif %}
 </div>
 
+
+ 
+{% block scripts %}
 <!-- jQuery (required for autocomplete) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- jQuery UI (for autocomplete) -->
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
- 
+
+<!-- URLs for JavaScript -->
 <script>
-    $(document).ready(function() {
-        // Get the current LDAP source
-        const currentLdapSource = $('#current_ldap_source').val() || 'meta';
-        
-        // Add LDAP source to all links that don't already have it
-        $('a[href]').each(function() {
-            // Only process internal links
-            if ($(this).attr('href') && $(this).attr('href').startsWith('/')) {
-                if (!$(this).attr('href').includes('source=')) {
-                    let url;
-                    try {
-                        url = new URL($(this).attr('href'), window.location.origin);
-                        url.searchParams.set('source', currentLdapSource);
-                        $(this).attr('href', url.toString());
-                    } catch (e) {
-                        // Handle edge cases for malformed URLs
-                        const href = $(this).attr('href');
-                        if (href.includes('?')) {
-                            $(this).attr('href', href + '&source=' + currentLdapSource);
-                        } else {
-                            $(this).attr('href', href + '?source=' + currentLdapSource);
-                        }
-                    }
-                }
-            }
-        });
-        
-        // Add LDAP source to all forms that don't already have it
-        $('form').each(function() {
-            // Check if the form already has an ldap_source input
-            let hasLdapSource = false;
-            $(this).find('input').each(function() {
-                if ($(this).attr('name') === 'ldap_source') {
-                    hasLdapSource = true;
-                    $(this).val(currentLdapSource);
-                }
-            });
-            
-            // If not, add a hidden input for ldap_source
-            if (!hasLdapSource) {
-                const input = $('<input>').attr({
-                    type: 'hidden',
-                    name: 'ldap_source',
-                    value: currentLdapSource
-                });
-                $(this).append(input);
-            }
-        });
-        
-        // Service name autocomplete
-        $('#service_name').autocomplete({
-            source: function(request, response) {
-                $.getJSON("{{ url_for('autocomplete.autocomplete_services') }}", {
-                    term: request.term,
-                    source: currentLdapSource
-                }, function(data) {
-                    response(data);
-                });
-            },
-            select: function(event, ui) {
-                $('#service_name').val(ui.item.value);
-                return false;
-            },
-            minLength: 2
-        }).data('ui-autocomplete')._renderItem = function(ul, item) {
-            return $('<li>')
-                .append(`<div>${item.label}</div>`)
-                .appendTo(ul);
-        };
-    });
+    // Passing URL values to JavaScript
+    window.autocompleteServicesUrl = "{{ url_for('autocomplete.autocomplete_services') }}";
 </script>
+<script src="{{ url_for('static', filename='js/service_users.js') }}"></script>
+{% endblock %}
 {% endblock %}

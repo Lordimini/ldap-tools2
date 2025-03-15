@@ -68,17 +68,17 @@ $(document).ready(function () {
         };
     }
     
-    // Astuce pour la recherche avec caractères génériques
-    const cardForm = $('.card form');
-    if (cardForm.length > 0) {
-        const wildcardTip = `
-            <div class="alert alert-info mt-2">
-                <i class="bi bi-info-circle-fill"></i> 
-                <strong>Search tip:</strong> You can use the asterisk (*) as a wildcard. 
-            </div>
-        `;
-        cardForm.append(wildcardTip);
-    }
+    // // Astuce pour la recherche avec caractères génériques
+    // const cardForm = $('.card form');
+    // if (cardForm.length > 0) {
+    //     const wildcardTip = `
+    //         <div class="alert alert-info mt-2">
+    //             <i class="bi bi-info-circle-fill"></i> 
+    //             <strong>Search tip:</strong> You can use the asterisk (*) as a wildcard. 
+    //         </div>
+    //     `;
+    //     cardForm.append(wildcardTip);
+    // }
     
     // Make sure all links include the LDAP source parameter
     $('a[href]').each(function() {

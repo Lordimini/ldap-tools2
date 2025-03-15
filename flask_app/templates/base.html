@@ -33,6 +33,10 @@
             <div class="d-flex align-items-center ms-auto">
                 <!-- User Profile -->
                 {% if current_user.is_authenticated %}
+                <div style="color: white; padding: 10px; background: red;">
+                    Debug: Authenticated as {{ current_user.username }} 
+                    Roles: {{ current_user.roles|join(', ') }}
+                  </div>
                 <div class="dropdown">
                     <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="user-avatar">

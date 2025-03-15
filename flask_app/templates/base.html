@@ -113,8 +113,6 @@
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     
-    <!-- Additional page scripts -->
-    {% block scripts %}
     <!-- LDAP Manager Library -->
     <script src="{{ url_for('static', filename='js/utils/ldap-utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/utils/validation-utils.js') }}"></script>
@@ -124,6 +122,8 @@
     <script src="{{ url_for('static', filename='js/compatibility.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main-init.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-    {% endblock %}
+    
+    <!-- Additional page scripts -->
+    {% block scripts %}{% endblock %}
 </body>
 </html>

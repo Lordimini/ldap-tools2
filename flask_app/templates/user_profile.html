@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile - LDAP Manager{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">User Profile</h2>
+                    <div class="d-flex">
+                        {% for role in user.roles %}
+                        <span class="badge {% if role == 'admin' %}bg-danger{% elif role == 'reader' %}bg-info{% else %}bg-secondary{% endif %} ms-2">
+                            {{ role | capitalize }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <div class="user-avatar-large" style="width: 120px; height: 120px; background-color: #3498db; color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 3rem; margin-bottom: 1rem;">
+                                {{ user.username[0] | upper }}
+                            </div>
+                            <h3>{{ user.name }}</h3>
+                            <p class="text-muted">{{ user.username }}</p>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h4 class="border-bottom pb-2 mb-3">User Information</h4>
+                                    <table class="table table-dark">
+                                        <tbody>
+                                            <tr>
+                                                <td class="attribute-cell">Username</td>
+                                                <td>{{ user.username }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="attribute-cell">Display Name</td>
+                                                <td>{{ user.display_name }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="attribute-cell">Email</td>
+                                                <td>{{ user.email }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="attribute-cell">LDAP Source</td>
+                                                <td>{{ user.ldap_source }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="attribute-cell">LDAP DN</td>
+                                                <td><code>{{ user.dn }}</code></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4 class="border-bottom pb-2 mb-3">Roles & Permissions</h4>
+                                    <div class="mb-3">
+                                        <h5>Roles</h5>
+                                        {% if user.roles %}
+                                        <div>
+                                            {% for role in user.roles %}
+                                            <span class="badge {% if role == 'admin' %}bg-danger{% elif role == 'reader' %}bg-info{% else %}bg-secondary{% endif %} me-2 p-2 mb-2">
+                                                {{ role | capitalize }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                        {% else %}
+                                        <p class="text-muted">No specific roles assigned.</p>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <h5>Permissions</h5>
+                                        {% if user.permissions %}
+                                        <div>
+                                            {% for permission in user.permissions %}
+                                            <span class="badge bg-primary me-2 p-2 mb-2">
+                                                {{ permission | replace('_', ' ') | capitalize }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                        {% else %}
+                                        <p class="text-muted">No specific permissions assigned.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h4 class="border-bottom pb-2 mb-3">Group Memberships</h4>
+                                    {% if user.groups %}
+                                    <div class="card p-3 bg-dark">
+                                        <div class="d-flex flex-wrap">
+                                            {% for group in user.groups %}
+                                            <div class="badge bg-info me-2 mb-2 p-2">
+                                                {{ group }}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted">No group memberships found.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

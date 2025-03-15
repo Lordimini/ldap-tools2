@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found - LDAP Manager{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i> Error 404 - Page Not Found</h3>
+                </div>
+                <div class="card-body p-5 text-center">
+                    <div class="display-1 text-warning mb-4">404</div>
+                    <h2 class="mb-4">Page Not Found</h2>
+                    <p class="lead">
+                        The page you are looking for does not exist or has been moved.
+                    </p>
+                    <p class="text-muted">
+                        URL: <code>{{ request.path }}</code>
+                    </p>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-secondary">
+                        <i class="bi bi-house-door"></i> Go to Dashboard
+                    </a>
+                    
+                    <a href="javascript:history.back()" class="btn btn-primary">
+                        <i class="bi bi-arrow-left"></i> Go Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

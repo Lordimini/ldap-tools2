@@ -1,0 +1,106 @@
+from flask_login import LoginManager, current_user
+from flask import g, session, flash, redirect, url_for, request
+from flask_app.models.user_model import User
+from flask_app.models.edir_model import EDIRModel
+import functools
+
+login_manager = LoginManager()
+
+def init_login_manager(app):
+    """Initialize the login manager with the Flask app"""
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'Please log in to access this page.'
+    login_manager.login_message_category = 'info'
+    
+    # Set up the user loader
+    @login_manager.user_loader
+    def load_user(username):
+        """Load user from session"""
+        if not username:
+            return None
+        
+        # Store user in g for easy access
+        if 'user_data' in session:
+            user_data = session['user_data']
+            ldap_source = session.get('ldap_source', 'meta')
+            user = User.from_ldap_data(username, user_data, ldap_source)
+            return user
+        
+        return None
+    
+    # Before request handler to set up g.user
+    @app.before_request
+    def before_request():
+        g.user = current_user
+        # Add LDAP source to g
+        g.ldap_source = session.get('ldap_source', 'meta')
+        
+        # If user is logged in, ensure LDAP config is set for current user
+        if current_user.is_authenticated:
+            g.user_roles = current_user.roles
+            
+            # Set LDAP name for display
+            ldap_source = current_user.ldap_source
+            g.ldap_name = app.ldap_config_manager.get_config(ldap_source).get('LDAP_name', 'LDAP')
+
+def authenticate_user(username, password, ldap_source='meta'):
+    """
+    Authenticate a user against LDAP and create User object
+    
+    Args:
+        username: Username to authenticate
+        password: Password to authenticate with
+        ldap_source: LDAP source to use for authentication
+        
+    Returns:
+        User: Authenticated User object or None if authentication fails
+    """
+    try:
+        # Create EDIR model for the specified source
+        ldap_model = EDIRModel(source=ldap_source)
+        
+        # Authenticate against LDAP
+        conn = ldap_model.authenticate(username, password)
+        if not conn:
+            return None
+        
+        # Check if user is member of admin or reader group
+        is_admin_member = False
+        is_reader_member = False
+        
+        admin_group_dn = ldap_model.admin_group_dn
+        reader_group_dn = ldap_model.reader_group_dn
+        
+        # Check admin group membership
+        conn.search(admin_group_dn, f'(member={conn.user})', search_scope='BASE')
+        if conn.entries:
+            is_admin_member = True
+        
+        # Check reader group membership
+        conn.search(reader_group_dn, f'(member={conn.user})', search_scope='BASE')
+        if conn.entries:
+            is_reader_member = True
+        
+        # Get user details
+        user_data = ldap_model.search_user_final(username, 'cn')
+        if not user_data:
+            return None
+            
+        # Add group membership information
+        user_data['is_admin_member'] = is_admin_member
+        user_data['is_reader_member'] = is_reader_member
+        user_data['admin_group_dn'] = admin_group_dn
+        user_data['reader_group_dn'] = reader_group_dn
+        
+        # Store user data in session for later retrieval
+        session['user_data'] = user_data
+        session['ldap_source'] = ldap_source
+        
+        # Create and return user
+        user = User.from_ldap_data(username, user_data, ldap_source)
+        return user
+    
+    except Exception as e:
+        print(f"Authentication error: {str(e)}")
+        return None

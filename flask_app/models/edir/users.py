@@ -350,31 +350,46 @@ class EDIRUserMixin(EDIRBase):
         return cn
    
     
-    def generate_password_from_cn(self, cn):
+    def generate_password_from_cn(self, cn, short_name=False):
         """
         Generate a password from a CN by swapping the first 3 characters with the next 3 
         (or 2 if CN is only 5 characters long) and adding '*987'
-    
+        
+        If short_name is True, uses additional complexity to avoid AD password policy issues
+        when original name or surname is 3 characters or fewer.
+        
         Example: 
         - For CN 'AUDRIG', password would be 'RIGAUD*987'
         - For CN 'ABCDE', password would be 'DEABC*987'
+        - For CN from short name (e.g., 'BOBSMI' from 'Bob Smith'), with short_name=True
+        password might be 'SMIBx3*987' (with 'x3' added to avoid containing the original name)
         """
         if len(cn) < 5:
             # Handle case with very short CN
-            return cn + '*987'
-    
-        # Check if CN is 5 characters or 6+ characters
-        if len(cn) == 5:
-            # For 5-character CN, swap first 3 with last 2
+            return cn + 'x4$*987'  # Added extra complexity
+        
+        # Check if short_name flag is True
+        if short_name:
+            # Add extra complexity to avoid password containing the original short name
             first_part = cn[:3]
-            second_part = cn[3:]
-            return (second_part + first_part).lower() + '*987'
+            if len(cn) == 5:
+                second_part = cn[3:] + 'x3'  # Add extra characters
+            else:
+                second_part = cn[3:6] + 'x3'  # Add extra characters
+                
+            return (second_part + first_part[0:2]).lower() + '$*987'
         else:
-            # For 6+ character CN, swap first 3 with next 3
-            first_part = cn[:3]
-            second_part = cn[3:6]
-            return (second_part + first_part).lower() + '*987'
-    
+            # Original logic for normal names
+            if len(cn) == 5:
+                # For 5-character CN, swap first 3 with last 2
+                first_part = cn[:3]
+                second_part = cn[3:]
+                return (second_part + first_part).lower() + '*987'
+            else:
+                # For 6+ character CN, swap first 3 with next 3
+                first_part = cn[:3]
+                second_part = cn[3:6]
+                return (second_part + first_part).lower() + '*987'
     
     def create_user(self, cn, ldap_attributes, template_details=None):
         try:
@@ -385,8 +400,15 @@ class EDIRUserMixin(EDIRBase):
             # Prepare the user DN
             user_dn = f"cn={cn},{self.usercreation_dn}"
 
+            # Check if the user has a short name or surname (3 characters or less)
+            has_short_name = False
+            if 'givenName' in ldap_attributes and len(ldap_attributes['givenName']) <= 3:
+                has_short_name = True
+            elif 'sn' in ldap_attributes and len(ldap_attributes['sn']) <= 3:
+                has_short_name = True
+                
             # Generate password from CN
-            password = self.generate_password_from_cn(cn)
+            password = self.generate_password_from_cn(cn, short_name=has_short_name)
         
             # Add userPassword attribute
             ldap_attributes['userPassword'] = [password]
@@ -464,6 +486,13 @@ class EDIRUserMixin(EDIRBase):
             # Récupérer le CN de l'utilisateur
             user_cn = conn.entries[0].cn.value
             
+            # Vérifier si l'utilisateur a un nom ou prénom court
+            has_short_name = False
+            if hasattr(conn.entries[0], 'givenName') and len(conn.entries[0].givenName.value) <= 3:
+                has_short_name = True
+            elif hasattr(conn.entries[0], 'sn') and len(conn.entries[0].sn.value) <= 3:
+                has_short_name = True
+                
             # Définir les attributs à modifier
             changes = {}
             for attr_name, attr_value in attributes.items():
@@ -477,7 +506,7 @@ class EDIRUserMixin(EDIRBase):
             # Gérer la réinitialisation du mot de passe
             if reset_password:
                 # Générer un mot de passe à partir du CN
-                password = self.generate_password_from_cn(user_cn)
+                password = self.generate_password_from_cn(user_cn, short_name=has_short_name)
                 conn.modify(user_dn, {'userPassword': [(MODIFY_REPLACE, [password])]})
                 log_messages.append(f"Reset password to default")
             
@@ -695,6 +724,13 @@ class EDIRUserMixin(EDIRBase):
             # Obtenir le CN de l'utilisateur
             user_cn = conn.entries[0].cn.value
             
+            # Vérifier si l'utilisateur a un nom ou prénom court
+            has_short_name = False
+            if hasattr(conn.entries[0], 'givenName') and len(conn.entries[0].givenName.value) <= 3:
+                has_short_name = True
+            elif hasattr(conn.entries[0], 'sn') and len(conn.entries[0].sn.value) <= 3:
+                has_short_name = True
+            
             # Construire le nouveau DN
             new_dn = f"cn={user_cn},{target_container}"
             
@@ -720,7 +756,7 @@ class EDIRUserMixin(EDIRBase):
             # Définir le mot de passe si demandé
             if set_password:
                 # Générer un mot de passe basé sur le CN
-                password = self.generate_password_from_cn(user_cn)
+                password = self.generate_password_from_cn(user_cn, short_name=has_short_name)
                 password_result = conn.modify(new_dn, {'userPassword': [(MODIFY_REPLACE, [password])]})
                 if not password_result:
                     print(f"Error setting password: {conn.result}")

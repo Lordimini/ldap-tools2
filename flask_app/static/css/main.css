@@ -513,3 +513,27 @@ code {
 .sidebar .sidebar-heading {
     display: none; /* No longer needed with the new design */
 }
+
+/* Fix for white text on white background in modals */
+.modal-content {
+    color: #212529 !important;
+}
+
+.modal-header {
+    color: #212529 !important;
+}
+
+.modal-body {
+    color: #212529 !important;
+}
+
+.modal-footer {
+    color: #212529 !important;
+}
+
+/* Gardez le texte blanc pour les modales qui ont un fond foncé */
+.modal-header.bg-info.text-white,
+.modal-header.bg-primary.text-white,
+.modal-header.bg-dark.text-white {
+    color: #f8f9fa !important;
+}

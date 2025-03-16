@@ -7,7 +7,6 @@ from flask_app.routes.group import group_bp
 from flask_app.routes.role import role_bp
 from flask_app.routes.service import service_bp
 from flask_app.routes.ldap import ldap_bp
-from flask_app.routes.user import user_bp
 from flask_app.routes.token import token_bp
 from flask_app.routes.upload import upload_bp
 from flask_app.routes.autocomplete import autocomplete_bp
@@ -67,7 +66,6 @@ def register_blueprints(app):
     app.register_blueprint(role_bp)
     app.register_blueprint(service_bp)
     app.register_blueprint(ldap_bp)
-    app.register_blueprint(user_bp)
     app.register_blueprint(token_bp)
     app.register_blueprint(upload_bp)
     app.register_blueprint(autocomplete_bp)

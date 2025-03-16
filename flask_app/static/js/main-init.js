@@ -40,69 +40,92 @@ $(document).ready(function() {
   /**
    * Initialise toutes les tables DataTables présentes sur la page
    */
-  function initializeTables() {
-    // Table des utilisateurs
-    if ($('#usersTable').length > 0) {
-      const userTable = DataTableUtils.initUserTable('#usersTable');
-      
-      // Ajouter un filtre par service si présent
-      if ($('#serviceFilter').length > 0) {
-        DataTableUtils.setupColumnFilter(userTable, '#serviceFilter', 3);
-      }
-      
-      console.log('LDAP Manager: Users table initialized');
-    }
+  /**
+ * Initialise toutes les tables DataTables présentes sur la page
+ */
+function initializeTables() {
+  // Table des utilisateurs
+  if ($('#usersTable').length > 0) {
+    // Déterminer si nous sommes dans la page view_role
+    // en vérifiant si window.searchUserUrl est défini
+    const isViewRolePage = typeof window.searchUserUrl !== 'undefined';
     
-    // Table des groupes
-    if ($('#groupsTable').length > 0) {
-      DataTableUtils.initGroupTable('#groupsTable');
-      console.log('LDAP Manager: Groups table initialized');
-    }
+    // Récupérer la source LDAP
+    const ldapSource = LDAPUtils.getCurrentSource();
     
-    // Table des utilisateurs actuels d'un groupe
-    if ($('#currentMembersTable').length > 0) {
-      DataTableUtils.initGenericTable('#currentMembersTable', {
-        responsive: true,
-        paging: true,
-        pageLength: 5,
-        lengthMenu: [[5, 10, 25, -1], [5, 10, 25, "All"]],
-        searching: true,
-        info: true,
-        order: [[1, 'asc']], // Tri par défaut par nom complet
-        language: {
-          search: "",
-          searchPlaceholder: "Search members...",
-          zeroRecords: "No matching records found",
-          info: "Showing _START_ to _END_ of _TOTAL_ members",
-          infoEmpty: "No members found",
-          infoFiltered: "(filtered from _MAX_ total members)"
-        }
+    let userTable;
+    
+    if (isViewRolePage) {
+      // Si nous sommes dans la page view_role, activer les lignes cliquables
+      userTable = DataTableUtils.initUserTable('#usersTable', {}, {
+        urlBase: window.searchUserUrl,
+        dataAttribute: 'cn',
+        ldapSource: ldapSource
       });
-      console.log('LDAP Manager: Current members table initialized');
+      console.log('LDAP Manager: Users table initialized with clickable rows');
+    } else {
+      // Initialisation standard pour les autres pages
+      userTable = DataTableUtils.initUserTable('#usersTable');
     }
     
-    // Table des rôles
-    if ($('#rolesTable').length > 0) {
-      DataTableUtils.initGenericTable('#rolesTable', {
-        paging: false,
-        searching: true,
-        info: false,
-        order: [[0, 'asc']]
-      });
-      console.log('LDAP Manager: Roles table initialized');
+    // Ajouter un filtre par service si présent
+    if ($('#serviceFilter').length > 0) {
+      DataTableUtils.setupColumnFilter(userTable, '#serviceFilter', 3);
     }
     
-    // Table des conteneurs
-    if ($('#containersTable').length > 0) {
-      DataTableUtils.initGenericTable('#containersTable', {
-        paging: false,
-        searching: true,
-        info: false,
-        order: [[0, 'asc']]
-      });
-      console.log('LDAP Manager: Containers table initialized');
-    }
+    console.log('LDAP Manager: Users table initialized');
   }
+  
+  // Table des groupes
+  if ($('#groupsTable').length > 0) {
+    DataTableUtils.initGroupTable('#groupsTable');
+    console.log('LDAP Manager: Groups table initialized');
+  }
+  
+  // Table des utilisateurs actuels d'un groupe
+  if ($('#currentMembersTable').length > 0) {
+    DataTableUtils.initGenericTable('#currentMembersTable', {
+      responsive: true,
+      paging: true,
+      pageLength: 5,
+      lengthMenu: [[5, 10, 25, -1], [5, 10, 25, "All"]],
+      searching: true,
+      info: true,
+      order: [[1, 'asc']], // Tri par défaut par nom complet
+      language: {
+        search: "",
+        searchPlaceholder: "Search members...",
+        zeroRecords: "No matching records found",
+        info: "Showing _START_ to _END_ of _TOTAL_ members",
+        infoEmpty: "No members found",
+        infoFiltered: "(filtered from _MAX_ total members)"
+      }
+    });
+    console.log('LDAP Manager: Current members table initialized');
+  }
+  
+  // Table des rôles
+  if ($('#rolesTable').length > 0) {
+    DataTableUtils.initGenericTable('#rolesTable', {
+      paging: false,
+      searching: true,
+      info: false,
+      order: [[0, 'asc']]
+    });
+    console.log('LDAP Manager: Roles table initialized');
+  }
+  
+  // Table des conteneurs
+  if ($('#containersTable').length > 0) {
+    DataTableUtils.initGenericTable('#containersTable', {
+      paging: false,
+      searching: true,
+      info: false,
+      order: [[0, 'asc']]
+    });
+    console.log('LDAP Manager: Containers table initialized');
+  }
+}
   
   /**
    * Initialise les fonctionnalités d'autocomplétion sur la page

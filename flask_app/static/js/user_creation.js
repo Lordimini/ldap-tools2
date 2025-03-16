@@ -320,6 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Function to perform user verification before creation
+// Function to perform user verification before creation
 function verifyUserInfo(event) {
     event.preventDefault();
     
@@ -359,6 +360,10 @@ function verifyUserInfo(event) {
     // Create modal content container
     const verificationResults = document.createElement('div');
     
+    // Initialize duplicate detection flags
+    let nameIsDuplicate = false;
+    let favvNatNrIsDuplicate = false;
+    
     // Push name verification promise
     promises.push(
         fetch(window.checkNameExistsUrl, {
@@ -386,6 +391,7 @@ function verifyUserInfo(event) {
             
             if (data.status === 'exists') {
                 alert.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Un utilisateur avec le nom '${sn} ${givenName}' existe déjà dans l'annuaire (${data.message}).`;
+                nameIsDuplicate = true;
             } else {
                 alert.innerHTML = `<i class="fas fa-check-circle"></i> Aucun utilisateur existant avec le nom '${sn} ${givenName}'.`;
                 // Mark name as verified
@@ -428,7 +434,9 @@ function verifyUserInfo(event) {
                     `<i class="fas fa-exclamation-triangle"></i> ${data.message}` :
                     `<i class="fas fa-check-circle"></i> ${data.message}`;
                 
-                if (data.status !== 'exists') {
+                if (data.status === 'exists') {
+                    favvNatNrIsDuplicate = true;
+                } else {
                     // Mark FavvNatNr as verified
                     window.favvNatNrVerified = true;
                 }
@@ -450,6 +458,7 @@ function verifyUserInfo(event) {
             // Display verification results in modal
             const verificationModal = document.getElementById('verificationModal');
             const verificationModalBody = document.getElementById('verificationModalBody');
+            const verificationModalFooter = document.getElementById('verificationModalFooter');
             
             if (verificationModal && verificationModalBody) {
                 verificationModalBody.innerHTML = '';
@@ -459,13 +468,22 @@ function verifyUserInfo(event) {
                 const conclusion = document.createElement('div');
                 conclusion.className = 'mt-3';
                 
-                if (window.nameVerified && window.favvNatNrVerified) {
+                const hasDuplicate = nameIsDuplicate || favvNatNrIsDuplicate;
+                
+                if (!hasDuplicate) {
                     conclusion.innerHTML = `
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i> 
                             Toutes les vérifications sont réussies. Vous pouvez maintenant continuer avec la création de l'utilisateur.
                         </div>
                     `;
+                    
+                    // Reset footer (no admin override needed)
+                    if (verificationModalFooter) {
+                        verificationModalFooter.innerHTML = `
+                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Fermer</button>
+                        `;
+                    }
                 } else {
                     conclusion.innerHTML = `
                         <div class="alert alert-warning">
@@ -473,6 +491,23 @@ function verifyUserInfo(event) {
                             Des doublons potentiels ont été détectés. Vous pouvez modifier les informations et vérifier à nouveau.
                         </div>
                     `;
+                    
+                    // Check if the user is an admin to show the override button
+                    if (window.isAdminUser && verificationModalFooter) {
+                        verificationModalFooter.innerHTML = `
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                            <button type="button" class="btn btn-danger" id="adminOverrideBtn">
+                                <i class="fas fa-exclamation-triangle"></i> Override Admin
+                            </button>
+                        `;
+                    } else {
+                        // Reset footer (non-admin users)
+                        if (verificationModalFooter) {
+                            verificationModalFooter.innerHTML = `
+                                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Fermer</button>
+                            `;
+                        }
+                    }
                 }
                 
                 verificationModalBody.appendChild(conclusion);
@@ -480,6 +515,28 @@ function verifyUserInfo(event) {
                 // Show verification modal
                 const modal = new bootstrap.Modal(verificationModal);
                 modal.show();
+                
+                // Add event listener for admin override button if it exists
+                const adminOverrideBtn = document.getElementById('adminOverrideBtn');
+                if (adminOverrideBtn) {
+                    adminOverrideBtn.addEventListener('click', function() {
+                        // Force verification to be successful
+                        window.nameVerified = true;
+                        window.favvNatNrVerified = true;
+                        
+                        // Update button
+                        updateSubmitButtonText();
+                        
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(verificationModal);
+                        if (modal) {
+                            modal.hide();
+                        }
+                        
+                        // Show confirmation message
+                        alert('Vérification contournée par l\'administrateur. Vous pouvez maintenant prévisualiser et créer l\'utilisateur.');
+                    });
+                }
                 
                 // Update submit button text
                 updateSubmitButtonText();

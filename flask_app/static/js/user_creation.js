@@ -37,12 +37,22 @@ function updateSubmitButtonText() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    
+    
     // Get the current LDAP source
     const currentLdapSource = document.getElementById('current_ldap_source')?.value || 'meta';
     
     // State variables to track verification status
     let userTypeRequiresFavvNatNr = false;
     
+    // Determine if the current user is an admin
+    window.isAdminUser = false; // Default value
+    
+    // Check if the adminStatus hidden field exists
+    const adminStatusField = document.getElementById('admin_status');
+    if (adminStatusField) {
+        window.isAdminUser = adminStatusField.value === 'true';
+    }
     // Update the submit button text initially
     updateSubmitButtonText();
     

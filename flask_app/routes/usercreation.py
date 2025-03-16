@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, session
 from flask_app.models.edir_model import EDIRModel
-from flask_login import login_required  # Nouvel import depuis Flask-Login
+from flask_login import login_required, current_user  # Nouvel import depuis Flask-Login
 from flask_app.models.ldap_config_manager import LDAPConfigManager
 from flask_wtf import FlaskForm
 from wtforms import SelectField, StringField, HiddenField
@@ -77,6 +77,15 @@ def create_user():
         'manager': ''
     }
     
+    # Vérifier si l'utilisateur actuel est un administrateur
+    # Utilisez la méthode appropriée de votre application pour vérifier si l'utilisateur est admin
+    is_admin = current_user.is_admin if hasattr(current_user, 'is_admin') else False
+    
+    # Si vous utilisez une autre méthode pour déterminer si un utilisateur est admin, utilisez-la ici
+    # Par exemple, si vous utilisez une relation de groupe:
+    # is_admin = 'admin' in [g.name for g in current_user.groups]
+    
+     
     if request.method == 'POST':
         # Récupérer les données du formulaire (peut être soit du formulaire visible ou caché)
         user_type = request.form.get('user_type') or request.form.get('hidden_user_type')

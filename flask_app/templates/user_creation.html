@@ -15,6 +15,7 @@
     <h1 class="text-center mb-4">Create User Account</h1>
     <!-- Store the current LDAP source to be included in all forms -->
     <input type="hidden" id="current_ldap_source" name="ldap_source" value="{{ ldap_source }}">
+    <input type="hidden" id="admin_status" name="admin_status" value="{{ 'true' if current_user.is_admin else 'false' }}">
     
     
     <!-- Flash messages for any errors/warnings -->
@@ -175,7 +176,7 @@
                 <div class="modal-body" id="verificationModalBody">
                     <!-- Verification results will be added here -->
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer" id="verificationModalFooter">
                     <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Fermer</button>
                 </div>
             </div>

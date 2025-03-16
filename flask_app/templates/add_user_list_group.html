@@ -250,6 +250,7 @@ SEDRET</pre>
     {% endif %}
 </div>
 
+{% endblock %}
 
 {% block scripts %}
 
@@ -262,5 +263,4 @@ SEDRET</pre>
     window.initialSelectedUsers = {% if selected_users %}{{ selected_users|tojson }}{% else %}[]{% endif %};
 </script>
 <script src="{{ url_for('static', filename='js/add_user_list_group.js') }}"></script>
-{% endblock %}
 {% endblock %}

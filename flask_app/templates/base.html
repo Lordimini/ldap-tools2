@@ -25,8 +25,8 @@
             
             <a class="navbar-brand ms-2" href="/dashboard">
                 LDAP Tools
-                {% if session.ldap_source %}
-                <span class="source-indicator source-{{ session.ldap_source }}">{{ session.ldap_source }}</span>
+                {% if current_user.ldap_source %}
+                <span class="source-indicator source-{{ current_user.ldap_source }}">{{ current_user.ldap_source }}</span>
                 {% endif %}
             </a>
             
@@ -68,7 +68,7 @@
                 <label for="ldap_source_selector" class="form-label text-light small mb-1">LDAP Source:</label>
                 <select id="ldap_source_selector" class="form-select form-select-sm bg-dark text-light">
                     {% for config in current_app.ldap_config_manager.get_available_configs() %}
-                    <option value="{{ config }}" {% if session.ldap_source == config %}selected{% endif %}>
+                    <option value="{{ config }}" {% if current_user.ldap_source == config %}selected{% endif %}>
                         {{ config }}
                     </option>
                     {% endfor %}
@@ -87,10 +87,10 @@
             <div class="d-flex justify-content-center">
                 <div class="alert alert-info d-flex justify-content-between align-items-center mb-4 w-50">
                     <div>
-                        <strong>Current LDAP Source:</strong> {{ session.ldap_name | default(ldap_name, true) }} ({{ session.ldap_source | default(ldap_source, true) }})
+                        <strong>Current LDAP Source:</strong> {{ current_user.ldap_name | default(ldap_name, true) }} ({{ current_user.ldap_source | default(ldap_source, true) }})
                     </div>
                     <div>
-                        <a href="{{ request.path }}?source={{ session.ldap_source | default(ldap_source, true) }}" class="btn btn-sm btn-outline-primary">
+                        <a href="{{ request.path }}?source={{ current_user.ldap_source | default(ldap_source, true) }}" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-arrow-repeat"></i> Refresh Data
                         </a>
                     </div>

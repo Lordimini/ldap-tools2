@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request
 from flask_app.utils.token_utils import fetch_new_token
-from flask_app.utils.ldap_utils import login_required
+from flask_login import login_required  # Nouvel import depuis Flask-Login
 
 token_bp = Blueprint('token', __name__)
 

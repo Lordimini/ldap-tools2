@@ -6,6 +6,7 @@ flask_app/utils/__pycache__/
 flask_app/models/edir/__pycache__/
 flask_app/models/meta/__pycache__/
 flask_app/models/__pycache__/
+flask_app/models/edir/__pycache__/
 flask_app/services/__pycache__/
 ldaptools.code-workspace
 todolist.txt

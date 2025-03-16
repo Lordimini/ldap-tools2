@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, session
 from flask_app.models.edir_model import EDIRModel
-from flask_app.utils.ldap_utils import login_required
+from flask_login import login_required  # Nouvel import depuis Flask-Login
 from flask_app.models.ldap_config_manager import LDAPConfigManager
 from flask_wtf import FlaskForm
 from wtforms import SelectField, StringField, HiddenField

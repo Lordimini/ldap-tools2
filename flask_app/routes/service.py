@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from flask_app.models.edir_model import EDIRModel
 from flask_app.utils.export_utils import util_export_service_users_csv
-from flask_app.utils.ldap_utils import login_required
+from flask_login import login_required  # Nouvel import depuis Flask-Login
 from flask_app.models.ldap_config_manager import LDAPConfigManager
 
 service_bp = Blueprint('service', __name__)

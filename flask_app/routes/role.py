@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 from flask_app.models.edir_model import EDIRModel
 from flask_app.models.ldap_config_manager import LDAPConfigManager
 from flask_app.utils.export_utils import util_export_role_users_csv, util_export_role_users_pdf
-from flask_app.utils.ldap_utils import login_required
+from flask_login import login_required  # Nouvel import depuis Flask-Login
 
 role_bp = Blueprint('role', __name__)
 

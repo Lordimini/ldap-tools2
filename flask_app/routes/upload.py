@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, json, session
 from flask_app.utils.file_utils import validate_entries, apply_changes
-from flask_app.utils.ldap_utils import login_required
+from flask_login import login_required  # Nouvel import depuis Flask-Login
 from flask_app.models.ldap_config_manager import LDAPConfigManager
 
 # Load group DN options from JSON file

@@ -1,0 +1,76 @@
+{
+    "menu_items": [
+      {
+        "label": "Dashboard",
+        "url": "/dashboard",
+        "icon": "bi bi-speedometer2",
+        "active_pattern": "^/dashboard"
+      },
+      {
+        "is_section": true,
+        "label": "USER MANAGEMENT",
+        "items": [
+          {
+            "label": "Search User",
+            "url": "/search",
+            "icon": "bi bi-search",
+            "active_pattern": "^/search"
+          }
+        ]
+      },
+      {
+        "is_section": true,
+        "label": "GROUP & ROLE MANAGEMENT",
+        "items": [
+          {
+            "label": "Group Users",
+            "url": "/group_users",
+            "icon": "bi bi-people",
+            "active_pattern": "^/group/group_users"
+          },
+          {
+            "label": "Role Users",
+            "url": "/role_users",
+            "icon": "bi bi-person-badge",
+            "active_pattern": "^/role/role_users"
+          },
+          {
+            "label": "Role Groups",
+            "url": "/role_groups",
+            "icon": "bi bi-diagram-3",
+            "active_pattern": "^/role/role_groups"
+          }
+        ]
+      },
+      {
+        "is_section": true,
+        "label": "SERVICE MANAGEMENT",
+        "items": [
+          {
+            "label": "Service Users",
+            "url": "/service_users",
+            "icon": "bi bi-building",
+            "active_pattern": "^/service/service_users"
+          }
+        ]
+      },
+      {
+        "is_section": true,
+        "label": "REPORTS",
+        "items": [
+          {
+            "label": "User Reports",
+            "url": "/reports/users",
+            "icon": "bi bi-file-earmark-text",
+            "active_pattern": "^/reports/users"
+          },
+          {
+            "label": "Group Reports",
+            "url": "/reports/groups",
+            "icon": "bi bi-file-earmark-bar-graph",
+            "active_pattern": "^/reports/groups"
+          }
+        ]
+      }
+    ]
+  }

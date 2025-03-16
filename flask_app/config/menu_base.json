@@ -1,0 +1,119 @@
+{
+    "menu_items": [
+      {
+        "label": "Dashboard",
+        "url": "/dashboard",
+        "icon": "bi bi-speedometer2",
+        "active_pattern": "^/dashboard"
+      },
+      {
+        "is_section": true,
+        "label": "USER MANAGEMENT",
+        "items": [
+          {
+            "label": "Search User",
+            "url": "/search",
+            "icon": "bi bi-search",
+            "active_pattern": "^/search",
+            "required_permission": "view_users"
+          },
+          {
+            "label": "Create User",
+            "url": "/usercreation/user_creation",
+            "icon": "bi bi-person-plus",
+            "active_pattern": "^/usercreation/user_creation",
+            "required_permission": "create_users"
+          },
+          {
+            "label": "Update User",
+            "url": "/userupdate/update_user",
+            "icon": "bi bi-pencil",
+            "active_pattern": "^/userupdate/update_user",
+            "required_permission": "edit_users"
+          },
+          {
+            "label": "Complete Creation",
+            "url": "/postcreation/post_creation",
+            "icon": "bi bi-person-check",
+            "active_pattern": "^/postcreation/post_creation",
+            "required_permission": "create_users"
+          }
+        ]
+      },
+      {
+        "is_section": true,
+        "label": "GROUP & ROLE MANAGEMENT",
+        "items": [
+          {
+            "label": "Group Users",
+            "url": "/group/group_users",
+            "icon": "bi bi-people",
+            "active_pattern": "^/group/group_users",
+            "required_permission": "view_groups"
+          },
+          {
+            "label": "Add Users to Group",
+            "url": "/group/add_users_to_group",
+            "icon": "bi bi-person-plus-fill",
+            "active_pattern": "^/group/add_users_to_group",
+            "required_permission": "edit_groups"
+          },
+          {
+            "label": "Role Users",
+            "url": "/role/role_users",
+            "icon": "bi bi-person-badge",
+            "active_pattern": "^/role/role_users",
+            "required_permission": "view_roles"
+          },
+          {
+            "label": "Role Groups",
+            "url": "/role/role_groups",
+            "icon": "bi bi-diagram-3",
+            "active_pattern": "^/role/role_groups",
+            "required_permission": "view_roles"
+          }
+        ]
+      },
+      {
+        "is_section": true,
+        "label": "SERVICE MANAGEMENT",
+        "items": [
+          {
+            "label": "Service Users",
+            "url": "/service/service_users",
+            "icon": "bi bi-building",
+            "active_pattern": "^/service/service_users",
+            "required_permission": "view_services"
+          }
+        ]
+      },
+      {
+        "is_section": true,
+        "label": "SYSTEM TOOLS",
+        "items": [
+          {
+            "label": "CSV Upload",
+            "url": "/upload",
+            "icon": "bi bi-upload",
+            "active_pattern": "^/upload",
+            "required_permission": "upload_files"
+          },
+          {
+            "label": "LDAP Browser",
+            "url": "/ldap/ldap_browser",
+            "icon": "bi bi-folder2-open",
+            "active_pattern": "^/ldap/ldap_browser",
+            "required_permission": "view_roles"
+          },
+          {
+            "label": "Generate Token",
+            "url": "/token/generate_token",
+            "icon": "bi bi-key",
+            "active_pattern": "^/token/generate_token",
+            "required_permission": "manage_system",
+            "admin_only": true
+          }
+        ]
+      }
+    ]
+  }

@@ -1,0 +1,127 @@
+{
+  "menu_items": [
+    {
+      "id": "dashboard",
+      "label": "Dashboard",
+      "icon": "bi bi-speedometer2",
+      "url": "/dashboard",
+      "active_pattern": "^/dashboard"
+    },
+    {
+      "id": "user_management",
+      "label": "User Management",
+      "icon": "bi bi-people-fill",
+      "is_section": true,
+      "items": [
+        {
+          "id": "search_user",
+          "label": "Search User",
+          "icon": "bi bi-search",
+          "url": "/search",
+          "active_pattern": "^/search"
+        },
+        {
+          "id": "create_user",
+          "label": "Create User",
+          "icon": "bi bi-person-plus-fill",
+          "url": "/user_creation",
+          "active_pattern": "^/user_creation"
+        },
+        {
+          "id": "Update_User",
+          "label": "Update User",
+          "icon": "bi bi-person-gear",
+          "url": "/update_user",
+          "active_pattern": "^/update_user"
+        },
+        {
+          "id": "post_creation",
+          "label": "Complete User Creation",
+          "icon": "bi bi-person-check-fill",
+          "url": "/post_creation",
+          "active_pattern": "^/post_creation"
+        }
+      ]
+    },
+    {
+      "id": "group_management",
+      "label": "Group Management",
+      "icon": "bi bi-people-fill",
+      "is_section": true, 
+      "items": [
+        {
+          "id": "group_users",
+          "label": "List Group Members",
+          "icon": "bi bi-list-ul",
+          "url": "/group_users",
+          "active_pattern": "^/group/users"
+        },
+        {
+          "id": "group_populate",
+          "label": "Group Management",
+          "icon": "bi bi-people-fill",
+          "url": "/add_users_to_group",
+          "active_pattern": "^/group"
+        }
+      ]
+    },
+    {
+      "id": "role_management",
+      "label": "Role Management",
+      "icon": "bi bi-person-lock",
+      "is_section": true, 
+      "items": [
+        {
+          "id": "role_users",
+          "label": "List Role Members",
+          "icon": "bi bi-list-check",
+          "url": "/role_users",
+          "active_pattern": "^/role/users"
+        },
+        {
+          "id": "role_groups",
+          "label": "List Role Resources",
+          "icon": "bi bi-card-list",
+          "url": "/role_groups",
+          "active_pattern": "^/role/groups"
+        },
+        {
+          "id": "ldap_browser",
+          "label": "Role Browser",
+          "icon": "bi bi-folder2-open",
+          "url": "/ldap_browser",
+          "active_pattern": "^/ldap"
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "label": "Tools",
+      "icon": "bi bi-tools",
+      "is_section": true, 
+      "items": [
+        {
+          "id": "csv_upload",
+          "label": "CSV Upload",
+          "icon": "bi bi-file-earmark-arrow-up",
+          "url": "/upload",
+          "active_pattern": "^/csv/upload"
+        },
+        {
+          "id": "settings",
+          "label": "Settings",
+          "icon": "bi bi-gear-fill",
+          "url": "",
+          "active_pattern": "^/settings"
+        },
+        {
+          "id": "reports",
+          "label": "Reports",
+          "icon": "bi bi-file-earmark-bar-graph",
+          "url": "",
+          "active_pattern": "^/ldap"
+        }
+      ]
+    }
+  ]
+}

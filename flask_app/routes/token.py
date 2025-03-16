@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request,json
 from flask_app.utils.token_utils import fetch_new_token
 from flask_login import login_required  # Nouvel import depuis Flask-Login
 

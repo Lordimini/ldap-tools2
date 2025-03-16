@@ -2,6 +2,44 @@
 window.nameVerified = false;
 window.favvNatNrVerified = false;
 
+// Fonction pour vérifier la longueur des noms et afficher un avertissement
+function checkNameLength() {
+    const givenName = document.getElementById('givenName').value.trim();
+    const sn = document.getElementById('sn').value.trim();
+    const nameCheckResult = document.getElementById('nameCheckResult');
+    
+    // Effacer tout message existant concernant les noms courts
+    const existingWarnings = nameCheckResult.querySelectorAll('.short-name-warning');
+    existingWarnings.forEach(warning => warning.remove());
+    
+    // Vérifier si l'un des noms a 3 caractères ou moins
+    if ((givenName.length > 0 && givenName.length <= 3) || (sn.length > 0 && sn.length <= 3)) {
+        const shortNameWarning = document.createElement('div');
+        shortNameWarning.className = 'alert alert-warning short-name-warning mt-2';
+        shortNameWarning.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i> 
+            <strong>Remarque:</strong> Un des noms est court (3 caractères ou moins). 
+            Le mot de passe utilisera un format spécial pour se conformer aux politiques Active Directory.
+        `;
+        nameCheckResult.appendChild(shortNameWarning);
+    }
+}
+
+// Fonction pour configurer les écouteurs d'événements pour la vérification des noms
+function setupNameLengthCheck() {
+    const givenNameInput = document.getElementById('givenName');
+    const snInput = document.getElementById('sn');
+    
+    if (givenNameInput && snInput) {
+        // Ajouter des écouteurs d'événements pour les champs de nom
+        givenNameInput.addEventListener('input', checkNameLength);
+        snInput.addEventListener('input', checkNameLength);
+        
+        // Vérifier au chargement de la page (pour les formulaires avec des valeurs pré-remplies)
+        checkNameLength();
+    }
+}
+
 // Global updateSubmitButtonText function
 function updateSubmitButtonText() {
     const submitButton = document.getElementById('submitBtn');
@@ -36,315 +74,6 @@ function updateSubmitButtonText() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    
-    
-    // Get the current LDAP source
-    const currentLdapSource = document.getElementById('current_ldap_source')?.value || 'meta';
-    
-    // State variables to track verification status
-    let userTypeRequiresFavvNatNr = false;
-    
-    // Determine if the current user is an admin
-    window.isAdminUser = false; // Default value
-    
-    // Check if the adminStatus hidden field exists
-    const adminStatusField = document.getElementById('admin_status');
-    if (adminStatusField) {
-        window.isAdminUser = adminStatusField.value === 'true';
-    }
-    // Update the submit button text initially
-    updateSubmitButtonText();
-
-    // Ajouter la vérification de la longueur des noms
-    setupNameLengthCheck();
-    
-    // Setup the initial event handler for the submit button
-    const submitButton = document.getElementById('submitBtn');
-    if (submitButton) {
-        submitButton.addEventListener('click', verifyUserInfo);
-    }
-    
-    // Add LDAP source to all links that don't already have it
-    document.querySelectorAll('a[href]').forEach(function(link) {
-        // Only process internal links
-        if (link.href && link.href.startsWith(window.location.origin)) {
-            if (!link.href.includes('source=')) {
-                try {
-                    const url = new URL(link.href);
-                    url.searchParams.set('source', currentLdapSource);
-                    link.href = url.toString();
-                } catch (e) {
-                    // Handle edge cases for malformed URLs
-                    const href = link.href;
-                    if (href.includes('?')) {
-                        link.href = href + '&source=' + currentLdapSource;
-                    } else {
-                        link.href = href + '?source=' + currentLdapSource;
-                    }
-                }
-            }
-        }
-    });
-    
-    // Add LDAP source to all forms that don't already have it
-    document.querySelectorAll('form').forEach(function(form) {
-        // Check if the form already has an ldap_source input
-        let hasLdapSource = false;
-        form.querySelectorAll('input').forEach(function(input) {
-            if (input.name === 'ldap_source') {
-                hasLdapSource = true;
-                input.value = currentLdapSource;
-            }
-        });
-        
-        // If not, add a hidden input for ldap_source
-        if (!hasLdapSource) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'ldap_source';
-            input.value = currentLdapSource;
-            form.appendChild(input);
-        }
-    });
-    
-    // Show/hide FavvNatNr field based on user type selection
-    const userTypeSelect = document.getElementById('user_type');
-    const favvNatNrContainer = document.getElementById('favvNatNr_container');
-    const managerContainer = document.getElementById('manager_container');
-    
-    if (userTypeSelect && favvNatNrContainer && managerContainer) {
-        // Fonctions pour gérer l'état des overrides
-        function updateOverrideUI(fieldId, overrideActive) {
-            const field = document.getElementById(fieldId);
-            const overrideBtn = document.getElementById(fieldId + 'OverrideBtn');
-            const overrideIndicator = document.getElementById(fieldId + 'OverrideIndicator');
-            const overrideInput = document.getElementById(fieldId + '_override');
-            
-            if (!field || !overrideBtn || !overrideIndicator || !overrideInput) return;
-            
-            // Mettre à jour l'indicateur d'override
-            if (overrideActive) {
-                field.required = false;
-                overrideIndicator.style.display = 'block';
-                overrideBtn.classList.remove('btn-warning');
-                overrideBtn.classList.add('btn-danger');
-                overrideBtn.innerHTML = '<i class="fas fa-times-circle"></i> Annuler Override';
-                overrideInput.value = 'true';
-            } else {
-                field.required = true;
-                overrideIndicator.style.display = 'none';
-                overrideBtn.classList.remove('btn-danger');
-                overrideBtn.classList.add('btn-warning');
-                overrideBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Override';
-                overrideInput.value = 'false';
-            }
-        }
-        
-        // Fonction pour préparer les modales selon l'état d'override
-        function prepareOverrideModal(fieldId, modalId) {
-            const modal = document.getElementById(modalId);
-            const modalBody = document.getElementById(fieldId + 'ModalBody');
-            const modalFooter = document.getElementById(fieldId + 'ModalFooter');
-            const overrideInput = document.getElementById(fieldId + '_override');
-            
-            if (!modal || !modalBody || !modalFooter || !overrideInput) return;
-            
-            const overrideActive = overrideInput.value === 'true';
-            
-            if (overrideActive) {
-                // Si l'override est actif, montrer option pour le désactiver
-                modalBody.innerHTML = `
-                    <p><strong>Override Actif</strong></p>
-                    <p>Le champ '${fieldId}' est actuellement optionnel. Voulez-vous le rendre à nouveau obligatoire?</p>
-                `;
-                modalFooter.innerHTML = `
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="button" class="btn btn-success" id="disable${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)}Override">Rendre obligatoire</button>
-                `;
-                
-                // Ajouter event listener pour désactiver l'override
-                const disableBtn = document.getElementById(`disable${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)}Override`);
-                if (disableBtn) {
-                    disableBtn.addEventListener('click', function() {
-                        updateOverrideUI(fieldId, false);
-                        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                            bootstrap.Modal.getInstance(modal)?.hide();
-                        }
-                    });
-                }
-            } else {
-                // Si l'override n'est pas actif, montrer avertissement normal
-                modalBody.innerHTML = `
-                    <p><strong>Attention, à vos risques et périls!</strong></p>
-                    <p>Rendre ce champ optionnel n'est pas recommandé. Êtes-vous sûr de vouloir continuer?</p>
-                `;
-                modalFooter.innerHTML = `
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="button" class="btn btn-danger" id="confirm${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)}Override">Confirmer</button>
-                `;
-                
-                // Ajouter event listener pour activer l'override
-                const confirmBtn = document.getElementById(`confirm${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)}Override`);
-                if (confirmBtn) {
-                    confirmBtn.addEventListener('click', function() {
-                        updateOverrideUI(fieldId, true);
-                        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                            bootstrap.Modal.getInstance(modal)?.hide();
-                        }
-                    });
-                }
-            }
-        }
-        
-        // Gestionnaires d'événements pour les boutons d'override
-        const emailOverrideBtn = document.getElementById('emailOverrideBtn');
-        if (emailOverrideBtn) {
-            emailOverrideBtn.addEventListener('click', function() {
-                prepareOverrideModal('email', 'emailWarningModal');
-            });
-        }
-        
-        const favvNatNrOverrideBtn = document.getElementById('favvNatNrOverrideBtn');
-        if (favvNatNrOverrideBtn) {
-            favvNatNrOverrideBtn.addEventListener('click', function() {
-                prepareOverrideModal('favvNatNr', 'favvNatNrWarningModal');
-            });
-        }
-        
-        const managerOverrideBtn = document.getElementById('managerOverrideBtn');
-        if (managerOverrideBtn) {
-            managerOverrideBtn.addEventListener('click', function() {
-                prepareOverrideModal('manager', 'managerWarningModal');
-            });
-        }
-        
-        // Initialiser l'UI basée sur les valeurs stockées (utile pour préserver l'état après erreur de formulaire)
-        const fields = ['email', 'favvNatNr', 'manager'];
-        fields.forEach(field => {
-            const overrideInput = document.getElementById(field + '_override');
-            if (overrideInput && overrideInput.value === 'true') {
-                updateOverrideUI(field, true);
-            }
-        });
-        
-        // Function to toggle visibility of fields based on user type
-        function toggleFields() {
-            // OCI types
-            const userType = userTypeSelect.value;
-            userTypeRequiresFavvNatNr = (userType === 'BOODOCI' || userType === 'OCI');
-            
-            if (userTypeRequiresFavvNatNr) {
-                favvNatNrContainer.style.display = 'block';
-                // Reset verification status for FavvNatNr when user type changes
-                window.favvNatNrVerified = false;
-            } else {
-                favvNatNrContainer.style.display = 'none';
-                // No need to verify FavvNatNr if not required
-                window.favvNatNrVerified = true;
-            }
-            
-            // STAG type (trainee)
-            if (userType === 'STAG') {
-                managerContainer.style.display = 'block';
-            } else {
-                managerContainer.style.display = 'none';
-            }
-            
-            // Reset name verification status when user type changes
-            window.nameVerified = false;
-            updateSubmitButtonText();
-        }
-        
-        // Initial check
-        toggleFields();
-        
-        // Listen for changes to user type
-        userTypeSelect.addEventListener('change', toggleFields);
-        
-        // Reset verification when name fields change
-        const givenNameInput = document.getElementById('givenName');
-        const snInput = document.getElementById('sn');
-        
-        if (givenNameInput) {
-            givenNameInput.addEventListener('input', function() {
-                window.nameVerified = false;
-                updateSubmitButtonText();
-            });
-        }
-        
-        if (snInput) {
-            snInput.addEventListener('input', function() {
-                window.nameVerified = false;
-                updateSubmitButtonText();
-            });
-        }
-        
-        // FavvNatNr normalization
-        const favvNatNrInput = document.getElementById('favvNatNr');
-        if (favvNatNrInput) {
-            favvNatNrInput.addEventListener('input', function(e) {
-                // Remove all non-digit characters
-                const normalized = e.target.value.replace(/[^0-9]/g, '');
-                
-                // Update input value with normalized string
-                e.target.value = normalized;
-                
-                // Reset verification status
-                window.favvNatNrVerified = false;
-                updateSubmitButtonText();
-            });
-        }
-        
-        function setupNameLengthCheck() {
-            const givenNameInput = document.getElementById('givenName');
-            const snInput = document.getElementById('sn');
-            
-            if (givenNameInput && snInput) {
-                // Ajouter des écouteurs d'événements pour les champs de nom
-                givenNameInput.addEventListener('input', checkNameLength);
-                snInput.addEventListener('input', checkNameLength);
-                
-                // Vérifier au chargement de la page (pour les formulaires avec des valeurs pré-remplies)
-                checkNameLength();
-            }
-        }
-
-        // Appeler cette fonction au chargement de la page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Autres fonctions DOMContentLoaded existantes...
-            
-            // Ajouter la vérification de la longueur des noms
-            setupNameLengthCheck();
-        });
-
-        // Manager Autocomplete
-        const managerInput = $('#manager');
-        if (managerInput.length > 0 && managerInput.autocomplete) {
-            managerInput.autocomplete({
-                source: function(request, response) {
-                    $.getJSON(window.autocompleteManagersUrl, {
-                        term: request.term,
-                        source: currentLdapSource
-                    }, function(data) {
-                        response(data);
-                    });
-                },
-                select: function(event, ui) {
-                    managerInput.val(ui.item.value);
-                    return false;
-                },
-                minLength: 2
-            }).data('ui-autocomplete')._renderItem = function(ul, item) {
-                return $('<li>')
-                    .append(`<div>${item.label}</div>`)
-                    .appendTo(ul);
-            };
-        }
-    }
-});
-
-// Function to perform user verification before creation
 // Function to perform user verification before creation
 function verifyUserInfo(event) {
     event.preventDefault();
@@ -684,7 +413,6 @@ function validateForm(event) {
     return false; // Empêcher la soumission normale du formulaire
 }
 
-
 // Populate the confirmation modal with user info
 function populateConfirmationModal(cn, password, template_details, hasShortName) {
     const userTypeSelect = document.getElementById('user_type');
@@ -863,26 +591,288 @@ function populateConfirmationModal(cn, password, template_details, hasShortName)
     if (hiddenLdapSourceInput) hiddenLdapSourceInput.value = currentLdapSource;
 }
 
-// Fonction pour vérifier la longueur des noms et afficher un avertissement
-function checkNameLength() {
-    const givenName = document.getElementById('givenName').value.trim();
-    const sn = document.getElementById('sn').value.trim();
-    const nameCheckResult = document.getElementById('nameCheckResult');
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the current LDAP source
+    const currentLdapSource = document.getElementById('current_ldap_source')?.value || 'meta';
     
-    // Effacer tout message existant concernant les noms courts
-    const existingWarnings = nameCheckResult.querySelectorAll('.short-name-warning');
-    existingWarnings.forEach(warning => warning.remove());
+    // State variables to track verification status
+    let userTypeRequiresFavvNatNr = false;
     
-    // Vérifier si l'un des noms a 3 caractères ou moins
-    if ((givenName.length > 0 && givenName.length <= 3) || (sn.length > 0 && sn.length <= 3)) {
-        const shortNameWarning = document.createElement('div');
-        shortNameWarning.className = 'alert alert-warning short-name-warning mt-2';
-        shortNameWarning.innerHTML = `
-            <i class="fas fa-exclamation-triangle"></i> 
-            <strong>Remarque:</strong> Un des noms est court (3 caractères ou moins). 
-            Le mot de passe utilisera un format spécial pour se conformer aux politiques Active Directory.
-        `;
-        nameCheckResult.appendChild(shortNameWarning);
+    // Determine if the current user is an admin
+    window.isAdminUser = false; // Default value
+    
+    // Check if the adminStatus hidden field exists
+    const adminStatusField = document.getElementById('admin_status');
+    if (adminStatusField) {
+        window.isAdminUser = adminStatusField.value === 'true';
     }
-}
+    
+    // Update the submit button text initially
+    updateSubmitButtonText();
+
+    // Ajouter la vérification de la longueur des noms
+    setupNameLengthCheck();
+    
+    // Setup the initial event handler for the submit button
+    const submitButton = document.getElementById('submitBtn');
+    if (submitButton) {
+        submitButton.addEventListener('click', verifyUserInfo);
+    }
+    
+    // Add LDAP source to all links that don't already have it
+    document.querySelectorAll('a[href]').forEach(function(link) {
+        // Only process internal links
+        if (link.href && link.href.startsWith(window.location.origin)) {
+            if (!link.href.includes('source=')) {
+                try {
+                    const url = new URL(link.href);
+                    url.searchParams.set('source', currentLdapSource);
+                    link.href = url.toString();
+                } catch (e) {
+                    // Handle edge cases for malformed URLs
+                    const href = link.href;
+                    if (href.includes('?')) {
+                        link.href = href + '&source=' + currentLdapSource;
+                    } else {
+                        link.href = href + '?source=' + currentLdapSource;
+                    }
+                }
+            }
+        }
+    });
+    
+    // Add LDAP source to all forms that don't already have it
+    document.querySelectorAll('form').forEach(function(form) {
+        // Check if the form already has an ldap_source input
+        let hasLdapSource = false;
+        form.querySelectorAll('input').forEach(function(input) {
+            if (input.name === 'ldap_source') {
+                hasLdapSource = true;
+                input.value = currentLdapSource;
+            }
+        });
+        
+        // If not, add a hidden input for ldap_source
+        if (!hasLdapSource) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'ldap_source';
+            input.value = currentLdapSource;
+            form.appendChild(input);
+        }
+    });
+    
+    // Show/hide FavvNatNr field based on user type selection
+    const userTypeSelect = document.getElementById('user_type');
+    const favvNatNrContainer = document.getElementById('favvNatNr_container');
+    const managerContainer = document.getElementById('manager_container');
+    
+    if (userTypeSelect && favvNatNrContainer && managerContainer) {
+        // Fonctions pour gérer l'état des overrides
+        function updateOverrideUI(fieldId, overrideActive) {
+            const field = document.getElementById(fieldId);
+            const overrideBtn = document.getElementById(fieldId + 'OverrideBtn');
+            const overrideIndicator = document.getElementById(fieldId + 'OverrideIndicator');
+            const overrideInput = document.getElementById(fieldId + '_override');
+            
+            if (!field || !overrideBtn || !overrideIndicator || !overrideInput) return;
+            
+            // Mettre à jour l'indicateur d'override
+            if (overrideActive) {
+                field.required = false;
+                overrideIndicator.style.display = 'block';
+                overrideBtn.classList.remove('btn-warning');
+                overrideBtn.classList.add('btn-danger');
+                overrideBtn.innerHTML = '<i class="fas fa-times-circle"></i> Annuler Override';
+                overrideInput.value = 'true';
+            } else {
+                field.required = true;
+                overrideIndicator.style.display = 'none';
+                overrideBtn.classList.remove('btn-danger');
+                overrideBtn.classList.add('btn-warning');
+                overrideBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Override';
+                overrideInput.value = 'false';
+            }
+        }
+        
+        // Fonction pour préparer les modales selon l'état d'override
+        function prepareOverrideModal(fieldId, modalId) {
+            const modal = document.getElementById(modalId);
+            const modalBody = document.getElementById(fieldId + 'ModalBody');
+            const modalFooter = document.getElementById(fieldId + 'ModalFooter');
+            const overrideInput = document.getElementById(fieldId + '_override');
+            
+            if (!modal || !modalBody || !modalFooter || !overrideInput) return;
+            
+            const overrideActive = overrideInput.value === 'true';
+            
+            if (overrideActive) {
+                // Si l'override est actif, montrer option pour le désactiver
+                modalBody.innerHTML = `
+                    <p><strong>Override Actif</strong></p>
+                    <p>Le champ '${fieldId}' est actuellement optionnel. Voulez-vous le rendre à nouveau obligatoire?</p>
+                `;
+                modalFooter.innerHTML = `
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-success" id="disable${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)}Override">Rendre obligatoire</button>
+                `;
+                
+                // Ajouter event listener pour désactiver l'override
+                const disableBtn = document.getElementById(`disable${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)}Override`);
+                if (disableBtn) {
+                    disableBtn.addEventListener('click', function() {
+                        updateOverrideUI(fieldId, false);
+                        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                            bootstrap.Modal.getInstance(modal)?.hide();
+                        }
+                    });
+                }
+            } else {
+                // Si l'override n'est pas actif, montrer avertissement normal
+                modalBody.innerHTML = `
+                    <p><strong>Attention, à vos risques et périls!</strong></p>
+                    <p>Rendre ce champ optionnel n'est pas recommandé. Êtes-vous sûr de vouloir continuer?</p>
+                `;
+                modalFooter.innerHTML = `
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-danger" id="confirm${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)}Override">Confirmer</button>
+                `;
+                
+                // Ajouter event listener pour activer l'override
+                const confirmBtn = document.getElementById(`confirm${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)}Override`);
+                if (confirmBtn) {
+                    confirmBtn.addEventListener('click', function() {
+                        updateOverrideUI(fieldId, true);
+                        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                            bootstrap.Modal.getInstance(modal)?.hide();
+                        }
+                    });
+                }
+            }
+        }
+        
+        // Gestionnaires d'événements pour les boutons d'override
+        const emailOverrideBtn = document.getElementById('emailOverrideBtn');
+        if (emailOverrideBtn) {
+            emailOverrideBtn.addEventListener('click', function() {
+                prepareOverrideModal('email', 'emailWarningModal');
+            });
+        }
+        
+        const favvNatNrOverrideBtn = document.getElementById('favvNatNrOverrideBtn');
+        if (favvNatNrOverrideBtn) {
+            favvNatNrOverrideBtn.addEventListener('click', function() {
+                prepareOverrideModal('favvNatNr', 'favvNatNrWarningModal');
+            });
+        }
+        
+        const managerOverrideBtn = document.getElementById('managerOverrideBtn');
+        if (managerOverrideBtn) {
+            managerOverrideBtn.addEventListener('click', function() {
+                prepareOverrideModal('manager', 'managerWarningModal');
+            });
+        }
+        
+        // Initialiser l'UI basée sur les valeurs stockées (utile pour préserver l'état après erreur de formulaire)
+        const fields = ['email', 'favvNatNr', 'manager'];
+        fields.forEach(field => {
+            const overrideInput = document.getElementById(field + '_override');
+            if (overrideInput && overrideInput.value === 'true') {
+                updateOverrideUI(field, true);
+            }
+        });
+        
+        // Function to toggle visibility of fields based on user type
+        function toggleFields() {
+            // OCI types
+            const userType = userTypeSelect.value;
+            userTypeRequiresFavvNatNr = (userType === 'BOODOCI' || userType === 'OCI');
+            
+            if (userTypeRequiresFavvNatNr) {
+                favvNatNrContainer.style.display = 'block';
+                // Reset verification status for FavvNatNr when user type changes
+                window.favvNatNrVerified = false;
+            } else {
+                favvNatNrContainer.style.display = 'none';
+                // No need to verify FavvNatNr if not required
+                window.favvNatNrVerified = true;
+            }
+            
+            // STAG type (trainee)
+            if (userType === 'STAG') {
+                managerContainer.style.display = 'block';
+            } else {
+                managerContainer.style.display = 'none';
+            }
+            
+            // Reset name verification status when user type changes
+            window.nameVerified = false;
+            updateSubmitButtonText();
+        }
+        
+        // Initial check
+        toggleFields();
+        
+        // Listen for changes to user type
+        userTypeSelect.addEventListener('change', toggleFields);
+        
+        // Reset verification when name fields change
+        const givenNameInput = document.getElementById('givenName');
+        const snInput = document.getElementById('sn');
+        
+        if (givenNameInput) {
+            givenNameInput.addEventListener('input', function() {
+                window.nameVerified = false;
+                updateSubmitButtonText();
+            });
+        }
+        
+        if (snInput) {
+            snInput.addEventListener('input', function() {
+                window.nameVerified = false;
+                updateSubmitButtonText();
+            });
+        }
+        
+        // FavvNatNr normalization
+        const favvNatNrInput = document.getElementById('favvNatNr');
+        if (favvNatNrInput) {
+            favvNatNrInput.addEventListener('input', function(e) {
+                // Remove all non-digit characters
+                const normalized = e.target.value.replace(/[^0-9]/g, '');
+                
+                // Update input value with normalized string
+                e.target.value = normalized;
+                
+                // Reset verification status
+                window.favvNatNrVerified = false;
+                updateSubmitButtonText();
+            });
+        }
+        
+        // Manager Autocomplete
+        const managerInput = $('#manager');
+        if (managerInput.length > 0 && managerInput.autocomplete) {
+            managerInput.autocomplete({
+                source: function(request, response) {
+                    $.getJSON(window.autocompleteManagersUrl, {
+                        term: request.term,
+                        source: currentLdapSource
+                    }, function(data) {
+                        response(data);
+                    });
+                },
+                select: function(event, ui) {
+                    managerInput.val(ui.item.value);
+                    return false;
+                },
+                minLength: 2
+            }).data('ui-autocomplete')._renderItem = function(ul, item) {
+                return $('<li>')
+                    .append(`<div>${item.label}</div>`)
+                    .appendTo(ul);
+            };
+        }
+    }
+});
 

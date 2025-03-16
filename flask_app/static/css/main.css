@@ -462,3 +462,54 @@ code {
     color: var(--text-white) !important;
     margin: 0 !important;
 }
+
+
+/* Menu section styling */
+.sidebar .section-header > a {
+    font-weight: 600;
+    color: #e9ecef;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 0.25rem;
+    margin-bottom: 0.25rem;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s;
+}
+
+.sidebar .section-header > a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Style for section icons (chevron) */
+.sidebar .section-icon {
+    transition: transform 0.3s;
+}
+
+/* Rotate icon when section is expanded */
+.sidebar .nav-link[aria-expanded="true"] .section-icon {
+    transform: rotate(180deg);
+}
+
+/* Section items styling */
+.sidebar .section-items {
+    padding-left: 1rem;
+}
+
+.sidebar .section-items .nav-link {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border-left: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar .section-items .nav-link:hover {
+    border-left: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.sidebar .section-items .nav-link.active {
+    border-left: 2px solid #0d6efd;
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+/* Replace the old sidebar-heading style */
+.sidebar .sidebar-heading {
+    display: none; /* No longer needed with the new design */
+}

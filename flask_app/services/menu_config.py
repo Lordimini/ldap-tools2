@@ -118,7 +118,7 @@ class MenuConfig:
     
     def render_menu(self, user=None):
         """
-        Render HTML menu for the current user
+        Render HTML menu for the current user with collapsible sections
         
         Args:
             user: User object (uses g.user if not provided)
@@ -134,6 +134,9 @@ class MenuConfig:
         # Start building the menu HTML
         html = '<ul class="nav flex-column">'
         
+        # Counter to create unique IDs for each collapsible section
+        section_counter = 0
+        
         for item in menu_items:
             # Skip items that are explicitly set to not visible
             if item.get('visible') is False:
@@ -145,8 +148,25 @@ class MenuConfig:
                     continue
             
             if item.get('is_section'):
-                # Render section header
-                html += f'<div class="sidebar-heading">{item["label"]}</div>'
+                # Increment counter for unique ID
+                section_counter += 1
+                section_id = f'section-{section_counter}'
+                
+                # Render collapsible section header
+                html += f'''
+                <li class="nav-item section-header">
+                    <a class="nav-link d-flex justify-content-between align-items-center" 
+                    data-bs-toggle="collapse" 
+                    href="#{section_id}" 
+                    role="button" 
+                    aria-expanded="false" 
+                    aria-controls="{section_id}">
+                        <span>{item["label"]}</span>
+                        <i class="bi bi-chevron-down section-icon"></i>
+                    </a>
+                    <div class="collapse" id="{section_id}">
+                        <ul class="nav flex-column section-items">
+                '''
                 
                 # Render section items (only if they're visible)
                 for sub_item in item.get('items', []):
@@ -171,6 +191,13 @@ class MenuConfig:
                         </a>
                     </li>
                     '''
+                
+                # Close the section
+                html += '''
+                        </ul>
+                    </div>
+                </li>
+                '''
             else:
                 # Render regular menu item
                 is_active = self._is_active(item)

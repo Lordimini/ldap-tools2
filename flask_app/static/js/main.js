@@ -55,3 +55,41 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-expand section that contains active menu item
+    const activeNavLinks = document.querySelectorAll('.sidebar .section-items .nav-link.active');
+    
+    activeNavLinks.forEach(function(link) {
+        // Find parent collapse element
+        const collapseElement = link.closest('.collapse');
+        if (collapseElement) {
+            // Show this section
+            const bsCollapse = new bootstrap.Collapse(collapseElement, {
+                toggle: false
+            });
+            bsCollapse.show();
+            
+            // Update the aria-expanded attribute on the trigger
+            const trigger = document.querySelector(`[href="#${collapseElement.id}"]`);
+            if (trigger) {
+                trigger.setAttribute('aria-expanded', 'true');
+            }
+        }
+    });
+    
+    // Handle section clicks
+    const sectionHeaders = document.querySelectorAll('.sidebar .section-header > a');
+    
+    sectionHeaders.forEach(function(header) {
+        header.addEventListener('click', function(e) {
+            // Toggle icon rotation (Bootstrap will handle the collapse itself)
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            if (isExpanded) {
+                this.querySelector('.section-icon').style.transform = 'rotate(0deg)';
+            } else {
+                this.querySelector('.section-icon').style.transform = 'rotate(180deg)';
+            }
+        });
+    });
+});

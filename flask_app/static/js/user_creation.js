@@ -1,6 +1,56 @@
+// Initialize the verification state variables
+window.nameVerified = false;
+window.favvNatNrVerified = false;
+
+// Global updateSubmitButtonText function
+function updateSubmitButtonText() {
+    const submitButton = document.getElementById('submitBtn');
+    if (!submitButton) return;
+    
+    // Access the window global variables
+    const nameVerified = window.nameVerified || false;
+    const favvNatNrVerified = window.favvNatNrVerified || false;
+    
+    // Check if user type requires FavvNatNr
+    const userTypeSelect = document.getElementById('user_type');
+    const userTypeRequiresFavvNatNr = userTypeSelect && 
+                                     (userTypeSelect.value === 'BOODOCI' || 
+                                      userTypeSelect.value === 'OCI');
+    
+    if (nameVerified && (favvNatNrVerified || !userTypeRequiresFavvNatNr)) {
+        submitButton.textContent = 'Preview & Create User';
+        submitButton.classList.remove('btn-secondary');
+        submitButton.classList.add('btn-primary');
+        
+        // Change the event handler to validation and creation
+        submitButton.removeEventListener('click', verifyUserInfo);
+        submitButton.addEventListener('click', validateForm);
+    } else {
+        submitButton.textContent = 'Verify User Information';
+        submitButton.classList.remove('btn-primary');
+        submitButton.classList.add('btn-secondary');
+        
+        // Change the event handler to verification
+        submitButton.removeEventListener('click', validateForm);
+        submitButton.addEventListener('click', verifyUserInfo);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Get the current LDAP source
     const currentLdapSource = document.getElementById('current_ldap_source')?.value || 'meta';
+    
+    // State variables to track verification status
+    let userTypeRequiresFavvNatNr = false;
+    
+    // Update the submit button text initially
+    updateSubmitButtonText();
+    
+    // Setup the initial event handler for the submit button
+    const submitButton = document.getElementById('submitBtn');
+    if (submitButton) {
+        submitButton.addEventListener('click', verifyUserInfo);
+    }
     
     // Add LDAP source to all links that don't already have it
     document.querySelectorAll('a[href]').forEach(function(link) {
@@ -168,25 +218,54 @@ document.addEventListener('DOMContentLoaded', function() {
         // Function to toggle visibility of fields based on user type
         function toggleFields() {
             // OCI types
-            if (userTypeSelect.value === 'BOODOCI' || userTypeSelect.value === 'OCI') {
+            const userType = userTypeSelect.value;
+            userTypeRequiresFavvNatNr = (userType === 'BOODOCI' || userType === 'OCI');
+            
+            if (userTypeRequiresFavvNatNr) {
                 favvNatNrContainer.style.display = 'block';
+                // Reset verification status for FavvNatNr when user type changes
+                window.favvNatNrVerified = false;
             } else {
                 favvNatNrContainer.style.display = 'none';
+                // No need to verify FavvNatNr if not required
+                window.favvNatNrVerified = true;
             }
             
             // STAG type (trainee)
-            if (userTypeSelect.value === 'STAG') {
+            if (userType === 'STAG') {
                 managerContainer.style.display = 'block';
             } else {
                 managerContainer.style.display = 'none';
             }
+            
+            // Reset name verification status when user type changes
+            window.nameVerified = false;
+            updateSubmitButtonText();
         }
         
         // Initial check
         toggleFields();
         
-        // Listen for changes
+        // Listen for changes to user type
         userTypeSelect.addEventListener('change', toggleFields);
+        
+        // Reset verification when name fields change
+        const givenNameInput = document.getElementById('givenName');
+        const snInput = document.getElementById('sn');
+        
+        if (givenNameInput) {
+            givenNameInput.addEventListener('input', function() {
+                window.nameVerified = false;
+                updateSubmitButtonText();
+            });
+        }
+        
+        if (snInput) {
+            snInput.addEventListener('input', function() {
+                window.nameVerified = false;
+                updateSubmitButtonText();
+            });
+        }
         
         // FavvNatNr normalization
         const favvNatNrInput = document.getElementById('favvNatNr');
@@ -198,11 +277,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update input value with normalized string
                 e.target.value = normalized;
                 
-                // Clear check result when input changes
-                const favvNatNrCheckResult = document.getElementById('favvNatNrCheckResult');
-                if (favvNatNrCheckResult) {
-                    favvNatNrCheckResult.innerHTML = '';
-                }
+                // Reset verification status
+                window.favvNatNrVerified = false;
+                updateSubmitButtonText();
             });
         }
         
@@ -229,147 +306,184 @@ document.addEventListener('DOMContentLoaded', function() {
                     .appendTo(ul);
             };
         }
-        
-        // Handle confirmation button
-        const confirmCreateBtn = document.getElementById('confirmCreate');
-        if (confirmCreateBtn) {
-            confirmCreateBtn.addEventListener('click', function() {
-                // Set the LDAP source in the hidden form
-                const hiddenLdapSourceInput = document.getElementById('hidden_ldap_source');
-                if (hiddenLdapSourceInput) {
-                    hiddenLdapSourceInput.value = currentLdapSource;
-                }
-                
-                const actualSubmitForm = document.getElementById('actualSubmitForm');
-                if (actualSubmitForm) {
-                    actualSubmitForm.submit();
-                }
-            });
-        }
-        
-        // Gestionnaire pour le bouton de vérification du nom
-        const checkNameBtn = document.getElementById('checkNameBtn');
-        if (checkNameBtn) {
-            checkNameBtn.addEventListener('click', function() {
-                const givenNameInput = document.getElementById('givenName');
-                const snInput = document.getElementById('sn');
-                const resultDiv = document.getElementById('nameCheckResult');
-                
-                if (!givenNameInput || !snInput || !resultDiv) return;
-                
-                const givenName = givenNameInput.value.trim();
-                const sn = snInput.value.trim();
-                
-                if (!givenName || !sn) {
-                    resultDiv.innerHTML = '<div class="alert alert-warning">Veuillez saisir le prénom et le nom.</div>';
-                    return;
-                }
-                
-                // Afficher un indicateur de chargement
-                resultDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Vérification en cours...</div>';
-                
-                // Envoyer la requête AJAX
-                fetch(window.checkNameExistsUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        givenName: givenName,
-                        sn: sn,
-                        ldap_source: currentLdapSource
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'exists') {
-                        // Afficher sn + givenName (au lieu de givenName + sn) pour être cohérent avec le format LDAP
-                        resultDiv.innerHTML = `<div class="alert alert-danger">Un utilisateur avec le nom '${sn} ${givenName}' existe déjà dans l'annuaire (${data.message}).</div>`;
-                    } else if (data.status === 'ok') {
-                        // Même modification ici
-                        resultDiv.innerHTML = `<div class="alert alert-success">Aucun utilisateur existant avec le nom '${sn} ${givenName}'.</div>`;
-                    } else {
-                        resultDiv.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    resultDiv.innerHTML = '<div class="alert alert-danger">Erreur lors de la vérification. Veuillez réessayer.</div>';
-                });
-            });
-        }
-        
-        // Gestionnaire pour le bouton de vérification du FavvNatNr
-        const checkFavvNatNrBtn = document.getElementById('checkFavvNatNrBtn');
-        if (checkFavvNatNrBtn) {
-            checkFavvNatNrBtn.addEventListener('click', function() {
-                const favvNatNrInput = document.getElementById('favvNatNr');
-                const resultDiv = document.getElementById('favvNatNrCheckResult');
-                
-                if (!favvNatNrInput || !resultDiv) return;
-                
-                const favvNatNr = favvNatNrInput.value.trim();
-                
-                if (!favvNatNr) {
-                    resultDiv.innerHTML = '<div class="alert alert-warning">Veuillez saisir un numéro de registre national.</div>';
-                    return;
-                }
-                
-                // Afficher un indicateur de chargement
-                resultDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Vérification en cours...</div>';
-                
-                // Envoyer la requête AJAX
-                fetch(window.checkFavvNatNrExistsUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        favvNatNr: favvNatNr,
-                        ldap_source: currentLdapSource
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'exists') {
-                        resultDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
-                    } else if (data.status === 'ok') {
-                        resultDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
-                    } else {
-                        resultDiv.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    resultDiv.innerHTML = '<div class="alert alert-danger">Erreur lors de la vérification. Veuillez réessayer.</div>';
-                });
-            });
-        }
-        
-        // Effacer les résultats de vérification lorsque les champs sont modifiés
-        const givenNameInput = document.getElementById('givenName');
-        if (givenNameInput) {
-            givenNameInput.addEventListener('input', function() {
-                const nameCheckResult = document.getElementById('nameCheckResult');
-                if (nameCheckResult) {
-                    nameCheckResult.innerHTML = '';
-                }
-            });
-        }
-        
-        const snInput = document.getElementById('sn');
-        if (snInput) {
-            snInput.addEventListener('input', function() {
-                const nameCheckResult = document.getElementById('nameCheckResult');
-                if (nameCheckResult) {
-                    nameCheckResult.innerHTML = '';
-                }
-            });
-        }
     }
 });
 
-// Fonction de validation du formulaire
+// Function to perform user verification before creation
+function verifyUserInfo(event) {
+    event.preventDefault();
+    
+    // Get form elements
+    const form = document.getElementById('userCreationForm');
+    const givenNameInput = document.getElementById('givenName');
+    const snInput = document.getElementById('sn');
+    const userTypeSelect = document.getElementById('user_type');
+    const favvNatNrInput = document.getElementById('favvNatNr');
+    const favvNatNrContainer = document.getElementById('favvNatNr_container');
+    const ldapSource = document.getElementById('current_ldap_source')?.value || 'meta';
+    
+    // Check if required fields are filled
+    if (!form || !givenNameInput || !snInput || !userTypeSelect) return false;
+    
+    if (!form.checkValidity()) {
+        // Trigger native browser validation
+        form.reportValidity();
+        return false;
+    }
+    
+    // Determine if we need to verify FavvNatNr
+    const userTypeRequiresFavvNatNr = (userTypeSelect.value === 'BOODOCI' || userTypeSelect.value === 'OCI');
+    const needFavvNatNrVerification = userTypeRequiresFavvNatNr && 
+                                     favvNatNrContainer.style.display !== 'none' && 
+                                     favvNatNrInput && 
+                                     favvNatNrInput.value.trim() !== '';
+    
+    // Get values
+    const givenName = givenNameInput.value.trim();
+    const sn = snInput.value.trim();
+    const favvNatNr = favvNatNrInput?.value.trim() || '';
+    
+    // Initialize verification promises
+    const promises = [];
+    
+    // Create modal content container
+    const verificationResults = document.createElement('div');
+    
+    // Push name verification promise
+    promises.push(
+        fetch(window.checkNameExistsUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                givenName: givenName,
+                sn: sn,
+                ldap_source: ldapSource
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'mb-3';
+            
+            const title = document.createElement('h5');
+            title.textContent = 'Name Verification';
+            resultDiv.appendChild(title);
+            
+            const alert = document.createElement('div');
+            alert.className = data.status === 'exists' ? 
+                'alert alert-danger' : 
+                'alert alert-success';
+            
+            if (data.status === 'exists') {
+                alert.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Un utilisateur avec le nom '${sn} ${givenName}' existe déjà dans l'annuaire (${data.message}).`;
+            } else {
+                alert.innerHTML = `<i class="fas fa-check-circle"></i> Aucun utilisateur existant avec le nom '${sn} ${givenName}'.`;
+                // Mark name as verified
+                window.nameVerified = true;
+            }
+            
+            resultDiv.appendChild(alert);
+            verificationResults.appendChild(resultDiv);
+            
+            return data;
+        })
+    );
+    
+    // Push FavvNatNr verification promise if needed
+    if (needFavvNatNrVerification) {
+        promises.push(
+            fetch(window.checkFavvNatNrExistsUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    favvNatNr: favvNatNr,
+                    ldap_source: ldapSource
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'mb-3';
+                
+                const title = document.createElement('h5');
+                title.textContent = 'National Register Number Verification';
+                resultDiv.appendChild(title);
+                
+                const alert = document.createElement('div');
+                alert.className = data.status === 'exists' ? 
+                    'alert alert-danger' : 
+                    'alert alert-success';
+                
+                alert.innerHTML = data.status === 'exists' ?
+                    `<i class="fas fa-exclamation-triangle"></i> ${data.message}` :
+                    `<i class="fas fa-check-circle"></i> ${data.message}`;
+                
+                if (data.status !== 'exists') {
+                    // Mark FavvNatNr as verified
+                    window.favvNatNrVerified = true;
+                }
+                
+                resultDiv.appendChild(alert);
+                verificationResults.appendChild(resultDiv);
+                
+                return data;
+            })
+        );
+    } else {
+        // No need to verify FavvNatNr
+        window.favvNatNrVerified = true;
+    }
+    
+    // Wait for all verifications to complete
+    Promise.all(promises)
+        .then(results => {
+            // Display verification results in modal
+            const verificationModal = document.getElementById('verificationModal');
+            const verificationModalBody = document.getElementById('verificationModalBody');
+            
+            if (verificationModal && verificationModalBody) {
+                verificationModalBody.innerHTML = '';
+                verificationModalBody.appendChild(verificationResults);
+                
+                // Add conclusion and next steps
+                const conclusion = document.createElement('div');
+                conclusion.className = 'mt-3';
+                
+                if (window.nameVerified && window.favvNatNrVerified) {
+                    conclusion.innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            Toutes les vérifications sont réussies. Vous pouvez maintenant continuer avec la création de l'utilisateur.
+                        </div>
+                    `;
+                } else {
+                    conclusion.innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-circle"></i> 
+                            Des doublons potentiels ont été détectés. Vous pouvez modifier les informations et vérifier à nouveau.
+                        </div>
+                    `;
+                }
+                
+                verificationModalBody.appendChild(conclusion);
+                
+                // Show verification modal
+                const modal = new bootstrap.Modal(verificationModal);
+                modal.show();
+                
+                // Update submit button text
+                updateSubmitButtonText();
+            }
+        })
+        .catch(error => {
+            console.error('Error during verification:', error);
+            alert('Une erreur est survenue pendant la vérification. Veuillez réessayer.');
+        });
+    
+    return false;
+}
+
+// Fonction de validation du formulaire après vérification
 function validateForm(event) {
     event.preventDefault();
     

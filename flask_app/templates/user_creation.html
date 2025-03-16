@@ -32,7 +32,7 @@
     {% endwith %}
 
     <!-- Form to create a new user -->
-    <form method="POST" class="card p-4 shadow" id="userCreationForm" onsubmit="return validateForm(event);">
+    <form method="POST" class="card p-4 shadow" id="userCreationForm">
         {{ form.hidden_tag() }}
         
         <!-- Dropdown for User Type -->
@@ -54,12 +54,7 @@
         <!-- Surname -->
         <div class="mb-3">
             <label for="sn" class="form-label">Surname:</label>
-            <div class="input-group">
-                <input type="text" id="sn" name="sn" class="form-control" value="{{ form_data.sn if form_data else '' }}" required>
-                <button type="button" id="checkNameBtn" class="btn btn-outline-primary">
-                    <i class="fas fa-check"></i> Vérifier
-                </button>
-            </div>
+            <input type="text" id="sn" name="sn" class="form-control" value="{{ form_data.sn if form_data else '' }}" required>
             <div id="nameCheckResult" class="mt-2"></div>
         </div>
 
@@ -102,9 +97,6 @@
                 <button type="button" id="favvNatNrOverrideBtn" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#favvNatNrWarningModal">
                     <i class="fas fa-exclamation-triangle"></i> Override
                 </button>
-                <button type="button" id="checkFavvNatNrBtn" class="btn btn-outline-primary">
-                    <i class="fas fa-check"></i> Vérifier
-                </button>
             </div>
             <div id="favvNatNrOverrideIndicator" class="mt-1 mb-2 text-danger fw-bold" style="display: none;">
                 <i class="fas fa-exclamation-circle"></i> Ce champ est actuellement optionnel (override actif)
@@ -115,7 +107,7 @@
         </div>
 
         <!-- Submit button -->
-        <button type="submit" class="btn btn-primary">Preview & Create User</button>
+        <button type="button" id="submitBtn" class="btn btn-secondary">Verify User Information</button>
     </form>
 
     <!-- Email Warning Modal -->
@@ -135,6 +127,7 @@
             </div>
         </div>
     </div>
+    
     <!-- Manager Warning Modal -->
     <div class="modal fade" id="managerWarningModal" tabindex="-1" aria-labelledby="managerWarningModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -166,6 +159,24 @@
                 </div>
                 <div class="modal-footer" id="favvNatNrModalFooter">
                     <!-- Les boutons seront modifiés dynamiquement par JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Verification Results Modal -->
+    <div class="modal fade" id="verificationModal" tabindex="-1" aria-labelledby="verificationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="verificationModalLabel">User Verification Results</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="verificationModalBody">
+                    <!-- Verification results will be added here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Fermer</button>
                 </div>
             </div>
         </div>
@@ -211,8 +222,6 @@
 {% endblock %}
 
 {% block scripts %}
-    
-
     <!-- URLs for JavaScript -->
     <script>
         // Passing URL values to JavaScript

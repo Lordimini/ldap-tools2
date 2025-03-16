@@ -59,8 +59,8 @@
             "active_pattern": "^/role_users"
           },
           {
-            "label": "Role Groups",
-            "url": "/rrole_groups",
+            "label": "Role Groups/resources",
+            "url": "/role_groups",
             "icon": "bi bi-diagram-3",
             "active_pattern": "^/role_groups"
           }
@@ -90,7 +90,7 @@
           },
           {
             "label": "LDAP Browser",
-            "url": "/lldap_browser",
+            "url": "/ldap_browser",
             "icon": "bi bi-folder2-open",
             "active_pattern": "^/ldap/ldap_browser"
           },

@@ -55,6 +55,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // Update the submit button text initially
     updateSubmitButtonText();
+
+    // Ajouter la vérification de la longueur des noms
+    setupNameLengthCheck();
     
     // Setup the initial event handler for the submit button
     const submitButton = document.getElementById('submitBtn');
@@ -293,6 +296,28 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
+        function setupNameLengthCheck() {
+            const givenNameInput = document.getElementById('givenName');
+            const snInput = document.getElementById('sn');
+            
+            if (givenNameInput && snInput) {
+                // Ajouter des écouteurs d'événements pour les champs de nom
+                givenNameInput.addEventListener('input', checkNameLength);
+                snInput.addEventListener('input', checkNameLength);
+                
+                // Vérifier au chargement de la page (pour les formulaires avec des valeurs pré-remplies)
+                checkNameLength();
+            }
+        }
+
+        // Appeler cette fonction au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Autres fonctions DOMContentLoaded existantes...
+            
+            // Ajouter la vérification de la longueur des noms
+            setupNameLengthCheck();
+        });
+
         // Manager Autocomplete
         const managerInput = $('#manager');
         if (managerInput.length > 0 && managerInput.autocomplete) {
@@ -616,6 +641,9 @@ function validateForm(event) {
     
     if (!givenNameInput || !snInput || !userTypeInput) return false;
     
+    // Vérifier si un des noms est court (3 caractères ou moins)
+    const hasShortName = givenNameInput.value.trim().length <= 3 || snInput.value.trim().length <= 3;
+    
     // Envoyer la requête AJAX
     fetch(window.previewUserDetailsUrl, {
         method: 'POST',
@@ -637,7 +665,7 @@ function validateForm(event) {
         }
         
         // Remplir la modal avec les données
-        populateConfirmationModal(data.cn, data.password, data.template_details);
+        populateConfirmationModal(data.cn, data.password, data.template_details, data.has_short_name || hasShortName);
         
         // Afficher la modal de confirmation
         if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
@@ -656,8 +684,9 @@ function validateForm(event) {
     return false; // Empêcher la soumission normale du formulaire
 }
 
+
 // Populate the confirmation modal with user info
-function populateConfirmationModal(cn, password, template_details) {
+function populateConfirmationModal(cn, password, template_details, hasShortName) {
     const userTypeSelect = document.getElementById('user_type');
     const givenNameInput = document.getElementById('givenName');
     const snInput = document.getElementById('sn');
@@ -680,8 +709,17 @@ function populateConfirmationModal(cn, password, template_details) {
     const manager = managerInput.value || 'No manager specified (Override)';
     const currentLdapSource = ldapSourceInput.value || 'meta';
     
+    // Déterminer si un nom est court (3 caractères ou moins)
+    const shortNameWarning = hasShortName ? `
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i> 
+            <strong>Remarque importante :</strong> Un ou plusieurs noms étant courts (3 caractères ou moins), 
+            le format du mot de passe a été modifié pour se conformer aux politiques Active Directory.
+        </div>` : '';
+    
     // Créer le HTML pour le résumé
     let html = `
+        ${shortNameWarning}
         <table class="table table-striped">
             <tr>
                 <th>User Type:</th>
@@ -697,7 +735,7 @@ function populateConfirmationModal(cn, password, template_details) {
             </tr>
             <tr class="table-primary">
                 <th>Generated Password:</th>
-                <td><code>${password}</code></td>
+                <td><code>${password}</code>${hasShortName ? ' <span class="badge bg-info">Format spécial</span>' : ''}</td>
             </tr>
             <tr>
                 <th>Email:</th>
@@ -824,3 +862,27 @@ function populateConfirmationModal(cn, password, template_details) {
     if (hiddenManagerOverrideInput) hiddenManagerOverrideInput.value = document.getElementById('manager_override')?.value || 'false';
     if (hiddenLdapSourceInput) hiddenLdapSourceInput.value = currentLdapSource;
 }
+
+// Fonction pour vérifier la longueur des noms et afficher un avertissement
+function checkNameLength() {
+    const givenName = document.getElementById('givenName').value.trim();
+    const sn = document.getElementById('sn').value.trim();
+    const nameCheckResult = document.getElementById('nameCheckResult');
+    
+    // Effacer tout message existant concernant les noms courts
+    const existingWarnings = nameCheckResult.querySelectorAll('.short-name-warning');
+    existingWarnings.forEach(warning => warning.remove());
+    
+    // Vérifier si l'un des noms a 3 caractères ou moins
+    if ((givenName.length > 0 && givenName.length <= 3) || (sn.length > 0 && sn.length <= 3)) {
+        const shortNameWarning = document.createElement('div');
+        shortNameWarning.className = 'alert alert-warning short-name-warning mt-2';
+        shortNameWarning.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i> 
+            <strong>Remarque:</strong> Un des noms est court (3 caractères ou moins). 
+            Le mot de passe utilisera un format spécial pour se conformer aux politiques Active Directory.
+        `;
+        nameCheckResult.appendChild(shortNameWarning);
+    }
+}
+

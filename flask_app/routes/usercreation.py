@@ -260,9 +260,12 @@ def preview_user_details():
         # Generate the CN
         cn = ldap_model.generate_unique_cn(given_name, sn)
         
-        # Generate password
-        password = ldap_model.generate_password_from_cn(cn)
+        # Check if either name is short (3 characters or less)
+        has_short_name = len(given_name) <= 3 or len(sn) <= 3
         
+        # Generate password with short_name flag if needed
+        password = ldap_model.generate_password_from_cn(cn, short_name=has_short_name)
+                
         # Get template details
         template_details = ldap_model.get_template_details(user_type)
         

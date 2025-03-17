@@ -25,7 +25,7 @@ class LDAPModel(
         Initialise le modèle avec la configuration correspondant à la source demandée.
         
         Args:
-            source (str): Identifiant de la source LDAP ('meta' ou 'idme')
+            source (str): Identifiant de la source LDAP ('meta','idme', ad-prod, ad-edu ou ad-teste)
         """
         config = LDAPConfigManager.get_config(source)
         self.source = source

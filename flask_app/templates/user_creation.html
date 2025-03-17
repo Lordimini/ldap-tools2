@@ -231,5 +231,7 @@
         window.checkFavvNatNrExistsUrl = "{{ url_for('usercreation.check_favvnatnr_exists') }}";
         window.previewUserDetailsUrl = "{{ url_for('usercreation.preview_user_details') }}";
     </script>
+
+    <!-- Charger enfin le script spécifique à la page -->
     <script src="{{ url_for('static', filename='js/user_creation.js') }}"></script>
 {% endblock %}

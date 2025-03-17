@@ -123,7 +123,8 @@ window.LDAPManager = {
       dataTables: DataTableUtils,
       autocomplete: AutocompleteUtils,
       groupManagement: GroupManagementUtils,
-      validation: ValidationUtils
+      validation: ValidationUtils,
+      userCreation: UserCreationUtils
     }
   };
   

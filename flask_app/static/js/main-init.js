@@ -279,3 +279,32 @@ function initializeTables() {
       }
     }
   }
+
+  /**
+ * Fonction d'initialisation pour les pages de création d'utilisateur
+ * Cette fonction doit être ajoutée au fichier main-init.js
+ */
+function initializeUserCreation() {
+  // Vérifier si nous sommes sur la page de création d'utilisateur
+  if (document.getElementById('userCreationForm')) {
+    console.log('LDAP Manager: Initializing user creation functionality');
+    
+    // Initialiser les validations avec les champs qui peuvent avoir des overrides
+    ValidationUtils.initRequiredFieldOverrides(['email', 'favvNatNr', 'manager']);
+    
+    // Initialiser les fonctionnalités spécifiques à la création d'utilisateur
+    if (typeof UserCreationUtils !== 'undefined') {
+      UserCreationUtils.init();
+    } else {
+      console.error('LDAP Manager: UserCreationUtils module not available');
+    }
+  }
+}
+
+/**
+ * Ajout à la fonction initializePageComponents dans main-init.js
+ * Ajouter cette ligne après les autres initialisations :
+ * 
+ * // Initialiser la création d'utilisateur si nécessaire
+ * initializeUserCreation();
+ */

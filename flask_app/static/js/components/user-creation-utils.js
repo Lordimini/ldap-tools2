@@ -778,3 +778,4 @@ const UserCreationUtils = {
       
       console.log('UserCreationUtils: Initialization complete');
     }
+}

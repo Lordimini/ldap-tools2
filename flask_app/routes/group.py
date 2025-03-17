@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
-from flask_app.models.edir_model import EDIRModel
+from flask_app.models.ldap_model import LDAPModel
 from flask_app.models.ldap_config_manager import LDAPConfigManager
 from flask_app.utils.export_utils import util_export_group_users_csv
 from flask_login import login_required  # Nouvel import depuis Flask-Login
@@ -26,8 +26,8 @@ def group_users():
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
@@ -70,8 +70,8 @@ def export_group_users_csv():
     if not ldap_source:
         ldap_source = session.get('ldap_source', 'meta')
     
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     # If we have a specific DN, use it
     if group_dn:
@@ -105,8 +105,8 @@ def add_users_to_group():
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
@@ -169,7 +169,7 @@ def add_users_to_group():
         ldap_source = session.get('ldap_source', ldap_source)
         
         # Reinitialize the model with the correct source
-        ldap_model = EDIRModel(source=ldap_source)
+        ldap_model = LDAPModel(source=ldap_source)
         
         # Get LDAP name for display purposes
         config = LDAPConfigManager.get_config(ldap_source)
@@ -204,8 +204,8 @@ def search_users_for_group():
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
@@ -278,8 +278,8 @@ def confirm_add_users():
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     import json
     try:
@@ -340,8 +340,8 @@ def validate_bulk_cns():
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     if not cn_list or not group_dn:
         return jsonify({'error': 'Empty CN list or group DN'}), 400

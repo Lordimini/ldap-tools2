@@ -1,12 +1,12 @@
 # flask_app/models/ldap/groups.py
-from .base import EDIRBase
+from .base import LDAPBase
 from ldap3 import Connection, MODIFY_ADD, MODIFY_DELETE
 from flask import flash
 
-class EDIRGroupMixin(EDIRBase):
+class LDAPGroupMixin(LDAPBase):
     
     def get_group_users(self, group_name):
-        conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True) 
+        conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True) 
         group_dn = None
         for base_dn in ['ou=Groups,ou=IAM-Security,o=COPY', self.app_base_dn, 'ou=GROUPS,ou=SYNC,o=COPY']:
             conn.search(base_dn, f'(cn={group_name})', search_scope='SUBTREE', attributes=['cn'])
@@ -65,7 +65,7 @@ class EDIRGroupMixin(EDIRBase):
             dict: Informations sur le groupe et ses utilisateurs
         """
         try:
-            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Vérifier si le groupe existe
             conn.search(group_dn, '(objectClass=groupOfNames)', search_scope='BASE', attributes=['cn'])
@@ -131,7 +131,7 @@ class EDIRGroupMixin(EDIRBase):
         """
         try:
             # Établir une connexion au serveur LDAP
-            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # 1. Ajouter le DN du groupe à l'attribut groupMembership de l'utilisateur
             user_modify = conn.modify(
@@ -183,7 +183,7 @@ class EDIRGroupMixin(EDIRBase):
         """
         try:
             # Établir une connexion au serveur LDAP
-            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # 1. Supprimer le DN du groupe de l'attribut groupMembership de l'utilisateur
             conn.modify(

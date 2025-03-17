@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
-from flask_app.models.edir_model import EDIRModel
+from flask_app.models.ldap_model import LDAPModel
 from flask_app.utils.export_utils import util_export_service_users_csv
 from flask_login import login_required  # Nouvel import depuis Flask-Login
 from flask_app.models.ldap_config_manager import LDAPConfigManager
@@ -31,7 +31,7 @@ def service_users():
     if request.method == 'POST' or prefill_service_name:
         # Get the service CN from the form
         service_name = request.form.get('service_name', '') or prefill_service_name        
-        ldap_model = EDIRModel(source=ldap_source)
+        ldap_model = LDAPModel(source=ldap_source)
         result = ldap_model.get_service_users(service_name)
         return render_template('service_users.html', 
                               result=result, 
@@ -59,7 +59,7 @@ def export_service_users_csv(service_name):
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    ldap_model = EDIRModel(source=ldap_source)
+    ldap_model = LDAPModel(source=ldap_source)
     result = ldap_model.get_service_users(service_name)
     if result and result['users']:
         return util_export_service_users_csv(service_name, result['users'])

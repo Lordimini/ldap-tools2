@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, session, url_for, redirect
-from flask_app.models.edir_model import EDIRModel
+from flask_app.models.ldap_model import LDAPModel
 from flask_login import login_required  # Nouvel import depuis Flask-Login
 from flask_app.models.ldap_config_manager import LDAPConfigManager
 
@@ -32,8 +32,8 @@ def search_user():
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)

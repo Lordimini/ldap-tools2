@@ -27,7 +27,7 @@ L'architecture d'authentification de LDAP Manager utilise les composants suivant
 
 1. **Flask-Login** : Gère les sessions utilisateur et l'état d'authentification
 2. **LDAPConfigManager** : Gère les connexions aux différentes sources LDAP configurées
-3. **EDIRModel** : Interagit directement avec les serveurs LDAP via ldap3
+3. **LDAPModel** : Interagit directement avec les serveurs LDAP via ldap3
 4. **User Model** : Implémente UserMixin de Flask-Login et ajoute des fonctionnalités RBAC
 5. **Menu Configuration** : Système de menus dynamiques basé sur les rôles utilisateur
 
@@ -213,8 +213,8 @@ def authenticate_user(username, password, ldap_source='meta'):
     Authentifie un utilisateur contre LDAP et crée un objet User
     """
     try:
-        # Création du modèle EDIR pour la source spécifiée
-        ldap_model = EDIRModel(source=ldap_source)
+        # Création du modèle LDAP pour la source spécifiée
+        ldap_model = LDAPModel(source=ldap_source)
         
         # Authentification contre LDAP
         conn = ldap_model.authenticate(username, password)
@@ -453,7 +453,7 @@ Voici le flux de données complet pour l'authentification et l'autorisation :
 
 2. **Authentification LDAP**:
    - `authenticate_user()` est appelée
-   - EDIRModel tente de se connecter au serveur LDAP
+   - LDAPModel tente de se connecter au serveur LDAP
    - Si l'authentification réussit, les détails de l'utilisateur sont récupérés
 
 3. **Création de l'utilisateur**:

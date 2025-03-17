@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session, flash, json
-from flask_app.models.edir_model import EDIRModel
+from flask_app.models.ldap_model import LDAPModel
 # from flask_app.utils.ldap_utils import login_required
 from flask_login import login_required  # Nouvel import depuis Flask-Login
 from functools import lru_cache
@@ -45,7 +45,7 @@ def autocomplete_groups():
     
     try:
         # Créer une instance du modèle LDAP avec la source spécifiée
-        ldap_model = EDIRModel(source=ldap_source)
+        ldap_model = LDAPModel(source=ldap_source)
         result = ldap_model.autocomplete('group', search_term)
         return jsonify(result)
     except Exception as e:
@@ -79,7 +79,7 @@ def autocomplete_fullName():
             return jsonify(cached_result)
         
         # Créer une instance du modèle LDAP avec la source spécifiée
-        ldap_model = EDIRModel(source=ldap_source)
+        ldap_model = LDAPModel(source=ldap_source)
         result = ldap_model.autocomplete('fullName', search_term)
         
         # Limiter les résultats retournés
@@ -113,7 +113,7 @@ def autocomplete_roles():
     
     try:
         # Créer une instance du modèle LDAP avec la source spécifiée
-        ldap_model = EDIRModel(source=ldap_source)
+        ldap_model = LDAPModel(source=ldap_source)
         # Utiliser la fonction spécifique pour les rôles
         result = ldap_model.autocomplete_role(search_term)
         print(f"Résultats trouvés: {len(result)}")
@@ -151,7 +151,7 @@ def autocomplete_services():
             return jsonify(cached_result)
         
         # Créer une instance du modèle LDAP avec la source spécifiée
-        ldap_model = EDIRModel(source=ldap_source)
+        ldap_model = LDAPModel(source=ldap_source)
         # Utiliser la fonction spécifique pour les services
         result = ldap_model.autocomplete_services(search_term)
         print(f"Résultats trouvés: {len(result)}")
@@ -185,7 +185,7 @@ def autocomplete_managers():
     
     try:
         # Créer une instance du modèle LDAP avec la source spécifiée
-        ldap_model = EDIRModel(source=ldap_source)
+        ldap_model = LDAPModel(source=ldap_source)
         result = ldap_model.autocomplete('managers', search_term)
         return jsonify(result)
     except Exception as e:
@@ -236,7 +236,7 @@ def unified_autocomplete():
             return jsonify(cached_result)
             
         # Créer une instance du modèle LDAP avec la source spécifiée
-        ldap_model = EDIRModel(source=ldap_source)
+        ldap_model = LDAPModel(source=ldap_source)
         result = ldap_model.autocomplete(search_type, search_term)
         
         # Mettre en cache le résultat

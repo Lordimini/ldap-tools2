@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from flask_login import login_required  # Nouvel import depuis Flask-Login
-from flask_app.models.edir_model import EDIRModel
+from flask_app.models.ldap_model import LDAPModel
 from flask_app.models.ldap_config_manager import LDAPConfigManager
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -23,8 +23,8 @@ def dashboard():
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Step 3: Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Step 3: Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     # Step 4: Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)

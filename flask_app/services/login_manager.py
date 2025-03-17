@@ -1,7 +1,7 @@
 from flask_login import LoginManager, current_user
 from flask import g, session, flash, redirect, url_for, request
 from flask_app.models.user_model import User
-from flask_app.models.edir_model import EDIRModel
+from flask_app.models.ldap_model import LDAPModel
 import functools
 
 login_manager = LoginManager()
@@ -57,8 +57,8 @@ def authenticate_user(username, password, ldap_source='meta'):
         User: Authenticated User object or None if authentication fails
     """
     try:
-        # Create EDIR model for the specified source
-        ldap_model = EDIRModel(source=ldap_source)
+        # Create LDAP model for the specified source
+        ldap_model = LDAPModel(source=ldap_source)
         
         # Authenticate against LDAP
         conn = ldap_model.authenticate(username, password)

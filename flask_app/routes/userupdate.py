@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, json
-from flask_app.models.edir_model import EDIRModel
+from flask_app.models.ldap_model import LDAPModel
 from flask_login import login_required  # Nouvel import depuis Flask-Login
 from flask_app.models.ldap_config_manager import LDAPConfigManager
 from ldap3 import MODIFY_REPLACE, MODIFY_DELETE, MODIFY_ADD
@@ -31,8 +31,8 @@ def update_user_page():
     search_results = None
     selected_user = None
 
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
@@ -78,8 +78,8 @@ def search_user():
             flash('Please provide a search term and type', 'error')
             return redirect(url_for('userupdate.update_user_page', source=ldap_source))
         
-        # Create EDIR model with the appropriate source
-        ldap_model = EDIRModel(source=ldap_source)
+        # Create LDAP model with the appropriate source
+        ldap_model = LDAPModel(source=ldap_source)
         
         # Get LDAP name for display purposes
         config = LDAPConfigManager.get_config(ldap_source)
@@ -120,8 +120,8 @@ def select_user():
         flash('No user selected', 'error')
         return redirect(url_for('userupdate.update_user_page', source=ldap_source))
     
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
@@ -222,7 +222,7 @@ def update_user():
     change_reason = request.form.get('change_reason', '')
     
     # Call the LDAP model to update the user
-    ldap_model = EDIRModel(source=ldap_source)
+    ldap_model = LDAPModel(source=ldap_source)
     success, message = ldap_model.update_user(
         user_dn=user_dn,
         attributes=attributes,

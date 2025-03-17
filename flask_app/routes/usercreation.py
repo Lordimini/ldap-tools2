@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, session
-from flask_app.models.edir_model import EDIRModel
+from flask_app.models.ldap_model import LDAPModel
 from flask_login import login_required, current_user  # Nouvel import depuis Flask-Login
 from flask_app.models.ldap_config_manager import LDAPConfigManager
 from flask_wtf import FlaskForm
@@ -31,8 +31,8 @@ def fetch_user_types():
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     user_types = ldap_model.get_user_types_from_ldap('ou=tpl,ou=sync,o=copy')  # Adjust the DN as needed
     return jsonify(user_types)
@@ -53,8 +53,8 @@ def create_user():
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
@@ -255,7 +255,7 @@ def preview_user_details():
             return jsonify({'error': 'Given name, surname and user type are required'}), 400
         
         # Instantiate the LDAP model
-        ldap_model = EDIRModel(source=ldap_source)
+        ldap_model = LDAPModel(source=ldap_source)
         
         # Generate the CN
         cn = ldap_model.generate_unique_cn(given_name, sn)
@@ -272,7 +272,7 @@ def preview_user_details():
         # Get service manager's fullName if FavvExtDienstMgrDn is present
         if template_details and template_details.get('FavvExtDienstMgrDn'):
             try:
-                conn = Connection(ldap_model.edir_server, user=ldap_model.bind_dn, password=ldap_model.password, auto_bind=True)
+                conn = Connection(ldap_model.ldap_server, user=ldap_model.bind_dn, password=ldap_model.password, auto_bind=True)
                 conn.search(template_details['FavvExtDienstMgrDn'], '(objectClass=*)', attributes=['fullName'])
                 
                 if conn.entries and conn.entries[0].fullName:
@@ -289,7 +289,7 @@ def preview_user_details():
         if template_details and 'groupMembership' in template_details and template_details['groupMembership']:
             groups_info = []
             try:
-                conn = Connection(ldap_model.edir_server, user=ldap_model.bind_dn, password=ldap_model.password, auto_bind=True)
+                conn = Connection(ldap_model.ldap_server, user=ldap_model.bind_dn, password=ldap_model.password, auto_bind=True)
                 
                 for group_dn in template_details['groupMembership']:
                     conn.search(group_dn, '(objectClass=*)', attributes=['cn'])
@@ -339,7 +339,7 @@ def check_name_exists():
         return jsonify({'status': 'error', 'message': 'Prénom et nom sont requis'}), 400
     
     # Créer une instance du modèle LDAP avec la source spécifiée
-    ldap_model = EDIRModel(source=ldap_source)
+    ldap_model = LDAPModel(source=ldap_source)
     
     exists, existing_dn = ldap_model.check_name_combination_exists(given_name, sn)
     
@@ -380,7 +380,7 @@ def check_favvnatnr_exists():
     normalized_favvnatnr = favvnatnr.replace(' ', '').replace('-', '')
     
     # Créer une instance du modèle LDAP avec la source spécifiée
-    ldap_model = EDIRModel(source=ldap_source)
+    ldap_model = LDAPModel(source=ldap_source)
     
     exists, existing_dn, fullname = ldap_model.check_favvnatnr_exists(normalized_favvnatnr)
     

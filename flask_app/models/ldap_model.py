@@ -1,24 +1,24 @@
-# flask_app/models/edir_model.py
+# flask_app/models/ldap_model.py
 from flask_app.models.ldap_config_manager import LDAPConfigManager
-from flask_app.models.edir import (
-    EDIRUserMixin,
-    EDIRGroupMixin,
-    EDIRRoleMixin,
-    EDIRServiceMixin,
-    EDIRAutocompleteMixin,
-    EDIRDashboardMixin,
-    EDIRTemplate
+from flask_app.models.ldap import (
+    LDAPUserMixin,
+    LDAPGroupMixin,
+    LDAPRoleMixin,
+    LDAPServiceMixin,
+    LDAPAutocompleteMixin,
+    LDAPDashboardMixin,
+    LDAPTemplate
 )
 from ldap3 import Server, Connection, ALL
 
-class EDIRModel(
-    EDIRUserMixin,
-    EDIRGroupMixin,
-    EDIRRoleMixin,
-    EDIRServiceMixin,
-    EDIRAutocompleteMixin,
-    EDIRDashboardMixin,
-    EDIRTemplate
+class LDAPModel(
+    LDAPUserMixin,
+    LDAPGroupMixin,
+    LDAPRoleMixin,
+    LDAPServiceMixin,
+    LDAPAutocompleteMixin,
+    LDAPDashboardMixin,
+    LDAPTemplate
 ):
     def __init__(self, source='meta'):
         """
@@ -35,7 +35,7 @@ class EDIRModel(
         user_dn = f'cn={username},{self.actif_users_dn}'
         try:
             # Set up the server with a timeout
-            server = Server(self.edir_server, get_info=ALL, connect_timeout=10)
+            server = Server(self.ldap_server, get_info=ALL, connect_timeout=10)
             
             # Connect with timeout parameters
             conn = Connection(
@@ -58,7 +58,7 @@ class EDIRModel(
     
     def authenticate_admin(self, username, password):
         try:
-            server = Server(self.edir_server, get_info=ALL)
+            server = Server(self.ldap_server, get_info=ALL)
             conn = Connection(server, username, password=password, auto_bind=True)
             return conn
             

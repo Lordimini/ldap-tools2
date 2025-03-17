@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, current_app
-from flask_app.models.edir_model import EDIRModel
+from flask_app.models.ldap_model import LDAPModel
 from flask_login import login_required  # Nouvel import depuis Flask-Login
 from flask_app.config.meta_config import meta_login_config
 from flask_app.services.login_manager import authenticate_user

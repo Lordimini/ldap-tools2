@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
-from flask_app.models.edir_model import EDIRModel
+from flask_app.models.ldap_model import LDAPModel
 from flask_app.models.ldap_config_manager import LDAPConfigManager
 from flask_app.utils.export_utils import util_export_role_users_csv, util_export_role_users_pdf
 from flask_login import login_required  # Nouvel import depuis Flask-Login
@@ -25,8 +25,8 @@ def role_users():
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
@@ -42,7 +42,7 @@ def role_users():
         # Check if wildcard search is needed (contains *)
         has_wildcard = '*' in role_cn
         
-        # Use the EDIRModel for searching
+        # Use the LDAPModel for searching
         if has_wildcard:
             # For wildcard searches, get multiple matching roles
             search_results = ldap_model.autocomplete_role(role_cn)
@@ -93,8 +93,8 @@ def role_groups():
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
@@ -128,8 +128,8 @@ def export_role_users_csv(role_cn):
     if not ldap_source:
         ldap_source = session.get('ldap_source', 'meta')
     
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     result = ldap_model.get_role_users(role_cn)
     if result and result['users']:
@@ -145,8 +145,8 @@ def export_role_users_pdf(role_cn):
     if not ldap_source:
         ldap_source = session.get('ldap_source', 'meta')
     
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     result = ldap_model.get_role_users(role_cn)
     if result and result['users']:
@@ -166,8 +166,8 @@ def view_role(dn):
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Create EDIR model with the appropriate source
-    ldap_model = EDIRModel(source=ldap_source)
+    # Create LDAP model with the appropriate source
+    ldap_model = LDAPModel(source=ldap_source)
     
     # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)

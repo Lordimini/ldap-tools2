@@ -2,10 +2,10 @@
 import unicodedata
 from ldap3 import Connection, MODIFY_REPLACE, MODIFY_DELETE, SUBTREE, MODIFY_ADD
 import json
-from .base import EDIRBase
+from .base import LDAPBase
 from flask import flash,redirect,url_for
 
-class EDIRUserMixin(EDIRBase):
+class LDAPUserMixin(LDAPBase):
     def search_user_final(self, search_param, search_type=None, simplified=False, search_active_only=False, return_list=False):
         """
         Comprehensive function to search for users in the LDAP directory with multiple modes.
@@ -36,7 +36,7 @@ class EDIRUserMixin(EDIRBase):
             dict or list: User information or list of users, or None if not found
         """
         try:
-            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Define attributes based on the search mode
             if return_list:
@@ -311,7 +311,7 @@ class EDIRUserMixin(EDIRBase):
         cn = normalize_cn(cn_temp)
     
         # Check for uniqueness
-        conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True) 
+        conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True) 
         i = 2
     
         while True:
@@ -393,7 +393,7 @@ class EDIRUserMixin(EDIRBase):
     
     def create_user(self, cn, ldap_attributes, template_details=None):
         try:
-            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             # Bind to the server
             conn.bind()
 
@@ -471,7 +471,7 @@ class EDIRUserMixin(EDIRBase):
             if change_reason:
                 log_messages.append(f"Reason for changes: {change_reason}")
             
-            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Vérifier que l'utilisateur existe
             conn.search(user_dn, 
@@ -588,7 +588,7 @@ class EDIRUserMixin(EDIRBase):
         tuple: (bool, str) - (True if exists + user DN, False if not exists + empty string)
         """
         try:
-            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Create a search filter that combines both first name and last name
             search_filter = f'(&(givenName={given_name})(sn={sn}))'
@@ -625,7 +625,7 @@ class EDIRUserMixin(EDIRBase):
         tuple: (bool, str) - (True si existe + user DN, False si n'existe pas + chaîne vide)
         """
         try:
-            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
         
             # Normaliser le FavvNatNr (enlever espaces et tirets)
             normalized_favvnatnr = favvnatnr.replace(' ', '').replace('-', '')
@@ -663,7 +663,7 @@ class EDIRUserMixin(EDIRBase):
             list: Liste d'objets utilisateur avec dn, cn et fullName
         """
         try:
-            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Définir le DN du conteneur to-process
             to_process_dn = self.toprocess_users_dn
@@ -709,7 +709,7 @@ class EDIRUserMixin(EDIRBase):
         #
         
         try:
-            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Vérifier que l'utilisateur existe
             conn.search(user_dn, 
@@ -866,7 +866,7 @@ class EDIRUserMixin(EDIRBase):
             tuple: (success, message)
         """
         try:
-            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Vérifier que l'utilisateur existe
             conn.search(user_dn, 

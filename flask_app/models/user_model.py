@@ -73,7 +73,7 @@ class User(UserMixin):
     @classmethod
     def from_ldap_data(cls, username, user_data, ldap_source='meta'):
         """
-        Create a User instance from LDAP data retrieved from EDIRModel
+        Create a User instance from LDAP data retrieved from LDAPModel
         
         Args:
             username: Username for login

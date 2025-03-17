@@ -1,15 +1,15 @@
 # flask_app/models/ldap/roles.py
-from .base import EDIRBase
+from .base import LDAPBase
 from flask import flash, render_template
 from ldap3 import Connection
 
-class EDIRRoleMixin(EDIRBase):
+class LDAPRoleMixin(LDAPBase):
     def get_role_users(self, role_cn):
         """
         Obtient les utilisateurs associés à un rôle, avec validation des DNs.
         """
         try:
-            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Search for the role in the entire subtree of o=FAVV and o=COPY
             role_dn = None
@@ -95,7 +95,7 @@ class EDIRRoleMixin(EDIRBase):
         if role_cn:
             try:
                 # Connect to the LDAP server
-                conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+                conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
                 # Step 1: Search for the role in the RoleDefs container to get its DN
                 role_base_dn = self.role_base_dn
                 conn.search(role_base_dn, f'(cn={role_cn})', search_scope='SUBTREE', attributes=['entryDN'])
@@ -138,7 +138,7 @@ class EDIRRoleMixin(EDIRBase):
                 flash(f'An error occurred: {str(e)}', 'danger')
         
     def view_role(self, dn):
-        conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+        conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
         # Fetch the role's attributes
         conn.search(dn, '(objectClass=nrfRole)', search_scope='BASE', attributes=['cn', 'equivalentToMe'])
 
@@ -196,7 +196,7 @@ class EDIRRoleMixin(EDIRBase):
             return None
         
     def get_ldap_children(self, current_dn):
-        conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True) 
+        conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True) 
         # Search for entries under the current DN
         conn.search(current_dn, '(objectClass=*)', search_scope='LEVEL', attributes=['cn', 'objectClass'])
 

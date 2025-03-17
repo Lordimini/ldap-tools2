@@ -1,8 +1,8 @@
-# flask_app/models/edir/template.py
-from .base import EDIRBase
+# flask_app/models/ldap/template.py
+from .base import LDAPBase
 from ldap3 import Connection, SUBTREE
 
-class EDIRTemplate(EDIRBase):
+class LDAPTemplate(LDAPBase):
     def get_template_details(self, template_cn):
         """
         Get details of a specific template by its CN including associated groups
@@ -14,7 +14,7 @@ class EDIRTemplate(EDIRBase):
         dict: Template attributes or None if not found
         """
         try:
-            conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
         
             search_base = self.template_dn  # Base DN for templates
             search_filter = f'(cn={template_cn})'
@@ -52,7 +52,7 @@ class EDIRTemplate(EDIRBase):
             return None
         
     def get_user_types_from_ldap(self, dn):
-        conn = Connection(self.edir_server, user=self.bind_dn, password=self.password, auto_bind=True)
+        conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
     
         search_base = dn
         attributes = ['cn', 'description', 'title']

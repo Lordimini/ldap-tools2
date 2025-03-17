@@ -30,14 +30,14 @@ flask_app/
 LDAP Manager utilise une architecture d'authentification hybride:
 
 1. **Flask-Login** gère les sessions utilisateur côté serveur
-2. **LDAP** (via `EDIRModel`) pour l'authentification et les données utilisateur
+2. **LDAP** (via `LDAPModel`) pour l'authentification et les données utilisateur
 3. **RBAC** (Role-Based Access Control) basé sur les groupes LDAP
 
 ## Flux d'authentification
 
 ```
 +-------------+    +-------------+    +---------------+    +-------------+
-| Formulaire  | -> | Route login | -> | authenticate_ | -> | EDIRModel   |
+| Formulaire  | -> | Route login | -> | authenticate_ | -> | LDAPModel   |
 | de login    |    | auth.py     |    | user()        |    | (LDAP Auth) |
 +-------------+    +-------------+    +---------------+    +-------------+
                                              |

@@ -299,10 +299,21 @@ const UserCreationUtils = {
                 // Mettre à jour le bouton
                 UserCreationUtils.updateSubmitButtonText();
                 
-                // Fermer la modale
+                // Fermer la modale proprement
                 const modal = bootstrap.Modal.getInstance(verificationModal);
                 if (modal) {
                   modal.hide();
+                  
+                  // Nettoyer le backdrop et réactiver le scrolling
+                  setTimeout(() => {
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                      backdrop.remove();
+                    }
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                  }, 200);
                 }
                 
                 // Afficher un message de confirmation

@@ -123,16 +123,19 @@ window.LDAPManager = {
       dataTables: DataTableUtils,
       autocomplete: AutocompleteUtils,
       groupManagement: GroupManagementUtils,
-      validation: ValidationUtils,
-      userCreation: UserCreationUtils
+      validation: ValidationUtils
+      // Ne pas ajouter userCreation directement ici
+    },
+    
+    // Ajouter cette méthode pour l'enregistrement dynamique d'utilitaires
+    registerUtil: function(name, util) {
+      if (typeof util === 'object') {
+        this.utils[name] = util;
+        console.log(`Utility '${name}' registered successfully.`);
+      } else {
+        console.error(`Failed to register utility '${name}': not an object.`);
+      }
     }
+    
+    // ... reste du code existant ...
   };
-  
-  // Initialiser automatiquement l'application avec les paramètres par défaut
-  // Ce comportement peut être désactivé en définissant window.LDAPManagerNoAutoInit = true
-  // avant le chargement de ce script
-  if (!window.LDAPManagerNoAutoInit) {
-    window.LDAPManager.init({
-      debug: false
-    });
-  }

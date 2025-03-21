@@ -222,16 +222,35 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
-    <!-- URLs for JavaScript -->
-    <script>
-        // Passing URL values to JavaScript
-        window.autocompleteManagersUrl = "{{ url_for('autocomplete.autocomplete_managers') }}";
-        window.checkNameExistsUrl = "{{ url_for('usercreation.check_name_exists') }}";
-        window.checkFavvNatNrExistsUrl = "{{ url_for('usercreation.check_favvnatnr_exists') }}";
-        window.previewUserDetailsUrl = "{{ url_for('usercreation.preview_user_details') }}";
-    </script>
 
-    <!-- Charger enfin le script spécifique à la page -->
-    <script src="{{ url_for('static', filename='js/user_creation.js') }}"></script>
+{% block scripts %}
+<!-- URLs for JavaScript -->
+<script>
+    // Passing URL values to JavaScript
+    window.autocompleteManagersUrl = "{{ url_for('autocomplete.autocomplete_managers') }}";
+    window.checkNameExistsUrl = "{{ url_for('usercreation.check_name_exists') }}";
+    window.checkFavvNatNrExistsUrl = "{{ url_for('usercreation.check_favvnatnr_exists') }}";
+    window.previewUserDetailsUrl = "{{ url_for('usercreation.preview_user_details') }}";
+</script>
+
+<!-- Bibliothèques externes -->
+<script src="{{ url_for('static', filename='js/vendor/jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/jquery-ui.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/bootstrap.bundle.min.js') }}"></script>
+
+<!-- Modules utilitaires de base -->
+<script src="{{ url_for('static', filename='js/utils/ldap-utils.js') }}"></script>
+<script src="{{ url_for('static', filename='js/utils/validation-utils.js') }}"></script>
+
+<!-- Composants -->
+<script src="{{ url_for('static', filename='js/components/autocomplete-init.js') }}"></script>
+
+<!-- IMPORTANT: Chargez d'abord UserCreationUtils AVANT app.js -->
+<script src="{{ url_for('static', filename='js/components/user-creation-utils.js') }}"></script>
+
+<!-- Initialisation principale -->
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+<!-- Script spécifique à la page -->
+<script src="{{ url_for('static', filename='js/user_creation.js') }}"></script>
 {% endblock %}

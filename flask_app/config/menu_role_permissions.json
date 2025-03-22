@@ -15,7 +15,7 @@
             "url": "/search",
             "icon": "bi bi-search",
             "active_pattern": "^/search",
-            "required_permission": ["view_oci", "view_users", "admin_users"]
+            "required_permissions": ["view_oci", "view_users", "admin_users"]
           },
           {
             "label": "Create User",
@@ -34,7 +34,7 @@
             "url": "/post_creation",
             "icon": "bi bi-person-check",
             "active_pattern": "^/post_creation",
-            "required_permission": ["edit_oci", "admin_users"]
+            "required_permissions": ["edit_oci", "admin_users"]
 
           }
         ]

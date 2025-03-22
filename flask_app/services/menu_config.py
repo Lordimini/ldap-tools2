@@ -18,7 +18,6 @@ class MenuConfig:
         """Initialize the menu configuration with the Flask app"""
         self.app = app
         self._load_menu_configs()
-        self._prepare_role_menus()
         
         # Register with app context
         app.menu_config = self

@@ -6,7 +6,7 @@
       },
       "OCI-admin": {
         "user_types": ["OCI", "BOODOCI"],
-        "permissions": ["view_oci", "edit_oci"]
+        "permissions": ["edit_oci"]
       },
       "STAG-admin": {
         "user_types": ["STAG", "EMP - STAG"],

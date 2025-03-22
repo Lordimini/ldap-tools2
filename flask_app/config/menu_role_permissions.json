@@ -157,7 +157,7 @@
             "url": "/search",
             "icon": "bi bi-search",
             "active_pattern": "^/search",
-            "required_permissions": ["admin_users"]
+            "required_permissions": ["admin_users", "edit_oci"]
           },
           {
             "label": "Create User",
@@ -192,7 +192,7 @@
             "url": "/group_users",
             "icon": "bi bi-people",
             "active_pattern": "^/group_users",
-            "required_permissions": ["admin_users"]
+            "required_permissions": ["admin_users", "edit_oci"]
           },
           {
             "label": "Add Users to Group",
@@ -212,7 +212,7 @@
             "url": "/service_users",
             "icon": "bi bi-building",
             "active_pattern": "^/service_users",
-            "required_permissions": ["admin_users"]
+            "required_permissions": ["admin_users", "edit_oci"]
           }
         ]
       },

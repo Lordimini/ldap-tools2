@@ -36,7 +36,10 @@ class MenuConfig:
         if os.path.exists(menu_path):
             with open(menu_path, 'r') as f:
                 self.default_menu = json.load(f).get('menu_items', [])
+            # Initialize default menu
+            self.default_menu = self.menu_configs.get('default', {}).get('menu_items', [])
         else:
+            self.menu_configs = {}
             self.default_menu = []
         
         # Since we're using a single file with permissions,
@@ -51,7 +54,12 @@ class MenuConfig:
         # If no user or not authenticated, return empty menu
         if not user or not user.is_authenticated:
             return []
+        # Get current LDAP source
+        ldap_source = getattr(user, 'ldap_source', None) or session.get('ldap_source', 'meta')
         
+        # Get menu items for the current source, or fall back to default
+        source_config = self.menu_configs.get('sources', {}).get(ldap_source, {})
+        menu_items = copy.deepcopy(source_config.get('menu_items', self.default_menu))
         # Start with the default menu
         menu_items = copy.deepcopy(self.default_menu)
         

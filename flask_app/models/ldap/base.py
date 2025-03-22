@@ -16,6 +16,7 @@ class LDAPBase:
         self.admin_group_dn = config['admin_group_dn']
         self.reader_group_dn = config['reader_group_dn']
         self.oci_admin_group_dn = config.get('oci_admin_group_dn', '')  
+        # self.stag_admin_group_dn = config.get('stag_admin_group_dn', '')  # avec valeurs par défaut
         self.role_base_dn = config['role_base_dn']
         self.resource_base_dn = config['resource_base_dn']
         self.app_base_dn = config['app_base_dn']

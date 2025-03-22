@@ -104,7 +104,7 @@ def authenticate_user(username, password, ldap_source='meta'):
         user_data['admin_group_dn'] = admin_group_dn
         user_data['reader_group_dn'] = reader_group_dn
         user_data['oci_admin_group_dn'] = oci_admin_group_dn
-        user_data['stag_admin_group_dn'] = stag_admin_group_dn
+        # user_data['stag_admin_group_dn'] = stag_admin_group_dn
         
         # Store user data in session for later retrieval
         session['user_data'] = user_data

@@ -35,7 +35,7 @@ class MenuConfig:
         menu_path = os.path.join(config_dir, 'menu_role_permissions.json')
         if os.path.exists(menu_path):
             with open(menu_path, 'r') as f:
-                self.default_menu = json.load(f).get('menu_items', [])
+                self.menu_configs = json.load(f)
             # Initialize default menu
             self.default_menu = self.menu_configs.get('default', {}).get('menu_items', [])
         else:
@@ -60,8 +60,7 @@ class MenuConfig:
         # Get menu items for the current source, or fall back to default
         source_config = self.menu_configs.get('sources', {}).get(ldap_source, {})
         menu_items = copy.deepcopy(source_config.get('menu_items', self.default_menu))
-        # Start with the default menu
-        menu_items = copy.deepcopy(self.default_menu)
+       
         
         # Filter menu items based on user permissions
         filtered_menu = []

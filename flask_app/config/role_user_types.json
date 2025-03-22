@@ -6,9 +6,41 @@
       },
       "OCI-admin": {
         "user_types": ["OCI", "BOODOCI"],
-        "permissions": ["edit_oci"]
+        "permissions": ["edit_oci", "view_oci"]
       },
-      "STAG-admin": {
+      "OCI-reader": {
+        "user_types": ["OCI", "BOODOCI"],
+        "permissions": ["view_oci"]
+      },
+      "Business-admin": {
+        "user_types": ["*"],
+        "permissions": ["view_all", "edit_all"]
+      },
+      "Business-reader": {
+        "user_types": ["*"],
+        "permissions": ["view_all"]
+      },
+      "BMO_CDM-admin": {
+        "user_types": ["DMO", "CWK - DMO"],
+        "permissions": ["view_all", "edit_all", "edit_cdmo"]
+      },
+      "BMO_CDM-reader": {
+        "user_types": ["DMO", "CWK - DMO"],
+        "permissions": ["view_all", "view_cdmo"]
+      },
+      "DERDEN-admin": {
+        "user_types": ["OCI", "BOODOCI"],
+        "permissions": ["edit_oci", "view_oci"]
+      },
+      "DERDEN-reader": {
+        "user_types": ["OCI", "BOODOCI"],
+        "permissions": ["edit_oci", "view_oci"]
+      },
+      "DEV-admin": {
+        "user_types": ["STAG", "EMP - STAG"],
+        "permissions": ["view_stag", "edit_stag"]
+      },
+      "DEV-reader": {
         "user_types": ["STAG", "EMP - STAG"],
         "permissions": ["view_stag", "edit_stag"]
       },

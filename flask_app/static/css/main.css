@@ -537,3 +537,8 @@ code {
 .modal-header.bg-dark.text-white {
     color: #f8f9fa !important;
 }
+
+.badge-oci-admin {
+    background-color: #28a745; /* vert */
+    color: white;
+}

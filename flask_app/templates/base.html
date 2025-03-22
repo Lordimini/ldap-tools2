@@ -39,10 +39,18 @@
                             {{ current_user.username[0] | upper }}
                         </div>
                         <span>{{ current_user.name }}</span>
-                        {% if current_user.is_admin %}
-                        <span class="badge bg-danger ms-2">Admin</span>
-                        {% elif current_user.is_reader %}
-                        <span class="badge bg-info ms-2">Reader</span>
+                        {% if current_user.roles %}
+                        {% for role in current_user.roles %}
+                            {% if role == 'admin' %}
+                            <span class="badge bg-danger ms-2">Admin</span>
+                            {% elif role == 'reader' %}
+                            <span class="badge bg-info ms-2">Reader</span>
+                            {% elif role == 'OCI-admin' %}
+                            <span class="badge bg-success ms-2">OCI Admin</span>
+                            {% else %}
+                            <span class="badge bg-secondary ms-2">{{ role }}</span>
+                            {% endif %}
+                        {% endfor %}
                         {% endif %}
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">

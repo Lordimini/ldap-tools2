@@ -4,15 +4,6 @@ from ldap3 import Connection, SUBTREE
 
 class LDAPTemplate(LDAPBase):
     def get_template_details(self, template_cn):
-        """
-        Get details of a specific template by its CN including associated groups
-        
-        Parameters:
-        template_cn (str): The CN of the template to retrieve
-        
-        Returns:
-        dict: Template attributes or None if not found
-        """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
         

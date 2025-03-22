@@ -7,34 +7,6 @@ from flask import flash,redirect,url_for
 
 class LDAPUserMixin(LDAPBase):
     def search_user_final(self, search_param, search_type=None, simplified=False, search_active_only=False, return_list=False):
-        """
-        Comprehensive function to search for users in the LDAP directory with multiple modes.
-        
-        Args:
-            search_param (str): The search term or user DN
-            search_type (str, optional): Type of search ('cn', 'fullName', 'workforceID', 'FavvNatNr', 'mail')
-                                        If None, search_param is treated as a user DN
-            simplified (bool): If True, returns a simplified result format
-            search_active_only (bool): If True, only searches active users container
-            return_list (bool): If True, returns a list of matching users instead of detailed info for a single user
-                            (used for active users search)
-            
-            # Replace search_user:
-            user_info = self.search_user("johndoe", "cn")
-
-            # Replace search_user_by_dn:
-            user_info = self.search_user("cn=username,ou=Users,o=FAVV")
-
-            # Replace get_user_details:
-            user_details = self.search_user("cn=username,ou=Users,o=FAVV", simplified=True)
-
-            # Replace search_active_users:
-            active_users = self.search_user("john", "fullName", return_list=True)
-            active_users = self.search_user("@example.com", "mail", return_list=True)
-        
-        Returns:
-            dict or list: User information or list of users, or None if not found
-        """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
@@ -262,17 +234,6 @@ class LDAPUserMixin(LDAPBase):
             return None
         
     def generate_unique_cn(self, given_name, sn):
-        """
-        Generate a unique CN (Common Name) for a new user based on their given name and surname.
-        Handles prefixes in surnames and normalizes special characters.
-    
-        Parameters:
-        given_name (str): User's first name
-        sn (str): User's surname (last name)
-    
-        Returns:
-        str: A unique CN for the user in UPPERCASE
-        """
         # Keep a copy of the original surname
         original_sn = sn
 
@@ -351,19 +312,6 @@ class LDAPUserMixin(LDAPBase):
    
     
     def generate_password_from_cn(self, cn, short_name=False):
-        """
-        Generate a password from a CN by swapping the first 3 characters with the next 3 
-        (or 2 if CN is only 5 characters long) and adding '*987'
-        
-        If short_name is True, uses additional complexity to avoid AD password policy issues
-        when original name or surname is 3 characters or fewer.
-        
-        Example: 
-        - For CN 'AUDRIG', password would be 'RIGAUD*987'
-        - For CN 'ABCDE', password would be 'DEABC*987'
-        - For CN from short name (e.g., 'BOBSMI' from 'Bob Smith'), with short_name=True
-        password might be 'SMIBx3*987' (with 'x3' added to avoid containing the original name)
-        """
         if len(cn) < 5:
             # Handle case with very short CN
             return cn + 'x4$*987'  # Added extra complexity
@@ -449,22 +397,6 @@ class LDAPUserMixin(LDAPBase):
             return False, None, 0, 0
         
     def update_user(self, user_dn, attributes, groups_to_add=None, groups_to_remove=None, reset_password=False, expire_password=False, target_container=None, change_reason=None):
-        """
-        Met à jour les attributs d'un utilisateur, ses groupes, et peut déplacer l'utilisateur vers un autre container.
-        
-        Args:
-            user_dn (str): DN de l'utilisateur à mettre à jour
-            attributes (dict): Dictionnaire des attributs à mettre à jour
-            groups_to_add (list): Liste des groupes à ajouter (dicts avec 'name' et 'dn')
-            groups_to_remove (list): Liste des groupes à supprimer (dicts avec 'name' et 'dn')
-            reset_password (bool): Si True, réinitialise le mot de passe de l'utilisateur
-            expire_password (bool): Si True, expire le mot de passe pour forcer le changement
-            target_container (str): Si spécifié, déplace l'utilisateur vers ce container
-            change_reason (str): Raison des changements (pour journalisation)
-            
-        Returns:
-            tuple: (success, message)
-        """
         try:
             # Messages de journalisation pour le suivi des modifications
             log_messages = []
@@ -577,16 +509,6 @@ class LDAPUserMixin(LDAPBase):
             return False, f"Error updating user: {str(e)}"
 
     def check_name_combination_exists(self, given_name, sn):
-        """
-        Check if a user with the given first name and last name already exists in LDAP.
-        
-        Parameters:
-        given_name (str): The given name (first name) to check
-        sn (str): The surname (last name) to check
-        
-        Returns:
-        tuple: (bool, str) - (True if exists + user DN, False if not exists + empty string)
-        """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
@@ -615,15 +537,6 @@ class LDAPUserMixin(LDAPBase):
             return False, ""
     
     def check_favvnatnr_exists(self, favvnatnr):
-        """
-        Vérifie si un utilisateur avec le numéro FavvNatNr donné existe déjà dans LDAP.
-    
-        Parameters:
-        favvnatnr (str): Le numéro FavvNatNr à vérifier
-    
-        Returns:
-        tuple: (bool, str) - (True si existe + user DN, False si n'existe pas + chaîne vide)
-        """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
         
@@ -656,12 +569,6 @@ class LDAPUserMixin(LDAPBase):
             return False, "", ""
         
     def get_pending_users(self):
-        """
-        Récupère la liste des utilisateurs en attente dans le conteneur to-process.
-        
-        Returns:
-            list: Liste d'objets utilisateur avec dn, cn et fullName
-        """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
@@ -693,23 +600,6 @@ class LDAPUserMixin(LDAPBase):
         
     
     def complete_user_creation(self, user_dn, target_container, attributes, groups, set_password=False):
-        """
-        Complète la création d'un utilisateur en le déplaçant vers le container cible
-        et en définissant les attributs supplémentaires.
-        
-        Args:
-            user_dn (str): DN de l'utilisateur
-            target_container (str): DN du container cible
-            attributes (dict): Attributs à définir
-            groups (list): Liste des groupes à ajouter (format: [{'name': 'group_name'}])
-            set_password (bool): Si True, définit un mot de passe par défaut
-            
-        Returns:
-            tuple: (success, message)
-        """
-        # Import the necessary constants
-        #
-        
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
@@ -858,15 +748,6 @@ class LDAPUserMixin(LDAPBase):
             return False, f"Error: {str(e)}"
             
     def delete_user(self, user_dn):
-        """
-        Supprime un utilisateur du répertoire.
-        
-        Args:
-            user_dn (str): DN de l'utilisateur à supprimer
-            
-        Returns:
-            tuple: (success, message)
-        """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             

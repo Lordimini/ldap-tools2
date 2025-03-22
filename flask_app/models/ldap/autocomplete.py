@@ -4,21 +4,6 @@ from ldap3 import Connection
 
 class LDAPAutocompleteMixin(LDAPBase):
     def autocomplete(self, search_type, search_term):
-        """
-        Fonction d'autocomplete unifiée supportant différents types de recherche.
-        
-        Parameters:
-        -----------
-        search_type : str
-            Type de recherche à effectuer ('group', 'fullName', 'role', 'services', 'managers')
-        search_term : str
-            Terme de recherche à utiliser pour l'autocomplete
-                
-        Returns:
-        --------
-        list
-            Liste de dictionnaires contenant les résultats d'autocomplete avec 'label' et 'value'
-        """
         # Validation initiale
         if not search_term or not search_type:
             return []
@@ -164,16 +149,6 @@ class LDAPAutocompleteMixin(LDAPBase):
             return []
         
     def autocomplete_services(self, search_term):
-        """
-        Fournit une fonctionnalité d'autocomplétion pour les services (OU),
-        avec élimination des doublons et validation des DNs.
-        
-        Args:
-            search_term (str): Terme de recherche pour filtrer les services
-            
-        Returns:
-            list: Liste des services correspondant au terme de recherche
-        """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             

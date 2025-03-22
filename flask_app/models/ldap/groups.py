@@ -54,16 +54,6 @@ class LDAPGroupMixin(LDAPBase):
         return result
         
     def get_group_users_by_dn(self, group_dn, group_name=None):
-        """
-        Récupère les utilisateurs d'un groupe en utilisant son DN complet.
-        
-        Args:
-            group_dn (str): DN complet du groupe
-            group_name (str, optional): Nom du groupe (pour l'affichage)
-            
-        Returns:
-            dict: Informations sur le groupe et ses utilisateurs
-        """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
@@ -119,16 +109,6 @@ class LDAPGroupMixin(LDAPBase):
             return None
         
     def add_user_to_group(self, user_dn, group_dn):
-        """
-        Ajoute un utilisateur à un groupe et met à jour les attributs correspondants
-        
-        Parameters:
-        user_dn (str): DN de l'utilisateur à ajouter
-        group_dn (str): DN du groupe auquel ajouter l'utilisateur
-        
-        Returns:
-        bool: True si l'opération a réussi, False sinon
-        """
         try:
             # Établir une connexion au serveur LDAP
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
@@ -171,16 +151,6 @@ class LDAPGroupMixin(LDAPBase):
             return False
     
     def remove_user_from_group(self, user_dn, group_dn):
-        """
-        Supprime un utilisateur d'un groupe.
-        
-        Args:
-            user_dn (str): DN de l'utilisateur à supprimer
-            group_dn (str): DN du groupe duquel supprimer l'utilisateur
-            
-        Returns:
-            bool: True si l'opération a réussi, False sinon
-        """
         try:
             # Établir une connexion au serveur LDAP
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)

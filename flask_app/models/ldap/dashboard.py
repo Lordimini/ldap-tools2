@@ -12,9 +12,6 @@ class LDAPDashboardMixin(LDAPBase):
         """
         return {
             'total_users': self.get_total_users_count(),
-            # 'total_groups': self.get_total_groups_count(),
-            # 'total_roles': self.get_total_roles_count(),
-            # 'services_count': self.get_services_count(),
             'recent_logins': self.get_recent_logins_count(),
             'disabled_accounts': self.get_disabled_accounts_count()
         }
@@ -63,15 +60,6 @@ class LDAPDashboardMixin(LDAPBase):
             return 0
         
     def get_recent_logins_count(self, days=7):
-        """
-        Récupère le nombre d'utilisateurs qui se sont connectés récemment
-        
-        Args:
-            days (int): Nombre de jours à considérer pour 'récent'
-            
-        Returns:
-            int: Nombre d'utilisateurs récemment connectés
-        """
         try:
             import time
             from datetime import datetime, timedelta
@@ -102,12 +90,6 @@ class LDAPDashboardMixin(LDAPBase):
 
         
     def get_disabled_accounts_count(self):
-        """
-        Récupère le nombre de comptes désactivés
-        
-        Returns:
-            int: Nombre de comptes désactivés
-        """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
@@ -130,16 +112,6 @@ class LDAPDashboardMixin(LDAPBase):
             return 0
         
     def get_inactive_users_count(self, months=3):
-        """
-        Récupère le nombre d'utilisateurs actifs (loginDisabled=FALSE) qui ne se sont pas 
-        connectés depuis plus de X mois
-        
-        Args:
-            months (int): Nombre de mois d'inactivité
-            
-        Returns:
-            int: Nombre d'utilisateurs inactifs
-        """
         try:
             #import time
             from datetime import datetime, timedelta
@@ -169,12 +141,6 @@ class LDAPDashboardMixin(LDAPBase):
             return 0
     
     def get_expired_password_users_count(self):
-        """
-        Récupère le nombre d'utilisateurs actifs (loginDisabled=FALSE) dont le mot de passe est expiré
-        
-        Returns:
-            int: Nombre d'utilisateurs avec mot de passe expiré
-        """
         try:
             import time
             from datetime import datetime
@@ -203,13 +169,6 @@ class LDAPDashboardMixin(LDAPBase):
             return 0
         
     def get_never_logged_in_users_count(self):
-        """
-        Récupère le nombre d'utilisateurs actifs (loginDisabled=FALSE) qui n'ont jamais effectué de connexion
-        (absence de l'attribut loginTime ou valeur vide)
-        
-        Returns:
-            int: Nombre d'utilisateurs qui ne se sont jamais connectés
-        """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             

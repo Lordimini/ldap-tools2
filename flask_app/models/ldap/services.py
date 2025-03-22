@@ -4,15 +4,6 @@ from ldap3 import Connection, SUBTREE
 
 class LDAPServiceMixin(LDAPBase):
     def get_service_users(self, service_name):
-        """
-        Récupère les utilisateurs d'un service donné, avec validation des DNs.
-        
-        Args:
-            service_name (str): Nom du service (ou) à rechercher
-            
-        Returns:
-            dict: Dictionnaire contenant le nom du service et la liste des utilisateurs
-        """
         try:
             users = []
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
@@ -72,12 +63,6 @@ class LDAPServiceMixin(LDAPBase):
             return None
         
     def get_managers(self):
-        """
-        Récupère la liste des utilisateurs ayant FavvDienstHoofd=YES
-    
-        Returns:
-        list: Liste des utilisateurs chefs hiérarchiques avec leur fullName et DN
-        """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
         

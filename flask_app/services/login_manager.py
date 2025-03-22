@@ -65,7 +65,7 @@ def authenticate_user(username, password, ldap_source='meta'):
         admin_group_dn = ldap_model.admin_group_dn
         reader_group_dn = ldap_model.reader_group_dn
         oci_admin_group_dn = ldap_model.oci_admin_group_dn  # You'll need to add these
-        stag_admin_group_dn = ldap_model.stag_admin_group_dn  # properties to LDAPModel
+        # stag_admin_group_dn = ldap_model.stag_admin_group_dn  # properties to LDAPModel
         
         # Check admin group membership
         if admin_group_dn:
@@ -85,11 +85,11 @@ def authenticate_user(username, password, ldap_source='meta'):
             if conn.entries:
                 is_oci_admin_member = True
         
-        # Check STAG admin group membership
-        if stag_admin_group_dn:
-            conn.search(stag_admin_group_dn, f'(member={conn.user})', search_scope='BASE')
-            if conn.entries:
-                is_stag_admin_member = True
+        # # Check STAG admin group membership
+        # if stag_admin_group_dn:
+        #     conn.search(stag_admin_group_dn, f'(member={conn.user})', search_scope='BASE')
+        #     if conn.entries:
+        #         is_stag_admin_member = True
         
         # Get user details
         user_data = ldap_model.search_user_final(username, 'cn')

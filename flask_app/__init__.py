@@ -16,6 +16,7 @@ from flask_app.routes.userupdate import userupdate_bp
 from flask_app.services.menu_config import MenuConfig
 from flask_app.services.login_manager import init_login_manager
 from flask_app.models.ldap_config_manager import LDAPConfigManager
+from flask_app.services.role_config_service import RoleConfigService
 
 # Initialize services
 menu_config = MenuConfig()
@@ -32,7 +33,7 @@ def create_app():
     ldap_config_manager.init_app(app)
     app.ldap_config_manager = ldap_config_manager
     
-    from flask_app.services.role_config_service import RoleConfigService
+    
     role_config = RoleConfigService()
     role_config.init_app(app)
     

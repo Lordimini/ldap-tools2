@@ -21,13 +21,15 @@
             "label": "Create User",
             "url": "/user_creation",
             "icon": "bi bi-person-plus",
-            "active_pattern": "^/user_creation"
+            "active_pattern": "^/user_creation",
+            "required_permissions": ["admin_users"]
           },
           {
             "label": "Update User",
             "url": "/update_user",
             "icon": "bi bi-pencil",
-            "active_pattern": "^/update_user"
+            "active_pattern": "^/update_user",
+            "required_permissions": ["admin_users"]
           },
           {
             "label": "Complete Creation",
@@ -47,25 +49,29 @@
             "label": "Group Users",
             "url": "/group_users",
             "icon": "bi bi-people",
-            "active_pattern": "^/group_users"
+            "active_pattern": "^/group_users",
+            "required_permissions": ["admin_users"]
           },
           {
             "label": "Add Users to Group",
             "url": "/add_users_to_group",
             "icon": "bi bi-person-plus-fill",
-            "active_pattern": "^/add_users_to_group"
+            "active_pattern": "^/add_users_to_group",
+            "required_permissions": ["admin_users"]
           },
           {
             "label": "Role Users",
             "url": "/role_users",
             "icon": "bi bi-person-badge",
-            "active_pattern": "^/role_users"
+            "active_pattern": "^/role_users",
+            "required_permissions": ["admin_users"]
           },
           {
             "label": "Role Groups/resources",
             "url": "/role_groups",
             "icon": "bi bi-diagram-3",
-            "active_pattern": "^/role_groups"
+            "active_pattern": "^/role_groups",
+            "required_permissions": ["admin_users"]
           }
         ]
       },
@@ -77,7 +83,8 @@
             "label": "Service Users",
             "url": "/service_users",
             "icon": "bi bi-building",
-            "active_pattern": "^/service_users"
+            "active_pattern": "^/service_users",
+            "required_permissions": ["admin_users"]
           }
         ]
       },
@@ -89,37 +96,43 @@
             "label": "CSV Upload",
             "url": "/upload",
             "icon": "bi bi-upload",
-            "active_pattern": "^/upload"
+            "active_pattern": "^/upload",
+            "required_permissions": ["admin_users"]
           },
           {
             "label": "LDAP Browser",
             "url": "/ldap_browser",
             "icon": "bi bi-folder2-open",
-            "active_pattern": "^/ldap/ldap_browser"
+            "active_pattern": "^/ldap/ldap_browser",
+            "required_permissions": ["admin_users"]
           },
           {
             "label": "Generate Token",
             "url": "/token/generate_token",
             "icon": "bi bi-key",
-            "active_pattern": "^/token/generate_token"
+            "active_pattern": "^/token/generate_token",
+            "required_permissions": ["admin_users"]
           },
           {
             "label": "System Settings",
             "url": "/admin/settings",
             "icon": "bi bi-gear-fill",
-            "active_pattern": "^/admin/settings"
+            "active_pattern": "^/admin/settings",
+            "required_permissions": ["admin_users"]
           },
           {
             "label": "User Management",
             "url": "/admin/users",
             "icon": "bi bi-people-fill",
-            "active_pattern": "^/admin/users"
+            "active_pattern": "^/admin/users",
+            "required_permissions": ["admin_users"]
           },
           {
             "label": "Audit Logs",
             "url": "/admin/logs",
             "icon": "bi bi-journal-text",
-            "active_pattern": "^/admin/logs"
+            "active_pattern": "^/admin/logs",
+            "required_permissions": ["admin_users"]
           }
         ]
       }

@@ -111,7 +111,7 @@ class User(UserMixin):
                 'view_users', 'create_users', 'edit_users', 'delete_users',
                 'view_groups', 'edit_groups', 'create_groups', 'delete_groups',
                 'view_roles', 'edit_roles', 'create_roles', 'delete_roles',
-                'view_services', 'edit_services', 'upload_files', 'manage_system'
+                'view_services', 'edit_services', 'upload_files', 'manage_system', 'admin_users'
             ])
         elif 'reader' in roles:
             permissions.update([

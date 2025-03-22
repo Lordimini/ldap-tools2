@@ -45,15 +45,6 @@ class MenuConfig:
         self.role_menus = {}
     
     def get_menu_for_user(self, user=None):
-        """
-        Get menu items for the current user based on their permissions
-        
-        Args:
-            user: User object (uses g.user if not provided)
-        
-        Returns:
-            list: Menu items appropriate for the user's permissions
-        """
         if user is None:
             user = g.user if hasattr(g, 'user') else None
         

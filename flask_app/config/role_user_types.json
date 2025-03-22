@@ -2,7 +2,7 @@
     "role_permissions": {
       "admin": {
         "user_types": ["*"],  
-        "permissions": ["view_all", "edit_all", "delete_all"]
+        "permissions": ["view_all", "edit_all", "delete_all", "admin_users"]
       },
       "OCI-admin": {
         "user_types": ["OCI", "BOODOCI"],

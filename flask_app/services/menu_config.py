@@ -29,49 +29,21 @@ class MenuConfig:
             return {'menu_config': self}
     
     def _load_menu_configs(self):
-        """Load menu configuration files from config directory"""
+        """Load menu configuration from a single JSON file"""
         config_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config')
         
-        # Load base menu configuration
-        base_menu_path = os.path.join(config_dir, 'menu_base.json')
-        if os.path.exists(base_menu_path):
-            with open(base_menu_path, 'r') as f:
+        # Load the single menu configuration file
+        menu_path = os.path.join(config_dir, 'menu_role_permissions.json')
+        if os.path.exists(menu_path):
+            with open(menu_path, 'r') as f:
                 self.default_menu = json.load(f).get('menu_items', [])
-        
-        # Load role-specific menu configurations
-        for filename in os.listdir(config_dir):
-            if filename.startswith('menu_role_') and filename.endswith('.json'):
-                role_name = filename[10:-5]  # Extract role name between 'menu_role_' and '.json'
-                file_path = os.path.join(config_dir, filename)
-                
-                with open(file_path, 'r') as f:
-                    self.menu_configs[role_name] = json.load(f).get('menu_items', [])
-    
-    def _prepare_role_menus(self):
-        """Prepare combined menus for each role"""
-        # Admin gets all menu items
-        if 'admin' in self.menu_configs:
-            self.role_menus['admin'] = self.menu_configs['admin']
         else:
-            # If no specific admin config, use default + admin items
-            admin_menu = copy.deepcopy(self.default_menu)
-            self.role_menus['admin'] = admin_menu
+            self.default_menu = []
         
-        # Reader gets reader-specific items + common items
-        if 'reader' in self.menu_configs:
-            self.role_menus['reader'] = self.menu_configs['reader']
-        else:
-            # Filter out admin-only items from default menu
-            reader_menu = [
-                item for item in self.default_menu 
-                if not item.get('admin_only', False)
-            ]
-            self.role_menus['reader'] = reader_menu
-        
-        # For other roles, create as needed
-        for role, menu_items in self.menu_configs.items():
-            if role not in ['admin', 'reader']:
-                self.role_menus[role] = menu_items
+        # Since we're using a single file with permissions,
+        # we don't need separate role-specific menus anymore
+        self.menu_configs = {}
+        self.role_menus = {}
     
     def get_menu_for_user(self, user=None):
         """
@@ -101,9 +73,19 @@ class MenuConfig:
             if item.get('is_section', False):
                 filtered_subitems = []
                 for subitem in item.get('items', []):
-                    # Check if the user has the required permission
-                    required_permission = subitem.get('required_permission')
-                    if not required_permission or user.has_permission(required_permission):
+                    # Check if the user has the required permission(s)
+                    has_permission = True
+                    
+                    # Check for multiple permissions (OR logic)
+                    required_permissions = subitem.get('required_permissions', [])
+                    if required_permissions:
+                        # User needs at least one of these permissions
+                        has_permission = any(user.has_permission(p) for p in required_permissions)
+                    # Check for single permission
+                    elif 'required_permission' in subitem:
+                        has_permission = user.has_permission(subitem['required_permission'])
+                    
+                    if has_permission:
                         filtered_subitems.append(subitem)
                 
                 # Only add the section if it has visible subitems
@@ -112,9 +94,19 @@ class MenuConfig:
                     section_copy['items'] = filtered_subitems
                     filtered_menu.append(section_copy)
             else:
-                # For regular items, check the permission directly
-                required_permission = item.get('required_permission')
-                if not required_permission or user.has_permission(required_permission):
+                # For regular items, check the permission(s)
+                has_permission = True
+                
+                # Check for multiple permissions (OR logic)
+                required_permissions = item.get('required_permissions', [])
+                if required_permissions:
+                    # User needs at least one of these permissions
+                    has_permission = any(user.has_permission(p) for p in required_permissions)
+                # Check for single permission
+                elif 'required_permission' in item:
+                    has_permission = user.has_permission(item['required_permission'])
+                
+                if has_permission:
                     filtered_menu.append(item)
         
         return filtered_menu
@@ -145,11 +137,7 @@ class MenuConfig:
             if item.get('visible') is False:
                 continue
             
-            # Check if user has required permission for this item
-            if 'required_permission' in item and user:
-                if not user.has_permission(item['required_permission']):
-                    continue
-            
+            # Item permission check is already done in get_menu_for_user
             if item.get('is_section'):
                 # Increment counter for unique ID
                 section_counter += 1
@@ -171,16 +159,13 @@ class MenuConfig:
                         <ul class="nav flex-column section-items">
                 '''
                 
-                # Render section items (only if they're visible)
+                # Render section items
                 for sub_item in item.get('items', []):
                     # Skip sub-items that are explicitly set to not visible
                     if sub_item.get('visible') is False:
                         continue
                     
-                    # Check permission for sub-item
-                    if 'required_permission' in sub_item and user:
-                        if not user.has_permission(sub_item['required_permission']):
-                            continue
+                    # Permission check already done in get_menu_for_user
                     
                     # Check if this is the active item based on current path
                     is_active = self._is_active(sub_item)

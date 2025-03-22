@@ -97,10 +97,6 @@ class User(UserMixin):
     #         roles.append('OCI-admin')
     #         print(f"Utilisateur {username} a le rôle OCI-admin")
         
-    #     # # Check for STAG-admin role
-    #     # if 'stag_admin_group_dn' in user_data and user_data.get('is_stag_admin_member', False):
-    #     #     roles.append('STAG-admin')
-        
     #     # Define permissions based on roles
     #     permissions = set()
         

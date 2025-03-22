@@ -75,13 +75,13 @@ class MenuConfig:
     
     def get_menu_for_user(self, user=None):
         """
-        Get menu items for the current user based on their roles
+        Get menu items for the current user based on their permissions
         
         Args:
             user: User object (uses g.user if not provided)
         
         Returns:
-            list: Menu items appropriate for the user's roles
+            list: Menu items appropriate for the user's permissions
         """
         if user is None:
             user = g.user if hasattr(g, 'user') else None
@@ -90,31 +90,34 @@ class MenuConfig:
         if not user or not user.is_authenticated:
             return []
         
-        # Check user roles and return appropriate menu
-        if user.is_admin and 'admin' in self.role_menus:
-            return self.role_menus['admin']
-        elif user.is_reader and 'reader' in self.role_menus:
-            return self.role_menus['reader']
+        # Start with the default menu
+        menu_items = copy.deepcopy(self.default_menu)
         
-        # If user has other roles, combine their role menus
-        combined_menu = []
-        for role in user.roles:
-            if role in self.role_menus:
-                # Add items not already in combined menu
-                for item in self.role_menus[role]:
-                    if item not in combined_menu:
-                        combined_menu.append(item)
+        # Filter menu items based on user permissions
+        filtered_menu = []
         
-        # If no specific role menu found, fall back to default menu
-        if not combined_menu:
-            # Filter items that don't require specific permissions
-            combined_menu = [
-                item for item in self.default_menu 
-                if not item.get('required_permission') or 
-                (user.has_permission(item.get('required_permission')))
-            ]
+        for item in menu_items:
+            # If it's a section, process its subitems
+            if item.get('is_section', False):
+                filtered_subitems = []
+                for subitem in item.get('items', []):
+                    # Check if the user has the required permission
+                    required_permission = subitem.get('required_permission')
+                    if not required_permission or user.has_permission(required_permission):
+                        filtered_subitems.append(subitem)
+                
+                # Only add the section if it has visible subitems
+                if filtered_subitems:
+                    section_copy = copy.deepcopy(item)
+                    section_copy['items'] = filtered_subitems
+                    filtered_menu.append(section_copy)
+            else:
+                # For regular items, check the permission directly
+                required_permission = item.get('required_permission')
+                if not required_permission or user.has_permission(required_permission):
+                    filtered_menu.append(item)
         
-        return combined_menu
+        return filtered_menu
     
     def render_menu(self, user=None):
         """

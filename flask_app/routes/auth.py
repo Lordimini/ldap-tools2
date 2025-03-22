@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from flask_app.models.ldap_model import LDAPModel
 from flask_login import login_required  # Nouvel import depuis Flask-Login
 from flask_app.config.meta_config import meta_login_config
-from flask_app.services.login_manager import authenticate_user
+from flask_app.services.login_manager import authenticate_user, current_user
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -66,22 +66,22 @@ def set_ldap_source():
 @auth_bp.route('/user_profile')
 @login_required
 def user_profile():
-    # Récupérer les informations de l'utilisateur actuel
-    username = session.get('username')
-    role = session.get('role', '')
+    # # Récupérer les informations de l'utilisateur actuel
+    # username = session.get('username')
+    # role = session.get('role', '')
     
-    # Créer un objet utilisateur simple pour le template
-    user = {
-        'username': username,
-        'display_name': username,  # Ou récupérer le nom complet si disponible
-        'email': '',  # Ajouter l'email si disponible
-        'roles': [role] if role else [],
-        'permissions': [],  # Ajouter les permissions si vous les gérez
-        'groups': [],  # Ajouter les groupes si disponibles
-        'ldap_source': session.get('ldap_source', 'meta'),
-        'dn': '',  # Ajouter le DN si disponible
-        'is_admin': role == 'admin',
-        'is_reader': role == 'reader'
-    }
+    # # Créer un objet utilisateur simple pour le template
+    # user = {
+    #     'username': username,
+    #     'display_name': username,  # Ou récupérer le nom complet si disponible
+    #     'email': '',  # Ajouter l'email si disponible
+    #     'roles': [role] if role else [],
+    #     'permissions': [],  # Ajouter les permissions si vous les gérez
+    #     'groups': [],  # Ajouter les groupes si disponibles
+    #     'ldap_source': session.get('ldap_source', 'meta'),
+    #     'dn': '',  # Ajouter le DN si disponible
+    #     'is_admin': role == 'admin',
+    #     'is_reader': role == 'reader'
+    # }
     
-    return render_template('user_profile.html', user=user)
+    return render_template('user_profile.html', user=current_user)

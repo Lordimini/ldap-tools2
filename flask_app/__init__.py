@@ -32,6 +32,10 @@ def create_app():
     ldap_config_manager.init_app(app)
     app.ldap_config_manager = ldap_config_manager
     
+    from flask_app.services.role_config_service import RoleConfigService
+    role_config = RoleConfigService()
+    role_config.init_app(app)
+    
     # Initialize login manager
     init_login_manager(app)
     

@@ -45,17 +45,7 @@ def init_login_manager(app):
             g.ldap_name = app.ldap_config_manager.get_config(ldap_source).get('LDAP_name', 'LDAP')
 
 def authenticate_user(username, password, ldap_source='meta'):
-    """
-    Authenticate a user against LDAP and create User object
-    
-    Args:
-        username: Username to authenticate
-        password: Password to authenticate with
-        ldap_source: LDAP source to use for authentication
-        
-    Returns:
-        User: Authenticated User object or None if authentication fails
-    """
+    """Authenticate a user against LDAP and create User object"""
     try:
         # Create LDAP model for the specified source
         ldap_model = LDAPModel(source=ldap_source)
@@ -65,22 +55,41 @@ def authenticate_user(username, password, ldap_source='meta'):
         if not conn:
             return None
         
-        # Check if user is member of admin or reader group
+        # Check for role-specific group memberships
         is_admin_member = False
         is_reader_member = False
+        is_oci_admin_member = False
+        is_stag_admin_member = False
         
+        # Get group DNs from LDAP model or config
         admin_group_dn = ldap_model.admin_group_dn
         reader_group_dn = ldap_model.reader_group_dn
+        oci_admin_group_dn = ldap_model.oci_admin_group_dn  # You'll need to add these
+        stag_admin_group_dn = ldap_model.stag_admin_group_dn  # properties to LDAPModel
         
         # Check admin group membership
-        conn.search(admin_group_dn, f'(member={conn.user})', search_scope='BASE')
-        if conn.entries:
-            is_admin_member = True
+        if admin_group_dn:
+            conn.search(admin_group_dn, f'(member={conn.user})', search_scope='BASE')
+            if conn.entries:
+                is_admin_member = True
         
         # Check reader group membership
-        conn.search(reader_group_dn, f'(member={conn.user})', search_scope='BASE')
-        if conn.entries:
-            is_reader_member = True
+        if reader_group_dn:
+            conn.search(reader_group_dn, f'(member={conn.user})', search_scope='BASE')
+            if conn.entries:
+                is_reader_member = True
+        
+        # Check OCI admin group membership
+        if oci_admin_group_dn:
+            conn.search(oci_admin_group_dn, f'(member={conn.user})', search_scope='BASE')
+            if conn.entries:
+                is_oci_admin_member = True
+        
+        # Check STAG admin group membership
+        if stag_admin_group_dn:
+            conn.search(stag_admin_group_dn, f'(member={conn.user})', search_scope='BASE')
+            if conn.entries:
+                is_stag_admin_member = True
         
         # Get user details
         user_data = ldap_model.search_user_final(username, 'cn')
@@ -90,8 +99,12 @@ def authenticate_user(username, password, ldap_source='meta'):
         # Add group membership information
         user_data['is_admin_member'] = is_admin_member
         user_data['is_reader_member'] = is_reader_member
+        user_data['is_oci_admin_member'] = is_oci_admin_member
+        user_data['is_stag_admin_member'] = is_stag_admin_member
         user_data['admin_group_dn'] = admin_group_dn
         user_data['reader_group_dn'] = reader_group_dn
+        user_data['oci_admin_group_dn'] = oci_admin_group_dn
+        user_data['stag_admin_group_dn'] = stag_admin_group_dn
         
         # Store user data in session for later retrieval
         session['user_data'] = user_data

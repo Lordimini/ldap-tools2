@@ -73,30 +73,37 @@ class User(UserMixin):
     @classmethod
     def from_ldap_data(cls, username, user_data, ldap_source='meta'):
         """
-        Create a User instance from LDAP data retrieved from LDAPModel
-        
-        Args:
-            username: Username for login
-            user_data: Dict containing LDAP user data
-            ldap_source: Source of LDAP data
-            
-        Returns:
-            User: Instantiated User object
+        Create a User instance from LDAP data
         """
         # Extract group memberships
         groups = []
         if 'groupMembership' in user_data and user_data['groupMembership']:
             groups = [group['cn'] for group in user_data['groupMembership']]
         
-        # Extract roles 
+        # Extract roles based on group membership
         roles = []
+        
+        # Check for admin role
         if 'admin_group_dn' in user_data and user_data.get('is_admin_member', False):
             roles.append('admin')
+        
+        # Check for reader role
         if 'reader_group_dn' in user_data and user_data.get('is_reader_member', False):
             roles.append('reader')
         
-        # Set permissions based on roles
+        # Check for OCI-admin role
+        if 'oci_admin_group_dn' in user_data and user_data.get('is_oci_admin_member', False):
+            roles.append('OCI-admin')
+        
+        # Check for STAG-admin role
+        if 'stag_admin_group_dn' in user_data and user_data.get('is_stag_admin_member', False):
+            roles.append('STAG-admin')
+        
+        # Define permissions based on roles
         permissions = set()
+        
+        # This would be replaced by loading from RoleConfigService 
+        # in a more dynamic implementation
         if 'admin' in roles:
             permissions.update([
                 'view_users', 'create_users', 'edit_users', 'delete_users',
@@ -107,6 +114,14 @@ class User(UserMixin):
         elif 'reader' in roles:
             permissions.update([
                 'view_users', 'view_groups', 'view_roles', 'view_services'
+            ])
+        elif 'OCI-admin' in roles:
+            permissions.update([
+                'view_oci', 'edit_oci'
+            ])
+        elif 'STAG-admin' in roles:
+            permissions.update([
+                'view_stag', 'edit_stag'
             ])
         
         return cls(

@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, json
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, json, current_app
 from flask_app.models.ldap_model import LDAPModel
-from flask_login import login_required  # Nouvel import depuis Flask-Login
+from flask_login import login_required, current_user
 from flask_app.models.ldap_config_manager import LDAPConfigManager
+
 
 postcreation_bp = Blueprint('postcreation', __name__)
 
@@ -12,27 +13,49 @@ def post_creation():
     Display the list of pending users in the to-process container
     and allow selection for completion.
     """
-    # Get LDAP source with proper fallback sequence
+    
     ldap_source = request.args.get('source')
     if request.method == 'POST':
         ldap_source = request.form.get('ldap_source', ldap_source)
     
-    # If not in query or form params, get from session with default fallback
     if not ldap_source:
         ldap_source = session.get('ldap_source', 'meta')
     
-    # Make sure session is updated with current source
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Create LDAP model with the appropriate source
     ldap_model = LDAPModel(source=ldap_source)
     
-    # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
     ldap_name = config.get('LDAP_name', 'META')
     
-    pending_users = ldap_model.get_pending_users()
+    # pending_users = ldap_model.get_pending_users()
+    
+    # Get all pending users
+    all_pending_users = ldap_model.get_pending_users()
+    
+    # Get role config service from app
+    role_config = current_app.role_config
+    
+    # Get allowed user types for current user's roles
+    allowed_types = role_config.get_allowed_user_types(current_user.roles)
+    
+    # Filter users based on allowed types
+    if '*' in allowed_types:
+        # Admin can see all users
+        pending_users = all_pending_users
+    else:
+        # Filter users by type
+        pending_users = []
+        for user in all_pending_users:
+            # You'll need to modify get_pending_users to include user type
+            # or fetch user details here
+            user_details = ldap_model.search_user_final(user['dn'])
+            if user_details and 'title' in user_details:
+                user_type = user_details['title']
+                if user_type in allowed_types:
+                    pending_users.append(user)
+    
     
     selected_user = None
     

@@ -1,0 +1,20 @@
+{
+    "role_permissions": {
+      "admin": {
+        "user_types": ["*"],  
+        "permissions": ["view_all", "edit_all", "delete_all"]
+      },
+      "OCI-admin": {
+        "user_types": ["OCI", "BOODOCI"],
+        "permissions": ["view_oci", "edit_oci"]
+      },
+      "STAG-admin": {
+        "user_types": ["STAG", "EMP - STAG"],
+        "permissions": ["view_stag", "edit_stag"]
+      },
+      "reader": {
+        "user_types": ["*"],
+        "permissions": ["view_all"]
+      }
+    }
+  }

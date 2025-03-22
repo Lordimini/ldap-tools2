@@ -44,13 +44,77 @@ class MenuConfig:
         self.menu_configs = {}
         self.role_menus = {}
     
+    # def get_menu_for_user(self, user=None):
+    #     if user is None:
+    #         user = g.user if hasattr(g, 'user') else None
+        
+    #     # If no user or not authenticated, return empty menu
+    #     if not user or not user.is_authenticated:
+    #         return []
+        
+    #     # Start with the default menu
+    #     menu_items = copy.deepcopy(self.default_menu)
+        
+    #     # Filter menu items based on user permissions
+    #     filtered_menu = []
+        
+    #     for item in menu_items:
+    #         # If it's a section, process its subitems
+    #         if item.get('is_section', False):
+    #             filtered_subitems = []
+    #             for subitem in item.get('items', []):
+    #                 # Check if the user has the required permission(s)
+    #                 has_permission = True
+                    
+    #                 # Check for multiple permissions (OR logic)
+    #                 required_permissions = subitem.get('required_permissions', [])
+    #                 if required_permissions:
+    #                     # User needs at least one of these permissions
+    #                     has_permission = any(user.has_permission(p) for p in required_permissions)
+    #                 # Check for single permission
+    #                 elif 'required_permission' in subitem:
+    #                     has_permission = user.has_permission(subitem['required_permission'])
+                    
+    #                 if has_permission:
+    #                     filtered_subitems.append(subitem)
+                
+    #             # Only add the section if it has visible subitems
+    #             if filtered_subitems:
+    #                 section_copy = copy.deepcopy(item)
+    #                 section_copy['items'] = filtered_subitems
+    #                 filtered_menu.append(section_copy)
+    #         else:
+    #             # For regular items, check the permission(s)
+    #             has_permission = True
+                
+    #             # Check for multiple permissions (OR logic)
+    #             required_permissions = item.get('required_permissions', [])
+    #             if required_permissions:
+    #                 # User needs at least one of these permissions
+    #                 has_permission = any(user.has_permission(p) for p in required_permissions)
+    #             # Check for single permission
+    #             elif 'required_permission' in item:
+    #                 has_permission = user.has_permission(item['required_permission'])
+                
+    #             if has_permission:
+    #                 filtered_menu.append(item)
+        
+    #     return filtered_menu
+    
     def get_menu_for_user(self, user=None):
+        """
+        Get menu items for the current user based on their permissions
+        """
         if user is None:
             user = g.user if hasattr(g, 'user') else None
         
         # If no user or not authenticated, return empty menu
         if not user or not user.is_authenticated:
+            print("DEBUG - Menu: Utilisateur non authentifié")
             return []
+        
+        print(f"DEBUG - Menu: Utilisateur authentifié {user.username} avec rôles {user.roles}")
+        print(f"DEBUG - Menu: Permissions de l'utilisateur {user.permissions}")
         
         # Start with the default menu
         menu_items = copy.deepcopy(self.default_menu)
@@ -61,44 +125,63 @@ class MenuConfig:
         for item in menu_items:
             # If it's a section, process its subitems
             if item.get('is_section', False):
+                print(f"DEBUG - Menu: Traitement de la section '{item.get('label')}'")
                 filtered_subitems = []
                 for subitem in item.get('items', []):
+                    print(f"DEBUG - Menu: Vérification de l'élément '{subitem.get('label')}'")
                     # Check if the user has the required permission(s)
                     has_permission = True
                     
                     # Check for multiple permissions (OR logic)
                     required_permissions = subitem.get('required_permissions', [])
                     if required_permissions:
+                        print(f"DEBUG - Menu: Permissions requises pour '{subitem.get('label')}': {required_permissions}")
                         # User needs at least one of these permissions
                         has_permission = any(user.has_permission(p) for p in required_permissions)
+                        print(f"DEBUG - Menu: A les permissions requises: {has_permission}")
                     # Check for single permission
                     elif 'required_permission' in subitem:
-                        has_permission = user.has_permission(subitem['required_permission'])
+                        perm = subitem['required_permission']
+                        print(f"DEBUG - Menu: Permission requise pour '{subitem.get('label')}': {perm}")
+                        has_permission = user.has_permission(perm)
+                        print(f"DEBUG - Menu: A la permission requise: {has_permission}")
                     
                     if has_permission:
+                        print(f"DEBUG - Menu: Ajout de l'élément '{subitem.get('label')}'")
                         filtered_subitems.append(subitem)
                 
                 # Only add the section if it has visible subitems
                 if filtered_subitems:
+                    print(f"DEBUG - Menu: Ajout de la section '{item.get('label')}' avec {len(filtered_subitems)} éléments")
                     section_copy = copy.deepcopy(item)
                     section_copy['items'] = filtered_subitems
                     filtered_menu.append(section_copy)
+                else:
+                    print(f"DEBUG - Menu: Section '{item.get('label')}' ignorée car aucun élément visible")
             else:
+                print(f"DEBUG - Menu: Vérification de l'élément racine '{item.get('label')}'")
                 # For regular items, check the permission(s)
                 has_permission = True
                 
                 # Check for multiple permissions (OR logic)
                 required_permissions = item.get('required_permissions', [])
                 if required_permissions:
+                    print(f"DEBUG - Menu: Permissions requises pour '{item.get('label')}': {required_permissions}")
                     # User needs at least one of these permissions
                     has_permission = any(user.has_permission(p) for p in required_permissions)
+                    print(f"DEBUG - Menu: A les permissions requises: {has_permission}")
                 # Check for single permission
                 elif 'required_permission' in item:
-                    has_permission = user.has_permission(item['required_permission'])
+                    perm = item['required_permission']
+                    print(f"DEBUG - Menu: Permission requise pour '{item.get('label')}': {perm}")
+                    has_permission = user.has_permission(perm)
+                    print(f"DEBUG - Menu: A la permission requise: {has_permission}")
                 
                 if has_permission:
+                    print(f"DEBUG - Menu: Ajout de l'élément racine '{item.get('label')}'")
                     filtered_menu.append(item)
         
+        print(f"DEBUG - Menu: Menu filtré final contient {len(filtered_menu)} éléments")
         return filtered_menu
     
     def render_menu(self, user=None):

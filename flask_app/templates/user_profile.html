@@ -11,7 +11,12 @@
                     <h2 class="mb-0">User Profile</h2>
                     <div class="d-flex">
                         {% for role in user.roles %}
-                        <span class="badge {% if role == 'admin' %}bg-danger{% elif role == 'reader' %}bg-info{% else %}bg-secondary{% endif %} ms-2">
+                        <span class="badge 
+                            {% if role == 'admin' %}bg-danger
+                            {% elif role == 'reader' %}bg-info
+                            {% elif role == 'OCI-admin' %}bg-success
+                            {% else %}bg-secondary
+                            {% endif %} ms-2">
                             {{ role | capitalize }}
                         </span>
                         {% endfor %}
@@ -62,8 +67,20 @@
                                         {% if user.roles %}
                                         <div>
                                             {% for role in user.roles %}
-                                            <span class="badge {% if role == 'admin' %}bg-danger{% elif role == 'reader' %}bg-info{% else %}bg-secondary{% endif %} me-2 p-2 mb-2">
+                                            <span class="badge 
+                                            {% if role == 'admin' %}bg-danger
+                                            {% elif role == 'reader' %}bg-info
+                                            {% elif role == 'OCI-admin' %}bg-success
+                                            {% elif role == 'STAG-admin' %}bg-warning text-dark
+                                            {% else %}bg-secondary
+                                            {% endif %} me-2 p-2 mb-2">
+                                            {% if role == 'OCI-admin' %}
+                                                OCI Admin
+                                            {% elif role == 'STAG-admin' %}
+                                                STAG Admin
+                                            {% else %}
                                                 {{ role | capitalize }}
+                                            {% endif %}
                                             </span>
                                             {% endfor %}
                                         </div>

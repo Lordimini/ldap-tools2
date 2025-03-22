@@ -178,7 +178,7 @@
             "url": "/post_creation",
             "icon": "bi bi-person-check",
             "active_pattern": "^/post_creation",
-            "required_permissions": ["edit_oci", "admin_users"]
+            "required_permissions": ["admin_users"]
 
           }
         ]

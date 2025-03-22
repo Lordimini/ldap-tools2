@@ -672,16 +672,18 @@ class LDAPUserMixin(LDAPBase):
             conn.search(to_process_dn, 
                     '(objectClass=Person)', 
                     search_scope='SUBTREE',
-                    attributes=['cn', 'fullName'])
-            
+                    attributes=['cn', 'fullName', 'title', 'favvEmployeeType'])
+                                    
             users = []
             for entry in conn.entries:
                 users.append({
                     'dn': entry.entry_dn,
                     'cn': entry.cn.value if hasattr(entry, 'cn') else 'Unknown',
-                    'fullName': entry.fullName.value if hasattr(entry, 'fullName') else 'Unknown'
+                    'fullName': entry.fullName.value if hasattr(entry, 'fullName') else 'Unknown',
+                    'title': entry.title.value if hasattr(entry, 'title') else 'Unknown',
+                    'favvEmployeeType': entry.favvEmployeeType.value if hasattr(entry, 'favvEmployeeType') else 'Unknown'
                 })
-            
+             
             conn.unbind()
             return users
             

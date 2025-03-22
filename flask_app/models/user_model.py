@@ -70,61 +70,101 @@ class User(UserMixin):
         """Check if user has reader role"""
         return 'reader' in self.roles
     
+    # @classmethod
+    # def from_ldap_data(cls, username, user_data, ldap_source='meta'):
+    #     """
+    #     Create a User instance from LDAP data
+    #     """
+    #     # Extract group memberships
+    #     groups = []
+    #     if 'groupMembership' in user_data and user_data['groupMembership']:
+    #         groups = [group['cn'] for group in user_data['groupMembership']]
+        
+    #     # Extract roles based on group membership
+    #     roles = []
+        
+    #     # Check for admin role
+    #     if 'admin_group_dn' in user_data and user_data.get('is_admin_member', False):
+    #         roles.append('admin')
+    #         print(f"Utilisateur {username} a le rôle admin")
+        
+    #     # Check for reader role
+    #     if 'reader_group_dn' in user_data and user_data.get('is_reader_member', False):
+    #         roles.append('reader')
+    #         print(f"Utilisateur {username} a le rôle reader")
+    #     # Check for OCI-admin role
+    #     if 'oci_admin_group_dn' in user_data and user_data.get('is_oci_admin_member', False):
+    #         roles.append('OCI-admin')
+    #         print(f"Utilisateur {username} a le rôle OCI-admin")
+        
+    #     # # Check for STAG-admin role
+    #     # if 'stag_admin_group_dn' in user_data and user_data.get('is_stag_admin_member', False):
+    #     #     roles.append('STAG-admin')
+        
+    #     # Define permissions based on roles
+    #     permissions = set()
+        
+    #     # This would be replaced by loading from RoleConfigService 
+    #     # in a more dynamic implementation
+    #     if 'admin' in roles:
+    #         permissions.update([
+    #             'view_users', 'create_users', 'edit_users', 'delete_users',
+    #             'view_groups', 'edit_groups', 'create_groups', 'delete_groups',
+    #             'view_roles', 'edit_roles', 'create_roles', 'delete_roles',
+    #             'view_services', 'edit_services', 'upload_files', 'manage_system', 'admin_users'
+    #         ])
+    #     elif 'reader' in roles:
+    #         permissions.update([
+    #             'view_users', 'view_groups', 'view_roles', 'view_services'
+    #         ])
+    #     elif 'OCI-admin' in roles:
+    #         permissions.update([
+    #             'view_oci', 'edit_oci'
+    #         ])
+    #     elif 'STAG-admin' in roles:
+    #         permissions.update([
+    #             'view_stag', 'edit_stag'
+    #         ])
+        
+    #     return cls(
+    #         username=username,
+    #         dn=user_data.get('dn', ''),
+    #         display_name=user_data.get('fullName', username),
+    #         email=user_data.get('mail', None),
+    #         ldap_source=ldap_source,
+    #         roles=roles,
+    #         permissions=permissions,
+    #         groups=groups
+    #     )
     @classmethod
     def from_ldap_data(cls, username, user_data, ldap_source='meta'):
-        """
-        Create a User instance from LDAP data
-        """
-        # Extract group memberships
+        # Extraction des groupes et rôles comme avant...
         groups = []
         if 'groupMembership' in user_data and user_data['groupMembership']:
             groups = [group['cn'] for group in user_data['groupMembership']]
         
-        # Extract roles based on group membership
+        # Extraction des rôles basés sur l'appartenance aux groupes
         roles = []
+        # Logique existante pour déterminer les rôles...
         
-        # Check for admin role
-        if 'admin_group_dn' in user_data and user_data.get('is_admin_member', False):
-            roles.append('admin')
-            print(f"Utilisateur {username} a le rôle admin")
-        
-        # Check for reader role
-        if 'reader_group_dn' in user_data and user_data.get('is_reader_member', False):
-            roles.append('reader')
-            print(f"Utilisateur {username} a le rôle reader")
-        # Check for OCI-admin role
-        if 'oci_admin_group_dn' in user_data and user_data.get('is_oci_admin_member', False):
-            roles.append('OCI-admin')
-            print(f"Utilisateur {username} a le rôle OCI-admin")
-        
-        # # Check for STAG-admin role
-        # if 'stag_admin_group_dn' in user_data and user_data.get('is_stag_admin_member', False):
-        #     roles.append('STAG-admin')
-        
-        # Define permissions based on roles
+        # Nouvelle approche : obtenir les permissions depuis RoleConfigService
+        # On importe localement pour éviter les imports circulaires
+        from flask import current_app
         permissions = set()
         
-        # This would be replaced by loading from RoleConfigService 
-        # in a more dynamic implementation
-        if 'admin' in roles:
-            permissions.update([
-                'view_users', 'create_users', 'edit_users', 'delete_users',
-                'view_groups', 'edit_groups', 'create_groups', 'delete_groups',
-                'view_roles', 'edit_roles', 'create_roles', 'delete_roles',
-                'view_services', 'edit_services', 'upload_files', 'manage_system', 'admin_users'
-            ])
-        elif 'reader' in roles:
-            permissions.update([
-                'view_users', 'view_groups', 'view_roles', 'view_services'
-            ])
-        elif 'OCI-admin' in roles:
-            permissions.update([
-                'view_oci', 'edit_oci'
-            ])
-        elif 'STAG-admin' in roles:
-            permissions.update([
-                'view_stag', 'edit_stag'
-            ])
+        if current_app and hasattr(current_app, 'role_config'):
+            # Utiliser le service de configuration des rôles pour obtenir les permissions
+            permissions = current_app.role_config.get_permissions(roles)
+        else:
+            # Code de secours au cas où le service n'est pas disponible
+            # Copier ici votre logique actuelle d'attribution de permissions
+            if 'admin' in roles:
+                permissions.update([
+                    'view_users', 'create_users', 'edit_users', 'delete_users',
+                    # etc...
+                    'admin_users'
+                ])
+            # Autres rôles...
         
         return cls(
             username=username,
@@ -136,7 +176,7 @@ class User(UserMixin):
             permissions=permissions,
             groups=groups
         )
-
+        
 # Role-based access decorators
 def role_required(role):
     """Decorator to require a specific role for access"""

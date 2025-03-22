@@ -86,14 +86,16 @@ class User(UserMixin):
         # Check for admin role
         if 'admin_group_dn' in user_data and user_data.get('is_admin_member', False):
             roles.append('admin')
+            print(f"Utilisateur {username} a le rôle admin")
         
         # Check for reader role
         if 'reader_group_dn' in user_data and user_data.get('is_reader_member', False):
             roles.append('reader')
-        
+            print(f"Utilisateur {username} a le rôle reader")
         # Check for OCI-admin role
         if 'oci_admin_group_dn' in user_data and user_data.get('is_oci_admin_member', False):
             roles.append('OCI-admin')
+            print(f"Utilisateur {username} a le rôle OCI-admin")
         
         # # Check for STAG-admin role
         # if 'stag_admin_group_dn' in user_data and user_data.get('is_stag_admin_member', False):

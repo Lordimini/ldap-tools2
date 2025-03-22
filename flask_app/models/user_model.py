@@ -134,33 +134,51 @@ class User(UserMixin):
     #     )
     @classmethod
     def from_ldap_data(cls, username, user_data, ldap_source='meta'):
-        # Extraction des groupes et rôles comme avant...
+        # Extract group memberships
         groups = []
         if 'groupMembership' in user_data and user_data['groupMembership']:
             groups = [group['cn'] for group in user_data['groupMembership']]
         
-        # Extraction des rôles basés sur l'appartenance aux groupes
+        # Extract roles based on group membership
         roles = []
-        # Logique existante pour déterminer les rôles...
+        
+        # Check for admin role
+        if 'admin_group_dn' in user_data and user_data.get('is_admin_member', False):
+            roles.append('admin')
+            print(f"Utilisateur {username} a le rôle admin")
+        
+        # Check for reader role
+        if 'reader_group_dn' in user_data and user_data.get('is_reader_member', False):
+            roles.append('reader')
+            print(f"Utilisateur {username} a le rôle reader")
+        
+        # Check for OCI-admin role
+        if 'oci_admin_group_dn' in user_data and user_data.get('is_oci_admin_member', False):
+            roles.append('OCI-admin')
+            print(f"Utilisateur {username} a le rôle OCI-admin")
         
         # Nouvelle approche : obtenir les permissions depuis RoleConfigService
-        # On importe localement pour éviter les imports circulaires
         from flask import current_app
         permissions = set()
         
+        print(f"DEBUG - Roles détectés: {roles}")
+        
         if current_app and hasattr(current_app, 'role_config'):
+            print("DEBUG - RoleConfigService est disponible")
             # Utiliser le service de configuration des rôles pour obtenir les permissions
             permissions = current_app.role_config.get_permissions(roles)
+            print(f"DEBUG - Permissions obtenues: {permissions}")
         else:
-            # Code de secours au cas où le service n'est pas disponible
-            # Copier ici votre logique actuelle d'attribution de permissions
-            if 'admin' in roles:
-                permissions.update([
-                    'view_users', 'create_users', 'edit_users', 'delete_users',
-                    # etc...
-                    'admin_users'
-                ])
-            # Autres rôles...
+            print("DEBUG - RoleConfigService n'est PAS disponible")
+            # Dans ce cas, ajoutons manuellement les permissions pour tester
+            if 'OCI-admin' in roles:
+                permissions.update(['view_oci', 'edit_oci'])
+                print("DEBUG - Ajout manuel des permissions OCI-admin")
+        
+        # Pour debug seulement, forçons quelques permissions si nécessaire
+        if 'OCI-admin' in roles and not permissions:
+            permissions.update(['view_oci', 'edit_oci'])
+            print("DEBUG - Forçage des permissions OCI-admin car aucune permission n'était définie")
         
         return cls(
             username=username,

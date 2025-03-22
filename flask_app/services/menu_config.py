@@ -45,11 +45,6 @@ class MenuConfig:
             self.menu_configs = {}
             self.default_menu = []
         
-        # Since we're using a single file with permissions,
-        # we don't need separate role-specific menus anymore
-        self.menu_configs = {}
-        self.role_menus = {}
-    
     def get_menu_for_user(self, user=None):
         if user is None:
             user = g.user if hasattr(g, 'user') else None

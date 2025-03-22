@@ -157,7 +157,7 @@
             "url": "/search",
             "icon": "bi bi-search",
             "active_pattern": "^/search",
-            "required_permissions": ["view_users", "admin_users"]
+            "required_permissions": ["admin_users"]
           },
           {
             "label": "Create User",

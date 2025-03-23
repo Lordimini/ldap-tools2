@@ -73,11 +73,6 @@ $(document).ready(function () {
         const searchTermInput = $('#search_term');
         
         if (searchTypeInput.length > 0 && searchTermInput.length > 0 && searchTermInput.autocomplete) {
-            // First destroy any existing autocomplete instance
-            if (searchTermInput.autocomplete('instance')) {
-                searchTermInput.autocomplete('destroy');
-            }
-            
             if (searchTypeInput.val() === 'fullName') {
                 searchTermInput.autocomplete({
                     source: function(request, response) {
@@ -104,6 +99,9 @@ $(document).ready(function () {
                         .append(`<div>${item.label}</div>`)
                         .appendTo(ul);
                 };
+            } else {
+                // Unbind existing autocomplete if any
+                searchTermInput.autocomplete('destroy');
             }
         }
     }
@@ -209,31 +207,6 @@ $(document).ready(function () {
         $('#hidden_selected_users').val(JSON.stringify(selectedUsers));
     });
     
-    // Add similar event for the confirm add form
-    $('#addUsersForm').on('submit', function(e) {
-        // Update the selected_users field with the latest data
-        $('#selected_users_data').val(JSON.stringify(selectedUsers));
-        
-        // Show a loading indicator
-        $('#confirm_add_btn').prop('disabled', true).html(`
-            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 
-            Adding users...
-        `);
-        
-        // Set a timeout to handle long operations
-        setTimeout(function() {
-            if ($('#confirm_add_btn').prop('disabled')) {
-                // If still disabled after 10 seconds, show a message
-                $('#confirm_add_btn').html(`
-                    <i class="bi bi-check-circle"></i> Processing... This may take a moment
-                `);
-            }
-        }, 10000);
-        
-        // Let the form submit normally
-        return true;
-    });
-    
     // Handle bulk CN processing
     $('#processBulkCNButton').on('click', function() {
         // Show spinner, hide text
@@ -315,28 +288,6 @@ $(document).ready(function () {
         });
     });
     
-    // Make sure all forms include the LDAP source parameter
-    $('form').each(function() {
-        // Check if the form already has a ldap_source input
-        let hasLdapSource = false;
-        $(this).find('input').each(function() {
-            if ($(this).attr('name') === 'ldap_source') {
-                hasLdapSource = true;
-                $(this).val(ldapSource);
-            }
-        });
-        
-        // If not, add a hidden input for ldap_source
-        if (!hasLdapSource) {
-            const input = $('<input>').attr({
-                type: 'hidden',
-                name: 'ldap_source',
-                value: ldapSource
-            });
-            $(this).append(input);
-        }
-    });
-    
     // Make sure all links include the LDAP source parameter
     $('a[href]').each(function() {
         // Only process internal links
@@ -350,78 +301,26 @@ $(document).ready(function () {
         }
     });
     
-    // Handle LDAP source changes and refresh the page with new source
-    $('#ldap_source_selector').on('change', function() {
-        const newSource = $(this).val();
-        
-        // Check if form data needs saving
-        if (selectedUsers.length > 0) {
-            // Save selected users to session storage
-            sessionStorage.setItem('selected_users', JSON.stringify(selectedUsers));
-            sessionStorage.setItem('current_group_name', $('#group_name').val() || '');
-            sessionStorage.setItem('current_group_dn', $('#group_dn').val() || '');
-        }
-        
-        // Create a new URL with current parameters plus the source
-        const url = new URL(window.location.href);
-        
-        // Update the source parameter
-        url.searchParams.set('source', newSource);
-        
-        // Navigate to the URL
-        window.location.href = url.toString();
-    });
-    
-    // Handle refresh button click
+    // Handle refresh button
     $('.refresh-btn').click(function() {
-        const source = $(this).data('source') || ldapSource;
-        
-        // Check if form data needs saving
-        if (selectedUsers.length > 0) {
-            // Save selected users to session storage
-            sessionStorage.setItem('selected_users', JSON.stringify(selectedUsers));
-            sessionStorage.setItem('current_group_name', $('#group_name').val() || '');
-            sessionStorage.setItem('current_group_dn', $('#group_dn').val() || '');
-        }
+        const source = $(this).data('source');
+        // Determine current URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
         
         // Create new URL with current parameters plus the source
-        const url = new URL(window.location.href);
+        const url = new URL(window.location.pathname, window.location.origin);
         
-        // Update the source parameter
+        // Copy over all existing parameters except source
+        for (const [key, value] of urlParams.entries()) {
+            if (key !== 'source') {
+                url.searchParams.append(key, value);
+            }
+        }
+        
+        // Add the source parameter
         url.searchParams.set('source', source);
         
         // Navigate to the URL
         window.location.href = url.toString();
     });
-    
-    // Check if we need to restore data from session storage
-    const storedUsers = sessionStorage.getItem('selected_users');
-    if (storedUsers && (!selectedUsers || selectedUsers.length === 0)) {
-        try {
-            selectedUsers = JSON.parse(storedUsers);
-            
-            // Also restore group info if available
-            const storedGroupName = sessionStorage.getItem('current_group_name');
-            const storedGroupDn = sessionStorage.getItem('current_group_dn');
-            
-            if (storedGroupName && $('#group_name').length && !$('#group_name').val()) {
-                $('#group_name').val(storedGroupName);
-            }
-            
-            if (storedGroupDn && $('#group_dn').length && !$('#group_dn').val()) {
-                $('#group_dn').val(storedGroupDn);
-            }
-            
-            // Update UI
-            updateSelectedUsersUI();
-            
-            // Clear session storage
-            sessionStorage.removeItem('selected_users');
-            sessionStorage.removeItem('current_group_name');
-            sessionStorage.removeItem('current_group_dn');
-        } catch (e) {
-            console.error("Error restoring user selection from session storage:", e);
-            sessionStorage.removeItem('selected_users');
-        }
-    }
 });

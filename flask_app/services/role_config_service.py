@@ -17,6 +17,7 @@ class RoleConfigService:
         app.role_config = self
     
     def _load_role_config(self):
+        
         config_path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)), 
             'config', 

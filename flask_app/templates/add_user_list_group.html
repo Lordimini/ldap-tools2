@@ -127,7 +127,6 @@
                         <div class="text-muted" id="no_users_message">No users selected</div>
                     </div>
                 </div>
-                <!-- This is the confirmation form that should be updated in add_user_list_group.html -->
                 <form id="addUsersForm" method="POST" action="{{ url_for('group.confirm_add_users') }}">
                     <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
                     <input type="hidden" name="group_name" value="{{ group_info.group_name }}">

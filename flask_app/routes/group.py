@@ -89,6 +89,7 @@ def export_group_users_csv():
 @login_required
 def add_users_to_group():
     """Route pour la page d'ajout d'utilisateurs à un groupe"""
+    # Get prefill values
     prefill_group_name = request.args.get('group_name', '')
     prefill_group_dn = request.args.get('group_dn', '')
     
@@ -128,6 +129,7 @@ def add_users_to_group():
             print(f"POST add_users_to_group - selected_users: {selected_users}")
         except Exception as e:
             print(f"Error parsing selected_users_json: {e}")
+            flash(f"Error parsing user data: {str(e)}", 'danger')
             selected_users = []
         
         # If we have a specific DN, use it for the search
@@ -163,9 +165,22 @@ def add_users_to_group():
                               ldap_source=ldap_source,
                               ldap_name=ldap_name)
     
-    # In case of GET, if we have information in session, restore it
-    if 'current_group' in session:
-        # Get LDAP source from session if available
+    # For GET requests:
+    # First, check if we have prefill values from query parameters
+    if prefill_group_name or prefill_group_dn:
+        # If we have a specific DN, use it for the search
+        if prefill_group_dn:
+            group_info = ldap_model.get_group_users_by_dn(prefill_group_dn, prefill_group_name)
+        else:
+            # Otherwise, use the existing method based on the CN
+            group_info = ldap_model.get_group_users(prefill_group_name)
+            
+        # Get selected users from session if available
+        selected_users = session.get('selected_users', [])
+    
+    # If no query parameters but we have session data, use that
+    elif 'current_group' in session:
+        # Get LDAP source from session
         ldap_source = session.get('ldap_source', ldap_source)
         
         # Reinitialize the model with the correct source
@@ -192,6 +207,7 @@ def add_users_to_group():
 @login_required
 def search_users_for_group():
     """Route pour rechercher des utilisateurs à ajouter au groupe"""
+    # Extract form data
     group_name = request.form.get('group_name', '')
     group_dn = request.form.get('group_dn', '')
     search_type = request.form.get('search_type', 'fullName')
@@ -219,11 +235,19 @@ def search_users_for_group():
         selected_users = json.loads(selected_users_json)
     except Exception as e:
         print(f"Error parsing selected_users_json: {e}")
+        flash(f"Error parsing user data: {str(e)}", 'danger')
         selected_users = []
     
     # Save in session
     session['selected_users'] = selected_users
     session['ldap_source'] = ldap_source
+    
+    # Store/update group information in session
+    if group_name and group_dn:
+        session['current_group'] = {
+            'name': group_name,
+            'dn': group_dn
+        }
     
     if not group_name or not group_dn or not search_term:
         flash('Missing required parameters.', 'danger')
@@ -267,6 +291,7 @@ def search_users_for_group():
 @login_required
 def confirm_add_users():
     """Route pour confirmer l'ajout des utilisateurs sélectionnés au groupe"""
+    # Extract form data
     group_name = request.form.get('group_name', '')
     group_dn = request.form.get('group_dn', '')
     selected_users_json = request.form.get('selected_users', '[]')
@@ -287,7 +312,8 @@ def confirm_add_users():
         print(f"confirm_add_users - Processing users: {selected_users}")
     except Exception as e:
         print(f"Error parsing selected_users: {e}")
-        selected_users = []
+        flash(f"Error parsing user data: {str(e)}", 'danger')
+        return redirect(url_for('group.add_users_to_group', source=ldap_source))
     
     # Clear selected users list in session
     session.pop('selected_users', None)
@@ -304,11 +330,15 @@ def confirm_add_users():
     for user in selected_users:
         user_dn = user.get('dn')
         if user_dn:
-            result = ldap_model.add_user_to_group(user_dn, group_dn)
-            if result:
-                success_count += 1
-            else:
-                failures.append(f"Failed to add user {user.get('cn')} ({user.get('fullName')})")
+            try:
+                result = ldap_model.add_user_to_group(user_dn, group_dn)
+                if result:
+                    success_count += 1
+                else:
+                    failures.append(f"Failed to add user {user.get('cn')} ({user.get('fullName')})")
+            except Exception as e:
+                print(f"Error adding user to group: {str(e)}")
+                failures.append(f"Error adding {user.get('cn')}: {str(e)}")
     
     # Build success/failure message
     if success_count > 0:
@@ -319,7 +349,14 @@ def confirm_add_users():
             flash(failure, 'danger')
     
     # Redirect to group page to see changes
-    return redirect(url_for('group.group_users', group_name=group_name, group_dn=group_dn, source=ldap_source))
+    # Use a try/except block to handle redirect errors
+    try:
+        return redirect(url_for('group.group_users', group_name=group_name, group_dn=group_dn, source=ldap_source))
+    except Exception as e:
+        print(f"Error redirecting after adding users: {str(e)}")
+        # Fallback to dashboard if redirect fails
+        flash("Users were added successfully, but there was an error returning to the group page.", "warning")
+        return redirect(url_for('dashboard.dashboard', source=ldap_source))
 
 @group_bp.route('/validate_bulk_cns', methods=['POST'])
 @login_required

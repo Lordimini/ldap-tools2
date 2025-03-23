@@ -26,22 +26,46 @@
       },
       "BMO_CDM-reader": {
         "user_types": ["DMO", "CWK - DMO"],
-        "permissions": ["view_all", "view_cdmo"]
+        "permissions": ["view_all", "edit_all", "edit_cdmo"]
       },
       "DERDEN-admin": {
-        "user_types": ["OCI", "BOODOCI"],
-        "permissions": ["edit_oci", "view_oci"]
+        "user_types": ["*"],
+        "permissions": ["view_derden", "edit_derden"]
       },
       "DERDEN-reader": {
-        "user_types": ["OCI", "BOODOCI"],
-        "permissions": ["edit_oci", "view_oci"]
+        "user_types": ["*"],
+        "permissions": ["view_derden"]
       },
-      "DEV-admin": {
-        "user_types": ["STAG", "EMP - STAG"],
+      "FirstLine-admin": {
+        "user_types": ["*"],
         "permissions": ["view_stag", "edit_stag"]
       },
-      "DEV-reader": {
-        "user_types": ["STAG", "EMP - STAG"],
+      "FirstLine-reader": {
+        "user_types": ["*"],
+        "permissions": ["view_stag", "edit_stag"]
+      },
+      "Infra-admin": {
+        "user_types": ["*"],
+        "permissions": ["view_stag", "edit_stag"]
+      },
+      "Infra-reader": {
+        "user_types": ["*"],
+        "permissions": ["view_stag", "edit_stag"]
+      },
+      "LabExt-admin": {
+        "user_types": ["*"],
+        "permissions": ["view_stag", "edit_stag"]
+      },
+      "LabExt-reader": {
+        "user_types": ["*"],
+        "permissions": ["view_stag", "edit_stag"]
+      },
+      "P&O-admin": {
+        "user_types": ["*"],
+        "permissions": ["view_stag", "edit_stag"]
+      },
+      "P&O-reader": {
+        "user_types": ["*"],
         "permissions": ["view_stag", "edit_stag"]
       },
       "reader": {

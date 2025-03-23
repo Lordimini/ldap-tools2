@@ -17,8 +17,6 @@ class LDAPBase:
         self.reader_group_dn = config['reader_group_dn']
         self.oci_admin_group_dn = config.get('oci_admin_group_dn', '')
         self.oci_reader_group_dn = config.get('oci_reader_group_dn', '')
-        self.AutoControle_admin_group_dn = config.get('AutoControle_admin_group_dn', '')
-        self.AutoControle_reader_group_dn = config.get('AutoControle_reader_group_dn', '')
         self.Business_admin_group_dn = config.get('Business_admin_group_dn', '')
         self.Business_reader_group_dn = config.get('Business_reader_group_dn', '')
         self.BMO_CDM_admin_group_dn = config.get('BMO_CDM_admin_group_dn', '')

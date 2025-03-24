@@ -72,8 +72,7 @@ def search_user():
             
             # If only one result is found, show it directly
             if len(search_results) == 1:
-                # result = ldap_model.search_user_final(search_results[0]['dn'])
-                # REFACTORISATION #2: Récupération des détails d'un utilisateur par DN
+                
                 options = {
                     'container': 'all'  # Rechercher dans tous les conteneurs (actif, inactif)
                 }
@@ -82,8 +81,7 @@ def search_user():
             elif len(search_results) == 0:
                 flash('No users found matching your criteria.', 'danger')
         else:
-            # Regular search for a specific user
-            # result = ldap_model.search_user_final(search_term, search_type)
+            
             
             # REFACTORISATION #3: Recherche standard d'un utilisateur spécifique
             options = {
@@ -99,7 +97,7 @@ def search_user():
     # If we have a DN parameter, try to get user details
     elif request.args.get('dn'):
         user_dn = request.args.get('dn')
-        # result = ldap_model.search_user_final(user_dn)
+        
         options = {
             'container': 'all'  # Rechercher dans tous les conteneurs (actif, inactif)
         }

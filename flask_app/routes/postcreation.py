@@ -10,7 +10,7 @@ postcreation_bp = Blueprint('postcreation', __name__)
 @login_required
 def post_creation():
     """
-    Display the list of pending users in the to-process container
+    Display the list of pending users in the toprocess container
     and allow selection for completion.
     """
     
@@ -32,7 +32,11 @@ def post_creation():
     # pending_users = ldap_model.get_pending_users()
     
     # Get all pending users
-    all_pending_users = ldap_model.get_pending_users()
+    options = {
+                'container': 'toprocess',
+                'return_list': True
+                }
+    all_pending_users = ldap_model.get_user("(objectClass=Person)", options)
     
     # Get role config service from app
     role_config = current_app.role_config
@@ -50,14 +54,10 @@ def post_creation():
         for user in all_pending_users:
             # You'll need to modify get_pending_users to include user type
             # or fetch user details here
-            # user_details = ldap_model.search_user_final(user['dn'])
-            
             options = {
-                'container': 'to-process',
+                'container': 'toprocess',
                 }
-
             user_details = ldap_model.get_user(user['dn'], options)
-        
             
             if user_details and 'title' in user_details:
                 user_type = user_details['title']
@@ -71,13 +71,22 @@ def post_creation():
     if request.method == 'POST' and 'user_dn' in request.form:
         user_dn = request.form['user_dn']
         if user_dn:
-            selected_user = ldap_model.search_user_final(user_dn, simplified=True)
+            options = {
+                'container': 'toprocess',
+                'simplified': True
+                }
+            selected_user = ldap_model.get_user(user_dn, options)
+            
     
     # Check if a user_dn is provided in the URL (after redirect)
     elif request.method == 'GET' and 'user_dn' in request.args:
         user_dn = request.args.get('user_dn')
         if user_dn:
-            selected_user = ldap_model.search_user_final(user_dn, simplified=True)
+            options = {
+                'container': 'toprocess',
+                'simplified': True
+                }
+            selected_user = ldap_model.get_user(user_dn, options)
     
     return render_template('post-creation.html', 
                           pending_users=pending_users,
@@ -164,12 +173,20 @@ def complete_user():
         
         # Complete the user creation process
         ldap_model = LDAPModel(source=ldap_source)
-        success, message = ldap_model.complete_user_creation(
+        
+        # Configurer les options pour update_user
+        options = {
+            'target_container': target_container,
+            'groups_to_add': groups,
+            'reset_password': set_password,
+            'is_completion': True  # Indique qu'il s'agit d'une opération de complétion
+        }
+
+        # Appeler update_user avec les mêmes paramètres
+        success, message = ldap_model.update_user(
             user_dn=user_dn,
-            target_container=target_container,
             attributes=attributes,
-            groups=groups,
-            set_password=set_password
+            options=options
         )
         
         if success:

@@ -32,7 +32,8 @@ class LDAPModel(
         super().__init__(config)
         
     def authenticate(self, username, password):
-        user_dn = f'cn={username},{self.actif_users_dn}'
+        # user_dn = f'cn={username},{self.actif_users_dn}'
+        user_dn = self.get_user_dn (username)
         try:
             # Set up the server with a timeout
             server = Server(self.ldap_server, get_info=ALL, connect_timeout=10)
@@ -54,6 +55,38 @@ class LDAPModel(
             
         except Exception as e:
             print(f"Authentication failed: {e}")
+            return None
+    
+    def get_user_dn(self, username, ldap_source='meta'):
+    
+        try:
+            ldap_model = LDAPModel(source=ldap_source)
+            conn = ldap_model.authenticate_admin(ldap_model.bind_dn, ldap_model.password)
+            if not conn:
+                    return None
+            user_dn = None
+            
+            for search_base in self.actif_users_dn:
+                search_filter = f'(cn={username})'
+                conn.search(
+                    search_base=search_base,
+                    search_filter=search_filter,
+                    search_scope='SUBTREE',
+                    attributes=['cn']
+                )
+                if conn.entries:
+                    user_dn = conn.entries[0].entry_dn
+                    break
+            conn.unbind()
+            
+            if not user_dn:
+                print(f"User '{username}' not found in any container")
+                return None
+            
+            return user_dn    
+        
+        except Exception as e:
+            print(f"can't find user: {str(e)}")
             return None
     
     def authenticate_admin(self, username, password):

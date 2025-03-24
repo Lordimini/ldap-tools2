@@ -1,5 +1,5 @@
 import csv, time
-from ldap3 import Server, Connection, ALL, MODIFY_ADD, SUBTREE
+from ldap3 import  MODIFY_ADD
 from flask_app.models.ldap_model import LDAPModel
 
 def validate_entries(csv_file_path, group_dn_structure):

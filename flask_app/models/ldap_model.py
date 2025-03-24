@@ -86,7 +86,7 @@ class LDAPModel(
             return user_dn    
         
         except Exception as e:
-            print(f"can't find user: {str(e)}")
+            print(f"Je trouve pas le user: {str(e)}")
             return None
     
     def authenticate_admin(self, username, password):

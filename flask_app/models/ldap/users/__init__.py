@@ -66,19 +66,19 @@ class LDAPUserMixin(LDAPUserCRUD, LDAPUserUtils):
         
     #     return self.update_user(user_dn, attributes, options)
     
-    # def get_pending_users(self):
-    #     """
-    #     Méthode de compatibilité qui récupère les utilisateurs en attente.
+    def get_pending_users(self):
+        """
+        Méthode de compatibilité qui récupère les utilisateurs en attente.
         
-    #     Returns:
-    #         list: Liste des utilisateurs en attente
-    #     """
-    #     options = {
-    #         'container': 'toprocess',
-    #         'return_list': True
-    #     }
+        Returns:
+            list: Liste des utilisateurs en attente
+        """
+        options = {
+            'container': 'toprocess',
+            'return_list': True
+        }
         
-    #     return self.get_user("(objectClass=Person)", options)
+        return self.get_user("(objectClass=Person)", options)
     
     # Exporter les classes individuelles pour un accès direct
     UserCRUD = LDAPUserCRUD

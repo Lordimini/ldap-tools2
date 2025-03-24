@@ -174,30 +174,30 @@ def complete_user():
         # Complete the user creation process
         ldap_model = LDAPModel(source=ldap_source)
         
-        # # Configurer les options pour update_user
-        # options = {
-        #     'target_container': target_container,
-        #     'groups_to_add': groups,
-        #     'reset_password': set_password,
-        #     'is_completion': True  # Indique qu'il s'agit d'une opération de complétion
-        # }
+        # Configurer les options pour update_user
+        options = {
+            'target_container': target_container,
+            'groups_to_add': groups,
+            'reset_password': set_password,
+            'is_completion': True  # Indique qu'il s'agit d'une opération de complétion
+        }
 
-        # # Appeler update_user avec les mêmes paramètres
-        # success, message = ldap_model.update_user(
-        #     user_dn=user_dn,
-        #     attributes=attributes,
-        #     options=options
-        # )
-        
-         # Complete the user creation process
-        ldap_model = LDAPModel(source=ldap_source)
-        success, message = ldap_model.complete_user_creation(
+        # Appeler update_user avec les mêmes paramètres
+        success, message = ldap_model.update_user(
             user_dn=user_dn,
-            target_container=target_container,
             attributes=attributes,
-            groups=groups,
-            set_password=set_password
+            options=options
         )
+        
+        #  # Complete the user creation process
+        # ldap_model = LDAPModel(source=ldap_source)
+        # success, message = ldap_model.complete_user_creation(
+        #     user_dn=user_dn,
+        #     target_container=target_container,
+        #     attributes=attributes,
+        #     groups=groups,
+        #     set_password=set_password
+        # )
         
         if success:
             flash(message, 'success')

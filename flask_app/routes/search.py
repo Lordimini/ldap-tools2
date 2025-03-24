@@ -61,10 +61,7 @@ def search_user():
         has_wildcard = '*' in search_term and search_type in ['fullName', 'cn']
         
         if has_wildcard:
-            # # Use return_list=True for wildcard searches to get multiple results
-            # search_results = ldap_model.search_user_final(search_term, search_type, return_list=True)
-            
-             # REFACTORISATION #1: Recherche d'utilisateurs avec wildcard
+            # REFACTORISATION #1: Recherche d'utilisateurs avec wildcard
             # Utiliser get_user avec l'option return_list=True pour les recherches wildcard
             options = {
                 'search_type': search_type,

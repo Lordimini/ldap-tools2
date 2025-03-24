@@ -1,5 +1,5 @@
 # flask_app/models/ldap/users/user_crud.py
-from ldap3 import Connection, MODIFY_REPLACE, MODIFY_DELETE, SUBTREE, MODIFY_ADD
+from ldap3 import MODIFY_REPLACE, MODIFY_DELETE, MODIFY_ADD
 from flask import flash, redirect, url_for
 from ..base import LDAPBase
 

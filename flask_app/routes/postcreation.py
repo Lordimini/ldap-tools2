@@ -88,18 +88,6 @@ def post_creation():
                 }
             selected_user = ldap_model.get_user(user_dn, options)
     
-    # # Check if a user_dn is provided in the POST form
-    # if request.method == 'POST' and 'user_dn' in request.form:
-    #     user_dn = request.form['user_dn']
-    #     if user_dn:
-    #         selected_user = ldap_model.search_user_final(user_dn, simplified=True)
-    
-    # # Check if a user_dn is provided in the URL (after redirect)
-    # elif request.method == 'GET' and 'user_dn' in request.args:
-    #     user_dn = request.args.get('user_dn')
-    #     if user_dn:
-    #         selected_user = ldap_model.search_user_final(user_dn, simplified=True)
-    
     return render_template('post-creation.html', 
                           pending_users=pending_users,
                           selected_user=selected_user,
@@ -200,16 +188,6 @@ def complete_user():
             attributes=attributes,
             options=options
         )
-        
-        #  # Complete the user creation process
-        # ldap_model = LDAPModel(source=ldap_source)
-        # success, message = ldap_model.complete_user_creation(
-        #     user_dn=user_dn,
-        #     target_container=target_container,
-        #     attributes=attributes,
-        #     groups=groups,
-        #     set_password=set_password
-        # )
         
         if success:
             flash(message, 'success')

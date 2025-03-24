@@ -66,22 +66,4 @@ def set_ldap_source():
 @auth_bp.route('/user_profile')
 @login_required
 def user_profile():
-    # # Récupérer les informations de l'utilisateur actuel
-    # username = session.get('username')
-    # role = session.get('role', '')
-    
-    # # Créer un objet utilisateur simple pour le template
-    # user = {
-    #     'username': username,
-    #     'display_name': username,  # Ou récupérer le nom complet si disponible
-    #     'email': '',  # Ajouter l'email si disponible
-    #     'roles': [role] if role else [],
-    #     'permissions': [],  # Ajouter les permissions si vous les gérez
-    #     'groups': [],  # Ajouter les groupes si disponibles
-    #     'ldap_source': session.get('ldap_source', 'meta'),
-    #     'dn': '',  # Ajouter le DN si disponible
-    #     'is_admin': role == 'admin',
-    #     'is_reader': role == 'reader'
-    # }
-    
     return render_template('user_profile.html', user=current_user)

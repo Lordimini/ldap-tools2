@@ -1,15 +1,10 @@
 # flask_app/models/ldap/dashboard.py
 from .base import LDAPBase
 from ldap3 import Connection
+from datetime import datetime, timedelta
 
 class LDAPDashboardMixin(LDAPBase):
     def get_dashboard_stats(self):
-        """
-        Récupère toutes les statistiques nécessaires pour le tableau de bord
-        
-        Returns:
-            dict: Dictionnaire contenant toutes les statistiques
-        """
         return {
             'total_users': self.get_total_users_count(),
             'recent_logins': self.get_recent_logins_count(),
@@ -17,27 +12,17 @@ class LDAPDashboardMixin(LDAPBase):
         }
         
     def get_total_users_count(self):
-        """
-        Récupère le nombre total d'utilisateurs dans la base de recherche
-        
-        Returns:
-            int: Nombre total d'utilisateurs
-        """
         try:
             conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
-            
-            # Recherche tous les utilisateurs dans la base spécifiée
             search_base = self.actif_users_dn
             search_filter = '(objectClass=Person)'
             
-            # Effectuer la recherche avec l'option paged_size pour gérer un grand nombre d'utilisateurs
             conn.search(search_base=search_base,
                         search_filter=search_filter,
                         search_scope='SUBTREE',
                         attributes=['cn'],
                         paged_size=1000)
                         
-            # Compter le nombre total d'entrées
             total_entries = len(conn.entries)
             
             # Si la recherche est paginée, récupérer toutes les pages
@@ -61,9 +46,7 @@ class LDAPDashboardMixin(LDAPBase):
         
     def get_recent_logins_count(self, days=7):
         try:
-            import time
-            from datetime import datetime, timedelta
-            
+           
             # Calculer la date limite (timestamp en format GeneralizedTime)
             limit_date = datetime.now() - timedelta(days=days)
             limit_timestamp = limit_date.strftime("%Y%m%d%H%M%SZ")
@@ -113,9 +96,6 @@ class LDAPDashboardMixin(LDAPBase):
         
     def get_inactive_users_count(self, months=3):
         try:
-            #import time
-            from datetime import datetime, timedelta
-            
             # Calculer la date limite (timestamp en format GeneralizedTime)
             limit_date = datetime.now() - timedelta(days=30*months)
             limit_timestamp = limit_date.strftime("%Y%m%d%H%M%SZ")
@@ -142,9 +122,6 @@ class LDAPDashboardMixin(LDAPBase):
     
     def get_expired_password_users_count(self):
         try:
-            import time
-            from datetime import datetime
-            
             # Obtenir la date actuelle au format LDAP GeneralizedTime
             current_date = datetime.now().strftime("%Y%m%d%H%M%SZ")
             
@@ -189,5 +166,4 @@ class LDAPDashboardMixin(LDAPBase):
         except Exception as e:
             print(f"Erreur lors du comptage des utilisateurs n'ayant jamais effectué de connexion: {str(e)}")
             return 0
-    
-    # ... autres méthodes liées au tableau de bord
+  

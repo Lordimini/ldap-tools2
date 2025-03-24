@@ -50,7 +50,15 @@ def post_creation():
         for user in all_pending_users:
             # You'll need to modify get_pending_users to include user type
             # or fetch user details here
-            user_details = ldap_model.search_user_final(user['dn'])
+            # user_details = ldap_model.search_user_final(user['dn'])
+            
+            options = {
+                'container': 'to-process',
+                }
+
+            user_details = ldap_model.get_user(user['dn'], options)
+        
+            
             if user_details and 'title' in user_details:
                 user_type = user_details['title']
                 if user_type in allowed_types:

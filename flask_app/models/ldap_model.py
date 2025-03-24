@@ -57,7 +57,7 @@ class LDAPModel(
             print(f"Authentication failed: {e}")
             return None
     
-    def get_user_dn(self, usernames):
+    def get_user_dn(self, username):
     
         try:
             # ldap_model = LDAPModel(source=ldap_source)

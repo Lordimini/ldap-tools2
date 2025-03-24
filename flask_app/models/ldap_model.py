@@ -31,6 +31,7 @@ class LDAPModel(
         self.source = source
         super().__init__(config)
         
+    @staticmethod
     def escape_filter_chars(text):
         return text.replace('\\', '\\5c').replace('*', '\\2a').replace('(', '\\28').replace(')', '\\29').replace('\0', '\\00')
 

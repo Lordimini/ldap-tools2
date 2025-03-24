@@ -31,6 +31,9 @@ class LDAPModel(
         self.source = source
         super().__init__(config)
         
+    def escape_filter_chars(text):
+        return text.replace('\\', '\\5c').replace('*', '\\2a').replace('(', '\\28').replace(')', '\\29').replace('\0', '\\00')
+
     def authenticate(self, username, password):
         # user_dn = f'cn={username},{self.actif_users_dn}'
         user_dn = self.get_user_dn (username)
@@ -66,7 +69,7 @@ class LDAPModel(
                     return None
             user_dn = None
             search_base = self.actif_users_dn
-            search_filter = f'(cn={username})'
+            search_filter = f'(cn={self.escape_filter_chars(username)})'
             conn.search(
                 search_base=search_base,
                 search_filter=search_filter,
@@ -83,7 +86,7 @@ class LDAPModel(
             return user_dn    
         
         except Exception as e:
-            print(f"Je trouve pas le user: {str(e)}")
+            print(f"Error finding user DN for username '{username}': {e}")
             return None
     
     def authenticate_admin(self, username, password):

@@ -33,7 +33,7 @@ def post_creation():
     
     # Get all pending users
     options = {
-                'container': 'all',
+                'container': 'toprocess',
                 'return_list': True
                 }
     all_pending_users = ldap_model.get_user("(objectClass=Person)", options)

@@ -61,18 +61,39 @@ def search_user():
         has_wildcard = '*' in search_term and search_type in ['fullName', 'cn']
         
         if has_wildcard:
-            # Use return_list=True for wildcard searches to get multiple results
-            search_results = ldap_model.search_user_final(search_term, search_type, return_list=True)
+            # # Use return_list=True for wildcard searches to get multiple results
+            # search_results = ldap_model.search_user_final(search_term, search_type, return_list=True)
+            
+             # REFACTORISATION #1: Recherche d'utilisateurs avec wildcard
+            # Utiliser get_user avec l'option return_list=True pour les recherches wildcard
+            options = {
+                'search_type': search_type,
+                'return_list': True,
+                'container': 'active'  # Rechercher uniquement dans les utilisateurs actifs
+            }
+            search_results = ldap_model.get_user(search_term, options)
             
             # If only one result is found, show it directly
             if len(search_results) == 1:
-                result = ldap_model.search_user_final(search_results[0]['dn'])
+                # result = ldap_model.search_user_final(search_results[0]['dn'])
+                # REFACTORISATION #2: Récupération des détails d'un utilisateur par DN
+                options = {
+                    'container': 'all'  # Rechercher dans tous les conteneurs (actif, inactif)
+                }
+                result = ldap_model.get_user(search_results[0]['dn'], options)
                 search_results = None
             elif len(search_results) == 0:
                 flash('No users found matching your criteria.', 'danger')
         else:
             # Regular search for a specific user
-            result = ldap_model.search_user_final(search_term, search_type)
+            # result = ldap_model.search_user_final(search_term, search_type)
+            
+            # REFACTORISATION #3: Recherche standard d'un utilisateur spécifique
+            options = {
+                'search_type': search_type,
+                'container': 'all'  # Rechercher dans tous les conteneurs (actif, inactif)
+            }
+            result = ldap_model.get_user(search_term, options)
             
             # Check result and set appropriate message
             if not result:
@@ -81,7 +102,11 @@ def search_user():
     # If we have a DN parameter, try to get user details
     elif request.args.get('dn'):
         user_dn = request.args.get('dn')
-        result = ldap_model.search_user_final(user_dn)
+        # result = ldap_model.search_user_final(user_dn)
+        options = {
+            'container': 'all'  # Rechercher dans tous les conteneurs (actif, inactif)
+        }
+        result = ldap_model.get_user(user_dn, options)
             
     # Render the template with appropriate data
     return render_template('search.html', 

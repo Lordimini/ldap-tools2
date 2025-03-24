@@ -86,8 +86,6 @@ def authenticate_user(username, password, ldap_source='meta'):
                 is_oci_admin_member = True
         
         # Get user details
-        # user_data = ldap_model.search_user_final(username, 'cn')
-        
         options = {
             'search_type': 'cn',
             'container': 'active'  

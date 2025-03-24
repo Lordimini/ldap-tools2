@@ -43,42 +43,42 @@ class LDAPUserMixin(LDAPUserCRUD, LDAPUserUtils):
         
     #     return self.get_user(search_param, options)
     
-    def complete_user_creation(self, user_dn, target_container, attributes, groups, set_password=False):
-        """
-        Méthode de compatibilité qui redirige vers update_user avec les options appropriées.
+    # def complete_user_creation(self, user_dn, target_container, attributes, groups, set_password=False):
+    #     """
+    #     Méthode de compatibilité qui redirige vers update_user avec les options appropriées.
         
-        Args:
-            user_dn (str): DN de l'utilisateur à compléter
-            target_container (str): Container cible pour déplacer l'utilisateur
-            attributes (dict): Attributs à définir
-            groups (list): Groupes à ajouter
-            set_password (bool): Définir un nouveau mot de passe
+    #     Args:
+    #         user_dn (str): DN de l'utilisateur à compléter
+    #         target_container (str): Container cible pour déplacer l'utilisateur
+    #         attributes (dict): Attributs à définir
+    #         groups (list): Groupes à ajouter
+    #         set_password (bool): Définir un nouveau mot de passe
             
-        Returns:
-            tuple: (bool, str) - Succès de l'opération et message de statut
-        """
-        options = {
-            'target_container': target_container,
-            'groups_to_add': groups,
-            'reset_password': set_password,
-            'is_completion': True
-        }
+    #     Returns:
+    #         tuple: (bool, str) - Succès de l'opération et message de statut
+    #     """
+    #     options = {
+    #         'target_container': target_container,
+    #         'groups_to_add': groups,
+    #         'reset_password': set_password,
+    #         'is_completion': True
+    #     }
         
-        return self.update_user(user_dn, attributes, options)
+    #     return self.update_user(user_dn, attributes, options)
     
-    def get_pending_users(self):
-        """
-        Méthode de compatibilité qui récupère les utilisateurs en attente.
+    # def get_pending_users(self):
+    #     """
+    #     Méthode de compatibilité qui récupère les utilisateurs en attente.
         
-        Returns:
-            list: Liste des utilisateurs en attente
-        """
-        options = {
-            'container': 'toprocess',
-            'return_list': True
-        }
+    #     Returns:
+    #         list: Liste des utilisateurs en attente
+    #     """
+    #     options = {
+    #         'container': 'toprocess',
+    #         'return_list': True
+    #     }
         
-        return self.get_user("(objectClass=Person)", options)
+    #     return self.get_user("(objectClass=Person)", options)
     
     # Exporter les classes individuelles pour un accès direct
     UserCRUD = LDAPUserCRUD

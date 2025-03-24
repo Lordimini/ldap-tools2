@@ -57,32 +57,29 @@ class LDAPModel(
             print(f"Authentication failed: {e}")
             return None
     
-    def get_user_dn(self, username, ldap_source='meta'):
+    def get_user_dn(self, usernames):
     
         try:
-            ldap_model = LDAPModel(source=ldap_source)
-            conn = ldap_model.authenticate_admin(ldap_model.bind_dn, ldap_model.password)
+            # ldap_model = LDAPModel(source=ldap_source)
+            conn = self.authenticate_admin(self.bind_dn, self.password)
             if not conn:
                     return None
             user_dn = None
-            
-            for search_base in self.actif_users_dn:
-                search_filter = f'(cn={username})'
-                conn.search(
-                    search_base=search_base,
-                    search_filter=search_filter,
-                    search_scope='SUBTREE',
-                    attributes=['cn']
-                )
-                if conn.entries:
+            search_base = self.actif_users_dn
+            search_filter = f'(cn={username})'
+            conn.search(
+                search_base=search_base,
+                search_filter=search_filter,
+                search_scope='SUBTREE',
+                attributes=['cn']
+            )
+            if conn.entries:
                     user_dn = conn.entries[0].entry_dn
-                    break
             conn.unbind()
             
             if not user_dn:
                 print(f"User '{username}' not found in any container")
                 return None
-            
             return user_dn    
         
         except Exception as e:

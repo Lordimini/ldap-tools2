@@ -628,15 +628,6 @@ class LDAPUserCRUD(LDAPBase):
             return False, f"Error updating user: {str(e)}"
             
     def delete_user(self, user_dn):
-        """
-        Supprime un utilisateur LDAP.
-        
-        Args:
-            user_dn (str): DN de l'utilisateur à supprimer
-            
-        Returns:
-            tuple: (bool, str) - Succès de l'opération et message de statut
-        """
         try:
             conn = self._get_connection()
             

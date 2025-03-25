@@ -1,7 +1,9 @@
 from flask import Blueprint, render_template, request, flash, session, url_for, redirect
-from flask_app.models.ldap_model import LDAPModel
-from flask_login import login_required  # Nouvel import depuis Flask-Login
+# from flask_app.models.ldap_model import LDAPModel
+from flask_login import login_required
 from flask_app.models.ldap_config_manager import LDAPConfigManager
+from flask_app.models.ldap.users import LDAPUserCRUD
+# from flask_app.models.ldap.users import LDAPUserUtils
 
 search_bp = Blueprint('search', __name__)
 
@@ -33,11 +35,14 @@ def search_user():
     session.modified = True
     
     # Create LDAP model with the appropriate source
-    ldap_model = LDAPModel(source=ldap_source)
+    # ldap_model = LDAPModel(source=ldap_source)
+    
     
     # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
     ldap_name = config.get('LDAP_name', 'META')
+    
+    user_crud = LDAPUserCRUD(config)
     
     if request.method == 'POST':
         # Get search parameters from form
@@ -68,7 +73,7 @@ def search_user():
                 'return_list': True,
                 'container': 'active'  # Rechercher uniquement dans les utilisateurs actifs
             }
-            search_results = ldap_model.get_user(search_term, options)
+            search_results = user_crud.get_user(search_term, options)
             
             # If only one result is found, show it directly
             if len(search_results) == 1:
@@ -76,7 +81,7 @@ def search_user():
                 options = {
                     'container': 'all'  # Rechercher dans tous les conteneurs (actif, inactif)
                 }
-                result = ldap_model.get_user(search_results[0]['dn'], options)
+                result = user_crud.get_user(search_results[0]['dn'], options)
                 search_results = None
             elif len(search_results) == 0:
                 flash('No users found matching your criteria.', 'danger')
@@ -88,7 +93,7 @@ def search_user():
                 'search_type': search_type,
                 'container': 'all'  # Rechercher dans tous les conteneurs (actif, inactif)
             }
-            result = ldap_model.get_user(search_term, options)
+            result = user_crud.get_user(search_term, options)
             
             # Check result and set appropriate message
             if not result:
@@ -101,7 +106,7 @@ def search_user():
         options = {
             'container': 'all'  # Rechercher dans tous les conteneurs (actif, inactif)
         }
-        result = ldap_model.get_user(user_dn, options)
+        result = user_crud.get_user(user_dn, options)
             
     # Render the template with appropriate data
     return render_template('search.html', 

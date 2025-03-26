@@ -114,21 +114,17 @@ class LDAPDashboardMixin(LDAPBase):
     def get_inactive_users_count(self, months=3):
         try:
             user_crud = self._get_user_crud()
-            
             # Calculer la date limite (timestamp en format GeneralizedTime)
             limit_date = datetime.now() - timedelta(days=30*months)
             limit_timestamp = limit_date.strftime("%Y%m%d%H%M%SZ")
             search_filter = f'(&(objectClass=Person)(loginDisabled=FALSE)(loginTime<={limit_timestamp}))'
-            
             options = {
                 'container': 'active',
                 'return_list': True,
                 'attributes': ['cn', 'loginTime']
             }
-            
             inactive_users = user_crud.get_user(search_filter, options)
             return len(inactive_users)
-            
         except Exception as e:
             print(f"Erreur lors du comptage des utilisateurs inactifs: {str(e)}")
             return 0

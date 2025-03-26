@@ -28,7 +28,7 @@ class LDAPDashboardMixin(LDAPBase):
         return LDAPUserCRUD(config)
     
     
-    def get_dashboard_stats(self, inactive_months=3):
+    def get_dashboard_stats(self, inactive_months=6):
         return {
             'total_users': self.get_total_users_count(),
             'recent_logins': self.get_recent_logins_count(),

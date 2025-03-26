@@ -7,15 +7,23 @@ from flask_app.models.ldap.users.user_crud import LDAPUserCRUD
 class LDAPDashboardMixin(LDAPBase):
     def _get_user_crud(self):
         config = {
-            'ldap_server': self.ldap_server,
-            'bind_dn': self.bind_dn,
-            'bind_password': self.password,
-            'base_dn': self.base_dn,
-            'actif_users_dn': self.actif_users_dn,
-            'out_users_dn': self.out_users_dn,
-            'all_users_dn': self.all_users_dn,
-            'template_dn': self.template_dn
-            # Omission des propriétés non nécessaires comme 'toprocess_users_dn'
+        'ldap_server': self.ldap_server,
+        'bind_dn': self.bind_dn,
+        'bind_password': self.password,
+        'base_dn': self.base_dn,
+        'actif_users_dn': self.actif_users_dn,
+        'out_users_dn': self.out_users_dn,
+        'all_users_dn': self.all_users_dn,
+        'template_dn': self.template_dn,
+        'usercreation_dn': self.usercreation_dn,
+        'admin_group_dn': self.admin_group_dn,
+        'reader_group_dn': self.reader_group_dn,
+        'oci_admin_group_dn': self.oci_admin_group_dn,
+        'oci_reader_group_dn': self.oci_reader_group_dn,
+        'role_base_dn': self.role_base_dn,
+        'resource_base_dn': self.resource_base_dn,
+        'app_base_dn': self.app_base_dn,
+        'toprocess_users_dn': self.toprocess_users_dn
         }
         return LDAPUserCRUD(config)
     

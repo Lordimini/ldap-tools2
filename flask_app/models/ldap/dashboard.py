@@ -6,12 +6,6 @@ from flask_app.models.ldap.users.user_crud import LDAPUserCRUD
 
 class LDAPDashboardMixin(LDAPBase):
     def _get_user_crud(self):
-        """
-        Crée une instance de LDAPUserCRUD avec la même configuration que ce mixin
-        
-        Returns:
-            LDAPUserCRUD: Une instance configurée
-        """
         config = {
             'ldap_server': self.ldap_server,
             'bind_dn': self.bind_dn,
@@ -22,7 +16,6 @@ class LDAPDashboardMixin(LDAPBase):
             'all_users_dn': self.all_users_dn
             # Omission des propriétés non nécessaires comme 'toprocess_users_dn'
         }
-        
         return LDAPUserCRUD(config)
     
     
@@ -96,21 +89,26 @@ class LDAPDashboardMixin(LDAPBase):
         
     def get_disabled_accounts_count(self):
         try:
-            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
+            user_crud = self._get_user_crud()
+            
+            # conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
             
             # Rechercher les utilisateurs avec loginDisabled=TRUE
-            search_base = self.actif_users_dn
+            # search_base = self.actif_users_dn
             search_filter = '(&(objectClass=Person)(loginDisabled=TRUE))'
             
-            conn.search(search_base=search_base,
-                        search_filter=search_filter,
-                        search_scope='SUBTREE',
-                        attributes=['cn'])
+            # conn.search(search_base=search_base,
+            #             search_filter=search_filter,
+            #             search_scope='SUBTREE',
+            #             attributes=['cn'])
+            options = {
+                'container': 'active',
+                'return_list': True,
+                'attributes': 'cn'
+            }
+            disabled_count = user_crud.get_user(search_filter, options)
             
-            disabled_count = len(conn.entries)
-            
-            conn.unbind()
-            return disabled_count
+            return len(disabled_count)
             
         except Exception as e:
             print(f"Erreur lors du comptage des comptes désactivés: {str(e)}")

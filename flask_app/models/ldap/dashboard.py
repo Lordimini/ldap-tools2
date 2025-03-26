@@ -135,47 +135,31 @@ class LDAPDashboardMixin(LDAPBase):
     
     def get_expired_password_users_count(self):
         try:
-            # Obtenir la date actuelle au format LDAP GeneralizedTime
+            user_crud = self._get_user_crud()
             current_date = datetime.now().strftime("%Y%m%d%H%M%SZ")
-            
-            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
-            
-            # Rechercher les utilisateurs actifs avec un mot de passe expiré
-            search_base = self.actif_users_dn
             search_filter = f'(&(objectClass=Person)(loginDisabled=FALSE)(passwordExpirationTime<={current_date}))'
-            
-            conn.search(search_base=search_base,
-                        search_filter=search_filter,
-                        search_scope='SUBTREE',
-                        attributes=['cn', 'passwordExpirationTime'])
-            
-            expired_password_users = len(conn.entries)
-            
-            conn.unbind()
-            return expired_password_users
-            
+            options = {
+                'container': 'active',
+                'return_list': True,
+                'attributes': ['cn', 'passwordExpirationTime']
+            }
+            expired_password_users = user_crud.get_user(search_filter, options)
+            return len(expired_password_users)
         except Exception as e:
             print(f"Erreur lors du comptage des utilisateurs avec mot de passe expiré: {str(e)}")
             return 0
         
     def get_never_logged_in_users_count(self):
         try:
-            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
-            
-            # Rechercher les utilisateurs actifs sans attribut loginTime
-            search_base = self.actif_users_dn
+            user_crud = self._get_user_crud()
             search_filter = '(&(objectClass=Person)(loginDisabled=FALSE)(!(loginTime=*)))'
-            
-            conn.search(search_base=search_base,
-                        search_filter=search_filter,
-                        search_scope='SUBTREE',
-                        attributes=['cn'])
-            
-            never_logged_in = len(conn.entries)
-            
-            conn.unbind()
-            return never_logged_in
-            
+            options = {
+                'container': 'active',
+                'return_list': True,
+                'attributes': 'cn'
+            }
+            never_logged_in = user_crud.get_user(search_filter, options)
+            return len(never_logged_in)
         except Exception as e:
             print(f"Erreur lors du comptage des utilisateurs n'ayant jamais effectué de connexion: {str(e)}")
             return 0

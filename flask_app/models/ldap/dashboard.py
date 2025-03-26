@@ -28,11 +28,14 @@ class LDAPDashboardMixin(LDAPBase):
         return LDAPUserCRUD(config)
     
     
-    def get_dashboard_stats(self):
+    def get_dashboard_stats(self, inactive_months=3):
         return {
             'total_users': self.get_total_users_count(),
             'recent_logins': self.get_recent_logins_count(),
-            'disabled_accounts': self.get_disabled_accounts_count()
+            'disabled_accounts': self.get_disabled_accounts_count(),
+            'inactive_users': self.get_inactive_users_count(months=inactive_months),
+            'expired_password_users': self.get_expired_password_users_count(),
+            'never_logged_in_users': self.get_never_logged_in_users_count()
         }
         
     def get_total_users_count(self):

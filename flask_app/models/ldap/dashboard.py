@@ -13,7 +13,8 @@ class LDAPDashboardMixin(LDAPBase):
             'base_dn': self.base_dn,
             'actif_users_dn': self.actif_users_dn,
             'out_users_dn': self.out_users_dn,
-            'all_users_dn': self.all_users_dn
+            'all_users_dn': self.all_users_dn,
+            'template_dn': self.template_dn
             # Omission des propriétés non nécessaires comme 'toprocess_users_dn'
         }
         return LDAPUserCRUD(config)

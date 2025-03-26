@@ -1,5 +1,4 @@
-from flask import Blueprint, render_template, request, flash, session, url_for, redirect
-# from flask_app.models.ldap_model import LDAPModel
+from flask import Blueprint, render_template, request, flash, session
 from flask_login import login_required
 from flask_app.models.ldap_config_manager import LDAPConfigManager
 from flask_app.models.ldap.users import LDAPUserCRUD
@@ -34,12 +33,9 @@ def search_user():
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Create LDAP model with the appropriate source
-    # ldap_model = LDAPModel(source=ldap_source)
-    
-    
     # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
+    
     ldap_name = config.get('LDAP_name', 'META')
     
     user_crud = LDAPUserCRUD(config)
@@ -66,20 +62,18 @@ def search_user():
         has_wildcard = '*' in search_term and search_type in ['fullName', 'cn']
         
         if has_wildcard:
-            # REFACTORISATION #1: Recherche d'utilisateurs avec wildcard
-            # Utiliser get_user avec l'option return_list=True pour les recherches wildcard
+            
             options = {
                 'search_type': search_type,
                 'return_list': True,
-                'container': 'active'  # Rechercher uniquement dans les utilisateurs actifs
+                'container': 'active'  
             }
             search_results = user_crud.get_user(search_term, options)
             
-            # If only one result is found, show it directly
             if len(search_results) == 1:
                 
                 options = {
-                    'container': 'all'  # Rechercher dans tous les conteneurs (actif, inactif)
+                    'container': 'all'  
                 }
                 result = user_crud.get_user(search_results[0]['dn'], options)
                 search_results = None
@@ -107,8 +101,7 @@ def search_user():
             'container': 'all'  # Rechercher dans tous les conteneurs (actif, inactif)
         }
         result = user_crud.get_user(user_dn, options)
-            
-    # Render the template with appropriate data
+    
     return render_template('search.html', 
                            result=result,
                            search_results=search_results,

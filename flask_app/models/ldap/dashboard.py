@@ -2,8 +2,30 @@
 from .base import LDAPBase
 from ldap3 import Connection
 from datetime import datetime, timedelta
+from flask_app.models.ldap.users.user_crud import LDAPUserCRUD
 
 class LDAPDashboardMixin(LDAPBase):
+    def _get_user_crud(self):
+        """
+        Crée une instance de LDAPUserCRUD avec la même configuration que ce mixin
+        
+        Returns:
+            LDAPUserCRUD: Une instance configurée
+        """
+        config = {
+            'ldap_server': self.ldap_server,
+            'bind_dn': self.bind_dn,
+            'bind_password': self.password,
+            'base_dn': self.base_dn,
+            'actif_users_dn': self.actif_users_dn,
+            'out_users_dn': self.out_users_dn,
+            'all_users_dn': self.all_users_dn
+            # Omission des propriétés non nécessaires comme 'toprocess_users_dn'
+        }
+        
+        return LDAPUserCRUD(config)
+    
+    
     def get_dashboard_stats(self):
         return {
             'total_users': self.get_total_users_count(),
@@ -46,26 +68,26 @@ class LDAPDashboardMixin(LDAPBase):
         
     def get_recent_logins_count(self, days=7):
         try:
-           
+            user_crud = self._get_user_crud()
+            
             # Calculer la date limite (timestamp en format GeneralizedTime)
             limit_date = datetime.now() - timedelta(days=days)
             limit_timestamp = limit_date.strftime("%Y%m%d%H%M%SZ")
             
-            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
-            
-            # Rechercher les utilisateurs avec une date de connexion récente
-            search_base = self.actif_users_dn
+            # Définir le filtre LDAP pour les connexions récentes
             search_filter = f'(&(objectClass=Person)(loginTime>={limit_timestamp}))'
+           
+            options = {
+                'container': 'active',
+                'return_list': True,
+                'attributes': ['cn', 'loginTime']
+            }
             
-            conn.search(search_base=search_base,
-                        search_filter=search_filter,
-                        search_scope='SUBTREE',
-                        attributes=['cn', 'loginTime'])
+            # Obtenir les utilisateurs avec une connexion récente
+            recent_users = user_crud.get_user(search_filter, options)
             
-            recent_logins = len(conn.entries)
-            
-            conn.unbind()
-            return recent_logins
+            # Retourner le nombre d'utilisateurs trouvés
+            return len(recent_users)
             
         except Exception as e:
             print(f"Erreur lors du comptage des connexions récentes: {str(e)}")

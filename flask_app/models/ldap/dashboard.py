@@ -99,51 +99,35 @@ class LDAPDashboardMixin(LDAPBase):
     def get_disabled_accounts_count(self):
         try:
             user_crud = self._get_user_crud()
-            
-            # conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
-            
-            # Rechercher les utilisateurs avec loginDisabled=TRUE
-            # search_base = self.actif_users_dn
             search_filter = '(&(objectClass=Person)(loginDisabled=TRUE))'
-            
-            # conn.search(search_base=search_base,
-            #             search_filter=search_filter,
-            #             search_scope='SUBTREE',
-            #             attributes=['cn'])
             options = {
                 'container': 'active',
                 'return_list': True,
                 'attributes': 'cn'
             }
             disabled_count = user_crud.get_user(search_filter, options)
-            
             return len(disabled_count)
-            
         except Exception as e:
             print(f"Erreur lors du comptage des comptes désactivés: {str(e)}")
             return 0
         
     def get_inactive_users_count(self, months=3):
         try:
+            user_crud = self._get_user_crud()
+            
             # Calculer la date limite (timestamp en format GeneralizedTime)
             limit_date = datetime.now() - timedelta(days=30*months)
             limit_timestamp = limit_date.strftime("%Y%m%d%H%M%SZ")
-            
-            conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True)
-            
-            # Rechercher les utilisateurs actifs mais avec une ancienne date de connexion
-            search_base = self.actif_users_dn
             search_filter = f'(&(objectClass=Person)(loginDisabled=FALSE)(loginTime<={limit_timestamp}))'
             
-            conn.search(search_base=search_base,
-                        search_filter=search_filter,
-                        search_scope='SUBTREE',
-                        attributes=['cn', 'loginTime'])
+            options = {
+                'container': 'active',
+                'return_list': True,
+                'attributes': ['cn', 'loginTime']
+            }
             
-            inactive_users = len(conn.entries)
-            
-            conn.unbind()
-            return inactive_users
+            inactive_users = user_crud.get_user(search_filter, options)
+            return len(inactive_users)
             
         except Exception as e:
             print(f"Erreur lors du comptage des utilisateurs inactifs: {str(e)}")

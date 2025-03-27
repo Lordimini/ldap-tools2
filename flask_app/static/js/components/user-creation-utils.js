@@ -357,6 +357,7 @@ const UserCreationUtils = {
           this.cleanupModal();
         }, 300);
       });
+      }
     })
     .catch(error => {
       console.error('Error during verification:', error);

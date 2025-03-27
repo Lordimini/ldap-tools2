@@ -452,7 +452,7 @@ const UserCreationUtils = {
     // Définir un timeout de sécurité pour garantir que l'indicateur de chargement disparait
     const loadingTimeout = setTimeout(() => {
       this.hideLoading();
-    }, 10000); // 10 secondes maximum
+    }, 2000); // 10 secondes maximum
 
     fetch(window.previewUserDetailsUrl, {
       method: 'POST',
@@ -535,7 +535,8 @@ const UserCreationUtils = {
   hideLoading: function() {
     const loadingIndicator = document.getElementById('loadingIndicator');
     if (loadingIndicator) {
-      loadingIndicator.style.display = 'none';
+      // Plutôt que simplement masquer, supprimons-le complètement du DOM
+      loadingIndicator.remove();
     }
   },
   

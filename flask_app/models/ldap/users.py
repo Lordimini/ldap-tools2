@@ -362,7 +362,7 @@ class LDAPUserMixin(LDAPBase):
             ldap_attributes['userPassword'] = [password]
             
             # Ajouter l'attribut uid (UniqueID dans ConsoleOne)
-            ldap_attributes['UniqueID'] = [cn]    
+            ldap_attributes['uid'] = [cn]    
             
             # Ensure proper objectClass values - make sure FavvAfscaUser is included
             ldap_attributes['objectClass'] = [

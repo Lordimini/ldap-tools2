@@ -311,7 +311,7 @@ class LDAPUserCRUD(LDAPBase):
             print(f"Error searching for user: {str(e)}")
             return None
     
-    def create_user(self, cn, ldap_attributes, template_details=None):
+    def create_user(self, cn, ldap_attributes, template_details=None, previewed_password=None):
         """
         Crée un nouvel utilisateur dans LDAP avec les attributs spécifiés.
         
@@ -335,14 +335,24 @@ class LDAPUserCRUD(LDAPBase):
                 has_short_name = True
             elif 'sn' in ldap_attributes and len(ldap_attributes['sn']) <= 3:
                 has_short_name = True
+            
+            # Utiliser le mot de passe prévisualisé s'il est fourni, sinon en générer un nouveau
+            if previewed_password:
+                password = previewed_password
+            else:
+                # Nous avons besoin d'une référence à LDAPUserUtils pour générer le mot de passe
+                # Cela sera résolu dans la classe wrapper (LDAPUserMixin)
+                # Pour l'instant, nous utilisons une méthode locale pour générer le mot de passe
+                # Cette méthode sera remplacée par l'appel à la méthode de LDAPUserUtils
+                from .user_utils import LDAPUserUtils
+                user_utils = LDAPUserUtils(self._get_config_for_utils())
+                password = user_utils.generate_password_from_cn(cn, short_name=has_short_name)
+        
                 
-            # Nous avons besoin d'une référence à LDAPUserUtils pour générer le mot de passe
-            # Cela sera résolu dans la classe wrapper (LDAPUserMixin)
-            # Pour l'instant, nous utilisons une méthode locale pour générer le mot de passe
-            # Cette méthode sera remplacée par l'appel à la méthode de LDAPUserUtils
-            from .user_utils import LDAPUserUtils
-            user_utils = LDAPUserUtils(self._get_config_for_utils())
-            password = user_utils.generate_password_from_cn(cn, short_name=has_short_name)
+            
+            # from .user_utils import LDAPUserUtils
+            # user_utils = LDAPUserUtils(self._get_config_for_utils())
+            # password = user_utils.generate_password_from_cn(cn, short_name=has_short_name)
         
             # Ajouter l'attribut userPassword
             ldap_attributes['userPassword'] = [password]

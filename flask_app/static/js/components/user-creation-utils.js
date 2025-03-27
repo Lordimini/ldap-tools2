@@ -505,6 +505,9 @@ const UserCreationUtils = {
     const managerInput = document.getElementById('manager');
     const userSummaryDiv = document.getElementById('userSummary');
     const ldapSource = LDAPUtils.getCurrentSource();
+    const hiddenPasswordInput = document.getElementById('hidden_password');
+
+    if (hiddenPasswordInput) hiddenPasswordInput.value = password;
     
     if (!userTypeSelect || !givenNameInput || !snInput || !emailInput || 
         !favvNatNrInput || !managerInput || !userSummaryDiv) {

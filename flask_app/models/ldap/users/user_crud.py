@@ -346,8 +346,8 @@ class LDAPUserCRUD(LDAPBase):
         
             # Ajouter l'attribut userPassword
             ldap_attributes['userPassword'] = [password]
-            # Ajouter l'attribut UniqueID
-            ldap_attributes['UniqueID'] = [cn]
+            # Ajouter l'attribut uid (UniqueID dans ConsoleOne)
+            ldap_attributes['uid'] = [cn]
             
             # Assurer les valeurs d'objectClass appropriées - s'assurer que FavvAfscaUser est inclus
             ldap_attributes['objectClass'] = [

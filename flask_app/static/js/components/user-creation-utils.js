@@ -448,6 +448,12 @@ const UserCreationUtils = {
     
     // Envoyer la requête AJAX pour prévisualiser les détails
     this.showLoading();
+
+    // Définir un timeout de sécurité pour garantir que l'indicateur de chargement disparait
+    const loadingTimeout = setTimeout(() => {
+      this.hideLoading();
+    }, 10000); // 10 secondes maximum
+
     fetch(window.previewUserDetailsUrl, {
       method: 'POST',
       headers: {
@@ -462,6 +468,9 @@ const UserCreationUtils = {
     })
     .then(response => response.json())
     .then(data => {
+      // Annuler le timeout de sécurité
+      clearTimeout(loadingTimeout);
+
       this.hideLoading();
       if (data.error) {
         alert('Erreur lors de la prévisualisation: ' + data.error);
@@ -481,6 +490,8 @@ const UserCreationUtils = {
       }
     })
     .catch(error => {
+      // Annuler le timeout de sécurité
+      clearTimeout(loadingTimeout);
       this.hideLoading();
       console.error('Error:', error);
       alert('Une erreur est survenue lors de la prévisualisation des détails utilisateur.');

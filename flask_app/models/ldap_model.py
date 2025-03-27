@@ -9,10 +9,13 @@ from flask_app.models.ldap import (
     LDAPDashboardMixin,
     LDAPTemplate
 )
+from flask_app.models.ldap.users import (LDAPUserCRUD,LDAPUserUtils)
 from ldap3 import Server, Connection, ALL
 
 class LDAPModel(
     LDAPUserMixin,
+    LDAPUserCRUD,
+    LDAPUserUtils,
     LDAPGroupMixin,
     LDAPRoleMixin,
     LDAPServiceMixin,

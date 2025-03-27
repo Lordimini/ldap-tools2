@@ -31,12 +31,13 @@ def dashboard():
     ldap_name = config.get('LDAP_name', 'META')
     
     # Récupérer les statistiques
-    stats = ldap_model.get_dashboard_stats()
+    stats = ldap_model.get_dashboard_stats(inactive_months=3, disabled_user_type=None) # changer ici si on veut les personnes qui n'ont pas fait de login depuis plus longtemps.
+    #ajouter les OCI, DERDEN, LABEXT etc
     
     disabled_accounts = stats.get('disabled_accounts', 0)
-    inactive_users = ldap_model.get_inactive_users_count(months=3)
-    expired_password_users = ldap_model.get_expired_password_users_count()
-    never_logged_in_users = ldap_model.get_never_logged_in_users_count()
+    inactive_users = stats.get('inactive_users', 0)
+    expired_password_users = stats.get('expired_password_users', 0)
+    never_logged_in_users = stats.get('never_logged_in_users', 0)
     
     # Step 5: Always include ldap_source in template context
     return render_template('dashboard.html', 

@@ -41,7 +41,10 @@ def update_user_page():
     # Check if a user_dn parameter is provided in the URL (after redirecting from search results)
     if request.args.get('user_dn'):
         user_dn = request.args.get('user_dn')
-        user_info = ldap_model.search_user_final(user_dn)
+        options = {
+            'container': 'all'  # Rechercher dans tous les conteneurs
+        }
+        user_info = ldap_model.get_user(user_dn, options)
         if user_info:
             selected_user = user_info
 
@@ -85,7 +88,12 @@ def search_user():
         config = LDAPConfigManager.get_config(ldap_source)
         ldap_name = config.get('LDAP_name', 'META')
         
-        search_results = ldap_model.search_user_final(search_term, search_type, return_list=True)
+        options = {
+            'search_type': search_type,
+            'container': 'active',
+            'return_list': True
+        }
+        search_results = ldap_model.get_user(search_term, options)
         
         return render_template('update-user.html', 
                               search_type=search_type,
@@ -127,7 +135,11 @@ def select_user():
     config = LDAPConfigManager.get_config(ldap_source)
     ldap_name = config.get('LDAP_name', 'META')
     
-    user_info = ldap_model.search_user_final(user_dn)
+    options = {
+    'container': 'all'  
+    }
+
+    user_info = ldap_model.get_user(user_dn, options)
     
     if not user_info:
         flash('User not found', 'error')

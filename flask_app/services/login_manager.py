@@ -85,14 +85,14 @@ def authenticate_user(username, password, ldap_source='meta'):
             if conn.entries:
                 is_oci_admin_member = True
         
-        # # Check STAG admin group membership
-        # if stag_admin_group_dn:
-        #     conn.search(stag_admin_group_dn, f'(member={conn.user})', search_scope='BASE')
-        #     if conn.entries:
-        #         is_stag_admin_member = True
-        
         # Get user details
-        user_data = ldap_model.search_user_final(username, 'cn')
+        options = {
+            'search_type': 'cn',
+            'container': 'active'  
+        }
+        user_data = ldap_model.get_user(username, options)
+        
+        
         if not user_data:
             return None
             

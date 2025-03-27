@@ -197,9 +197,12 @@ def create_user():
                         
                 if manager_dn:
                     ldap_attributes['FavvHierarMgrDN'] = [manager_dn]
+        # Récupérer le mot de passe prévisualisé (s'il existe)
+        previewed_password = request.form.get('password')
+        
         try:
             # Passer les détails du template à la méthode create_user
-            result, generated_password, groups_added, groups_failed = ldap_model.create_user(cn, ldap_attributes, template_details)
+            result, generated_password, groups_added, groups_failed = ldap_model.create_user(cn, ldap_attributes, template_details, previewed_password)
             if result:
                 # Afficher un message de succès avec le mot de passe généré
                 message = f"Utilisateur {sn} {given_name} (CN: {cn}) créé avec succès! Mot de passe: {generated_password}"

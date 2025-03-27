@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, request, flash, session, url_for, redirect
-from flask_app.models.ldap_model import LDAPModel
-from flask_login import login_required  # Nouvel import depuis Flask-Login
+from flask import Blueprint, render_template, request, flash, session
+from flask_login import login_required
 from flask_app.models.ldap_config_manager import LDAPConfigManager
+from flask_app.models.ldap.users import LDAPUserCRUD
+# from flask_app.models.ldap.users import LDAPUserUtils
 
 search_bp = Blueprint('search', __name__)
 
@@ -32,12 +33,12 @@ def search_user():
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Create LDAP model with the appropriate source
-    ldap_model = LDAPModel(source=ldap_source)
-    
     # Get LDAP name for display purposes
     config = LDAPConfigManager.get_config(ldap_source)
+    
     ldap_name = config.get('LDAP_name', 'META')
+    
+    user_crud = LDAPUserCRUD(config)
     
     if request.method == 'POST':
         # Get search parameters from form
@@ -61,18 +62,32 @@ def search_user():
         has_wildcard = '*' in search_term and search_type in ['fullName', 'cn']
         
         if has_wildcard:
-            # Use return_list=True for wildcard searches to get multiple results
-            search_results = ldap_model.search_user_final(search_term, search_type, return_list=True)
             
-            # If only one result is found, show it directly
+            options = {
+                'search_type': search_type,
+                'return_list': True,
+                'container': 'active'  
+            }
+            search_results = user_crud.get_user(search_term, options)
+            
             if len(search_results) == 1:
-                result = ldap_model.search_user_final(search_results[0]['dn'])
+                
+                options = {
+                    'container': 'all'  
+                }
+                result = user_crud.get_user(search_results[0]['dn'], options)
                 search_results = None
             elif len(search_results) == 0:
                 flash('No users found matching your criteria.', 'danger')
         else:
-            # Regular search for a specific user
-            result = ldap_model.search_user_final(search_term, search_type)
+            
+            
+            # REFACTORISATION #3: Recherche standard d'un utilisateur spécifique
+            options = {
+                'search_type': search_type,
+                'container': 'all'  # Rechercher dans tous les conteneurs (actif, inactif)
+            }
+            result = user_crud.get_user(search_term, options)
             
             # Check result and set appropriate message
             if not result:
@@ -81,9 +96,12 @@ def search_user():
     # If we have a DN parameter, try to get user details
     elif request.args.get('dn'):
         user_dn = request.args.get('dn')
-        result = ldap_model.search_user_final(user_dn)
-            
-    # Render the template with appropriate data
+        
+        options = {
+            'container': 'all'  # Rechercher dans tous les conteneurs (actif, inactif)
+        }
+        result = user_crud.get_user(user_dn, options)
+    
     return render_template('search.html', 
                            result=result,
                            search_results=search_results,

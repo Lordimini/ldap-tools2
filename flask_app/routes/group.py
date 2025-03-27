@@ -237,7 +237,14 @@ def search_users_for_group():
         return redirect(url_for('group.add_users_to_group', source=ldap_source))
     
     # Search active users
-    search_results = ldap_model.search_user_final(search_term, search_type, search_active_only=True, return_list=True)
+        
+    options = {
+            'search_type': search_type,
+            'container': 'active',
+            'return_list': True  
+        }
+    
+    search_results = ldap_model.get_user(search_term, options)
     
     if not search_results:
         flash('No users found matching your search criteria.', 'info')
@@ -366,7 +373,14 @@ def validate_bulk_cns():
             continue
         
         # Search for user in LDAP
-        user_info = ldap_model.search_user_final(cn, 'cn', simplified=True)
+        
+        options = {
+            'search_type': 'cn',
+            'container': 'all',
+            'simplified': True  
+        }
+    
+        user_info = ldap_model.get_user(cn, options)
         
         if user_info:
             # User found, add to valid users

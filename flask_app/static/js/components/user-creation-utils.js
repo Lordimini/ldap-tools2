@@ -315,57 +315,56 @@ const UserCreationUtils = {
           modal.show();
           
           // Ajouter un gestionnaire d'événements pour le bouton d'override administrateur s'il existe
-          const adminOverrideBtn = document.getElementById('adminOverrideBtn');
-          if (adminOverrideBtn) {
-            // Supprimer les gestionnaires d'événements précédents en clonant le bouton
-            const newAdminOverrideBtn = adminOverrideBtn.cloneNode(true);
-            adminOverrideBtn.parentNode.replaceChild(newAdminOverrideBtn, adminOverrideBtn);
-            
-            newAdminOverrideBtn.addEventListener('click', () => {
-              // Forcer la vérification à réussir
-              this.verificationState.nameVerified = true;
-              this.verificationState.favvNatNrVerified = true;
-              
-              // Mettre à jour le bouton de soumission
-              this.updateSubmitButtonText();
-              
-              // Nettoyer le DOM avant de fermer la modale
-              this.cleanupModal();
-              
-              // Fermer la modale
-              const bsModal = bootstrap.Modal.getInstance(verificationModal);
-              if (bsModal) {
-                bsModal.hide();
-              }
-              
-              // Double vérification pour s'assurer que tout est bien nettoyé
-              setTimeout(() => {
-                this.cleanupModal();
-              }, 300);
-              
-              // Afficher un message de confirmation
-              alert('Vérification contournée par l\'administrateur. Vous pouvez maintenant prévisualiser et créer l\'utilisateur.');
-            });
-          }
+      const adminOverrideBtn = document.getElementById('adminOverrideBtn');
+      if (adminOverrideBtn) {
+        // CORRECTION: Supprimer les gestionnaires d'événements précédents en clonant le bouton
+        const newAdminOverrideBtn = adminOverrideBtn.cloneNode(true);
+        adminOverrideBtn.parentNode.replaceChild(newAdminOverrideBtn, adminOverrideBtn);
+        
+        newAdminOverrideBtn.addEventListener('click', () => {
+          // Forcer la vérification à réussir
+          this.verificationState.nameVerified = true;
+          this.verificationState.favvNatNrVerified = true;
           
-          // Mettre à jour le texte du bouton de soumission
+          // Mettre à jour le bouton de soumission
           this.updateSubmitButtonText();
           
-          // Ajouter un gestionnaire pour nettoyer correctement lors de la fermeture normale
-          verificationModal.addEventListener('hidden.bs.modal', () => {
-            setTimeout(() => {
-              this.cleanupModal();
-            }, 300);
-          });
-        }
-      })
-      .catch(error => {
-        console.error('Error during verification:', error);
-        alert('Une erreur est survenue pendant la vérification. Veuillez réessayer.');
+          // Nettoyer le DOM avant de fermer la modale
+          this.cleanupModal();
+          
+          // Fermer la modale
+          const bsModal = bootstrap.Modal.getInstance(verificationModal);
+          if (bsModal) {
+            bsModal.hide();
+          }
+          
+          // Double vérification pour s'assurer que tout est bien nettoyé
+          setTimeout(() => {
+            this.cleanupModal();
+          }, 300);
+          
+          // Afficher un message de confirmation
+          alert('Vérification contournée par l\'administrateur. Vous pouvez maintenant prévisualiser et créer l\'utilisateur.');
+        });
+      }
+      
+      // Mettre à jour le texte du bouton de soumission
+      this.updateSubmitButtonText();
+      
+      // CORRECTION: Ajouter un gestionnaire pour nettoyer correctement lors de la fermeture normale
+      verificationModal.addEventListener('hidden.bs.modal', () => {
+        setTimeout(() => {
+          this.cleanupModal();
+        }, 300);
       });
-    
-    return false;
-  },
+    })
+    .catch(error => {
+      console.error('Error during verification:', error);
+      alert('Une erreur est survenue pendant la vérification. Veuillez réessayer.');
+    });
+  
+  return false;
+},
   
   /**
    * Valide le formulaire après vérification et affiche la prévisualisation
@@ -508,7 +507,7 @@ const UserCreationUtils = {
     const hiddenPasswordInput = document.getElementById('hidden_password');
 
     if (hiddenPasswordInput) hiddenPasswordInput.value = password;
-    
+
     if (!userTypeSelect || !givenNameInput || !snInput || !emailInput || 
         !favvNatNrInput || !managerInput || !userSummaryDiv) {
       return;
@@ -798,7 +797,7 @@ const UserCreationUtils = {
     // Configurer le bouton "Créer l'utilisateur" dans la modale de confirmation
     const confirmCreateBtn = document.getElementById('confirmCreate');
     if (confirmCreateBtn) {
-      // Supprimer les gestionnaires d'événements précédents en clonant le bouton
+      // CORRECTION: Supprimer les gestionnaires d'événements précédents en clonant le bouton
       const newConfirmCreateBtn = confirmCreateBtn.cloneNode(true);
       confirmCreateBtn.parentNode.replaceChild(newConfirmCreateBtn, confirmCreateBtn);
       
@@ -817,7 +816,7 @@ const UserCreationUtils = {
     // Configurer le bouton initial
     const submitButton = document.getElementById('submitBtn');
     if (submitButton) {
-      // Supprimer les gestionnaires d'événements précédents
+      // CORRECTION: Supprimer les gestionnaires d'événements précédents
       const newSubmitButton = submitButton.cloneNode(true);
       submitButton.parentNode.replaceChild(newSubmitButton, submitButton);
       
@@ -828,7 +827,7 @@ const UserCreationUtils = {
       window.submitButton = newSubmitButton;
     }
     
-    // Ajouter un gestionnaire d'événements sur les modales pour le nettoyage
+    // CORRECTION: Ajouter un gestionnaire d'événements sur les modales pour le nettoyage
     document.querySelectorAll('.modal').forEach(modal => {
       modal.addEventListener('hidden.bs.modal', () => {
         setTimeout(() => this.cleanupModal(), 300);
@@ -857,7 +856,7 @@ const UserCreationUtils = {
       const overrideInput = document.getElementById(`${item.fieldId}_override`);
       
       if (overrideBtn && field && overrideInput) {
-        // Supprimer les gestionnaires d'événements précédents
+        // CORRECTION: Supprimer les gestionnaires d'événements précédents
         const newOverrideBtn = overrideBtn.cloneNode(true);
         overrideBtn.parentNode.replaceChild(newOverrideBtn, overrideBtn);
         

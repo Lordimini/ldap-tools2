@@ -137,7 +137,9 @@ def create_user():
         
         # Obtenir les détails du modèle sélectionné
         template_details = ldap_model.get_template_details(user_type)
-
+        print(f"DEBUG - User type: {user_type}")
+        print(f"DEBUG - Template details from get_template_details: {template_details}")
+        
         # Générer un CN unique pour le nouvel utilisateur
         cn = ldap_model.generate_unique_cn(given_name, sn)
 

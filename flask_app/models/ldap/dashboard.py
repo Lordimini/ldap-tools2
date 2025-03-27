@@ -99,7 +99,7 @@ class LDAPDashboardMixin(LDAPBase):
             return 0
 
         
-    def get_disabled_accounts(self, user_type=None, return_count=True):
+    def get_disabled_accounts_count(self, user_type=None, return_count=True):
         """
         Récupère les comptes désactivés, optionnellement filtrés par type d'utilisateur.
         

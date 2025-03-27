@@ -36,7 +36,7 @@ class LDAPTemplate(LDAPBase):
                 return template_data
         
             conn.unbind()
-            return None
+            return template_data
         
         except Exception as e:
             print(f"Error retrieving template details: {str(e)}")

@@ -323,7 +323,10 @@ class LDAPUserCRUD(LDAPBase):
         Returns:
             tuple: (bool, str, int, int) - Succès, mot de passe, groupes ajoutés, groupes échoués
         """
+        
         try:
+            print("Template details:", template_details)  # Ajouter ce log
+            print("Initial LDAP attributes:", ldap_attributes)  # Ajouter ce log
             conn = self._get_connection()
 
             # Préparer le DN de l'utilisateur
@@ -347,15 +350,10 @@ class LDAPUserCRUD(LDAPBase):
                 from .user_utils import LDAPUserUtils
                 user_utils = LDAPUserUtils(self._get_config_for_utils())
                 password = user_utils.generate_password_from_cn(cn, short_name=has_short_name)
-        
-                
             
-            # from .user_utils import LDAPUserUtils
-            # user_utils = LDAPUserUtils(self._get_config_for_utils())
-            # password = user_utils.generate_password_from_cn(cn, short_name=has_short_name)
-        
             # Ajouter l'attribut userPassword
             ldap_attributes['userPassword'] = [password]
+            
             # Ajouter l'attribut uid (UniqueID dans ConsoleOne)
             ldap_attributes['uid'] = [cn]
             

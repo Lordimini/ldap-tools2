@@ -31,7 +31,8 @@ def dashboard():
     ldap_name = config.get('LDAP_name', 'META')
     
     # Récupérer les statistiques
-    stats = ldap_model.get_dashboard_stats(inactive_months=6)
+    stats = ldap_model.get_dashboard_stats(inactive_months=3, disabled_user_type='DMO') # changer ici si on veut les personnes qui n'ont pas fait de login depuis plus longtemps.
+    #ajouter les OCI, DERDEN, LABEXT etc
     
     disabled_accounts = stats.get('disabled_accounts', 0)
     inactive_users = stats.get('inactive_users', 0)

@@ -28,11 +28,11 @@ class LDAPDashboardMixin(LDAPBase):
         return LDAPUserCRUD(config)
     
     
-    def get_dashboard_stats(self, inactive_months=6):
+    def get_dashboard_stats(self, inactive_months=3, disabled_user_type=None):
         return {
             'total_users': self.get_total_users_count(),
             'recent_logins': self.get_recent_logins_count(),
-            'disabled_accounts': self.get_disabled_accounts_count(),
+            'disabled_accounts': self.get_disabled_accounts_count(user_type=disabled_user_type),
             'inactive_users': self.get_inactive_users_count(months=inactive_months),
             'expired_password_users': self.get_expired_password_users_count(),
             'never_logged_in_users': self.get_never_logged_in_users_count()
@@ -99,20 +99,43 @@ class LDAPDashboardMixin(LDAPBase):
             return 0
 
         
-    def get_disabled_accounts_count(self):
+    def get_disabled_accounts(self, user_type=None, return_count=True):
+        """
+        Récupère les comptes désactivés, optionnellement filtrés par type d'utilisateur.
+        
+        Args:
+            user_type (str, optional): Type d'utilisateur à filtrer (e.g., 'OCI')
+            return_count (bool): Si True, retourne le nombre d'utilisateurs, 
+                                sinon retourne la liste complète
+        
+        Returns:
+            int or list: Nombre ou liste des comptes désactivés selon return_count
+        """
         try:
             user_crud = self._get_user_crud()
+            
+            # Filtre de base pour les comptes désactivés
             search_filter = '(&(objectClass=Person)(loginDisabled=TRUE))'
+            
             options = {
                 'container': 'active',
                 'return_list': True,
-                'attributes': 'cn'
+                'attributes': ['cn', 'fullName', 'title', 'FavvEmployeeType']  # Attributs utiles
             }
-            disabled_count = user_crud.get_user(search_filter, options)
-            return len(disabled_count)
+            
+            # Si un type d'utilisateur est spécifié, ajoutez-le comme filtre
+            if user_type == 'DMO':
+                options['filter_attributes'] = {'FavvEmployeeType': 'CWK - DMO'}
+            
+            disabled_accounts = user_crud.get_user(search_filter, options)
+            
+            if return_count:
+                return len(disabled_accounts)
+            else:
+                return disabled_accounts
         except Exception as e:
-            print(f"Erreur lors du comptage des comptes désactivés: {str(e)}")
-            return 0
+            print(f"Erreur lors de la récupération des comptes désactivés: {str(e)}")
+            return 0 if return_count else []
         
     def get_inactive_users_count(self, months=3):
         try:

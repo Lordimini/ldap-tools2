@@ -197,7 +197,8 @@ def create_user():
                         
                 if manager_dn:
                     ldap_attributes['FavvHierarMgrDN'] = [manager_dn]
-
+        #ajouter le UniqueID pour tous les users
+        ldap_attributes['UniqueID'] = [cn]
         try:
             # Passer les détails du template à la méthode create_user
             result, generated_password, groups_added, groups_failed = ldap_model.create_user(cn, ldap_attributes, template_details)

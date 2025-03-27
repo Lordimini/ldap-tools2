@@ -213,7 +213,7 @@ def create_user():
                 if groups_failed > 0:
                     message += f" Attention: échec d'ajout à {groups_failed} groupe(s)."
                 
-                flash(message, 'success')
+                # flash(message, 'success')
                 # Rediriger vers une nouvelle page vide pour éviter la resoumission du formulaire en cas de rafraîchissement
                 return redirect(url_for('usercreation.create_user', source=ldap_source))
             else:

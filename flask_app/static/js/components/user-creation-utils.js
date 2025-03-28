@@ -724,12 +724,6 @@ const UserCreationUtils = {
    */
   fillHiddenForm: function(data) {
     console.log("Data being filled into hidden form:", data);
-    // S'assurer que le champ user_type est correctement rempli
-    const hiddenUserType = document.getElementById('hidden_user_type');
-    if (hiddenUserType) {
-      hiddenUserType.value = data.userType;
-      console.log("Set hidden_user_type to:", hiddenUserType.value);
-    }
     // Liste des champs à remplir
     const fields = [
       'user_type', 'givenName', 'sn', 'email', 'email_override',

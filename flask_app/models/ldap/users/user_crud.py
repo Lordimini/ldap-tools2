@@ -325,8 +325,6 @@ class LDAPUserCRUD(LDAPBase):
         """
         
         try:
-            print("Template details:", template_details)  # Ajouter ce log
-            print("Initial LDAP attributes:", ldap_attributes)  # Ajouter ce log
             conn = self._get_connection()
 
             # Préparer le DN de l'utilisateur

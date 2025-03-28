@@ -133,7 +133,7 @@ class LDAPUserCRUD(LDAPBase):
                 elif container == 'toprocess':
                     search_bases.append(self.toprocess_users_dn)
                 elif container == 'all':
-                    search_bases = [self.actif_users_dn, self.out_users_dn]
+                    search_bases = [self.actif_users_dn, self.out_users_dn, self.toprocess_users_dn]
             
             # Gérer les recherches de style liste
             if return_list:

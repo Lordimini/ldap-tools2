@@ -80,12 +80,9 @@ def search_user():
             elif len(search_results) == 0:
                 flash('No users found matching your criteria.', 'danger')
         else:
-            
-            
-            # REFACTORISATION #3: Recherche standard d'un utilisateur spécifique
             options = {
                 'search_type': search_type,
-                'container': 'all'  # Rechercher dans tous les conteneurs (actif, inactif)
+                'container': 'all'  
             }
             result = user_crud.get_user(search_term, options)
             
@@ -98,7 +95,7 @@ def search_user():
         user_dn = request.args.get('dn')
         
         options = {
-            'container': 'all'  # Rechercher dans tous les conteneurs (actif, inactif)
+            'container': 'all'  # Rechercher dans tous les conteneurs (actif, inactif,to-process)
         }
         result = user_crud.get_user(user_dn, options)
     

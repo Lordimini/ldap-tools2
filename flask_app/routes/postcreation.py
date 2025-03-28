@@ -132,8 +132,7 @@ def complete_user():
             'generationQualifier': request.form.get('generationQualifier', ''),
             'ou': request.form.get('ou', ''),
             'FavvEmployeeType': request.form.get('FavvEmployeeType', ''),
-            'FavvHierarMgrDN': request.form.get('manager_dn', ''),
-            'loginDisabled': 'TRUE' if request.form.get('loginDisabled') else 'FALSE'
+            'FavvHierarMgrDN': request.form.get('manager_dn', '')
         }
         
         # Get and parse selected groups from the form

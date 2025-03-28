@@ -66,7 +66,7 @@ def search_user():
             options = {
                 'search_type': search_type,
                 'return_list': True,
-                'container': 'active'  
+                'container': 'all'  
             }
             search_results = user_crud.get_user(search_term, options)
             

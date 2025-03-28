@@ -29,8 +29,6 @@ def post_creation():
     config = LDAPConfigManager.get_config(ldap_source)
     ldap_name = config.get('LDAP_name', 'META')
     
-    # pending_users = ldap_model.get_pending_users()
-    
     # Get all pending users
     options = {
                 'container': 'toprocess',

@@ -188,7 +188,7 @@
                             <!-- Langue (generationQualifier) -->
                             <div class="mb-3">
                                 <label for="generationQualifier" class="form-label">Langue:</label>
-                                <select id="generationQualifier" name="generationQualifier" class="form-select form-select-sm">
+                                <select id="generationQualifier" name="generationQualifier" class="form-select form-select-sm {% if not selected_user.generationQualifier %}border border-warning bg-warning bg-opacity-10{% endif %}">
                                     <option value="">-- Sélectionner une langue --</option>
                                     <option value="NL" {% if selected_user.generationQualifier == 'NL' %}selected{% endif %}>NL</option>
                                     <option value="FR" {% if selected_user.generationQualifier == 'FR' or selected_user.generationQualifier == 'F' %}selected{% endif %}>FR</option>
@@ -214,7 +214,7 @@
                             
                             <div class="mb-3">
                                 <label for="FavvEmployeeType" class="form-label">Employee Type:</label>
-                                <select id="FavvEmployeeType" name="FavvEmployeeType" class="form-select form-select-sm">
+                                <select id="FavvEmployeeType" name="FavvEmployeeType" class="form-select form-select-sm {% if not selected_user.FavvEmployeeType %}border border-warning bg-warning bg-opacity-10{% endif %}">
                                     <option value="">-- Select an employee type --</option>
                                     <option value="EXTERN" {% if selected_user.FavvEmployeeType == 'EXTERN' %}selected{% endif %}>EXTERN</option>
                                     <option value="CWK - DMO" {% if selected_user.FavvEmployeeType == 'CWK - DMO' %}selected{% endif %}>CWK - DMO</option>
@@ -251,13 +251,13 @@
                         </div>
                     </div>
                     
-                    <!-- Set Password Option -->
+                    <!-- Set Password Option
                     <div class="form-check mb-3">
                         <input class="form-check-input" type="checkbox" id="set_password" name="set_password" value="true">
                         <label class="form-check-label" for="set_password">
                             Set Default Password
                         </label>
-                    </div>
+                    </div> -->
                 </div>
             </form>
         </div>

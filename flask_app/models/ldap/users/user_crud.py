@@ -228,7 +228,7 @@ class LDAPUserCRUD(LDAPBase):
                     'FavvHierarMgrDN': getattr(user_attributes, 'FavvHierarMgrDN', {}).value if hasattr(user_attributes, 'FavvHierarMgrDN') else None,
                     'FavvExtDienstMgrDn': getattr(user_attributes, 'FavvExtDienstMgrDn', {}).value if hasattr(user_attributes, 'FavvExtDienstMgrDn') else None,
                     'nrfMemberOf': [],
-                    'loginDisabled': 'YES' if hasattr(user_attributes, 'loginDisabled') and user_attributes.loginDisabled.value else 'NO',
+                    'loginDisabled': user_attributes.loginDisabled.value if hasattr(user_attributes, 'loginDisabled') and user_attributes.loginDisabled else 'FALSE',
                     'loginTime': getattr(user_attributes, 'loginTime', {}).value if hasattr(user_attributes, 'loginTime') else '',
                     'passwordExpirationTime': getattr(user_attributes, 'passwordExpirationTime', {}).value if hasattr(user_attributes, 'passwordExpirationTime') else '',
                     'is_inactive': is_inactive,

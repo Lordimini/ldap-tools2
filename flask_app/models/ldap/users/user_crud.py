@@ -74,9 +74,9 @@ class LDAPUserCRUD(LDAPBase):
             else:
                 # Attributs complets pour les informations détaillées sur l'utilisateur
                 attributes = [
-                    'cn', 'favvEmployeeType', 'sn', 'givenName', 'FavvNatNr', 
+                    'cn', 'FavvEmployeeType', 'sn', 'givenName', 'FavvNatNr', 
                     'fullName', 'mail', 'workforceID', 'groupMembership', 
-                    'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 
+                    'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 'FavvExtDienstMgrDn', 
                     'nrfMemberOf', 'loginDisabled', 'loginTime', 'passwordExpirationTime',
                     'generationQualifier'
                 ]
@@ -214,7 +214,7 @@ class LDAPUserCRUD(LDAPBase):
                 result = {
                     'dn': user_dn if search_type is not None or container == 'toprocess' else search_base,
                     'CN': getattr(user_attributes, 'cn', {}).value if hasattr(user_attributes, 'cn') else '',
-                    'favvEmployeeType': getattr(user_attributes, 'favvEmployeeType', {}).value if hasattr(user_attributes, 'favvEmployeeType') else '',
+                    'FavvEmployeeType': getattr(user_attributes, 'FavvEmployeeType', {}).value if hasattr(user_attributes, 'FavvEmployeeType') else '',
                     'fullName': getattr(user_attributes, 'fullName', {}).value if hasattr(user_attributes, 'fullName') else '',
                     'mail': getattr(user_attributes, 'mail', {}).value if hasattr(user_attributes, 'mail') else '',
                     'sn': getattr(user_attributes, 'sn', {}).value if hasattr(user_attributes, 'sn') else '',
@@ -226,6 +226,7 @@ class LDAPUserCRUD(LDAPBase):
                     'groupMembership': [],
                     'DirXMLAssociations': getattr(user_attributes, 'DirXML-Associations', {}).values if hasattr(user_attributes, 'DirXML-Associations') else [],
                     'FavvHierarMgrDN': getattr(user_attributes, 'FavvHierarMgrDN', {}).value if hasattr(user_attributes, 'FavvHierarMgrDN') else None,
+                    'FavvExtDienstMgrDn': getattr(user_attributes, 'FavvExtDienstMgrDn', {}).value if hasattr(user_attributes, 'FavvExtDienstMgrDn') else None,
                     'nrfMemberOf': [],
                     'loginDisabled': 'YES' if hasattr(user_attributes, 'loginDisabled') and user_attributes.loginDisabled.value else 'NO',
                     'loginTime': getattr(user_attributes, 'loginTime', {}).value if hasattr(user_attributes, 'loginTime') else '',
@@ -239,6 +240,26 @@ class LDAPUserCRUD(LDAPBase):
                 if result['FavvHierarMgrDN']:
                     try:
                         conn.search(result['FavvHierarMgrDN'], '(objectClass=*)', attributes=['fullName'])
+                        if conn.entries:
+                            # Standardiser les noms de champs pour le manager
+                            manager_name = conn.entries[0].fullName.value
+                            result['ChefHierarchique'] = manager_name
+                            result['manager_name'] = manager_name  # Pour la compatibilité
+                        else:
+                            result['ChefHierarchique'] = 'Manager not found'
+                            result['manager_name'] = 'Manager not found'
+                    except Exception as e:
+                        error_msg = f'Error fetching manager: {str(e)}'
+                        result['ChefHierarchique'] = error_msg
+                        result['manager_name'] = error_msg
+                else:
+                    result['ChefHierarchique'] = 'No manager specified'
+                    result['manager_name'] = 'No manager specified'
+                    
+                # Récupérer le nom complet du manager
+                if result['FavvExtDienstMgrDn']:
+                    try:
+                        conn.search(result['FavvExtDienstMgrDn'], '(objectClass=*)', attributes=['fullName'])
                         if conn.entries:
                             # Standardiser les noms de champs pour le manager
                             manager_name = conn.entries[0].fullName.value
@@ -292,10 +313,11 @@ class LDAPUserCRUD(LDAPBase):
                         'FavvNatNr': result['FavvNatNr'],
                         'title': result['title'],
                         'ou': result['service'],
-                        'FavvEmployeeType': result['favvEmployeeType'],
+                        'FavvEmployeeType': result['FavvEmployeeType'],
                         'workforceID': result['workforceID'],
                         'loginDisabled': result['loginDisabled'] == 'YES',
                         'FavvHierarMgrDN': result['FavvHierarMgrDN'],
+                        'FavvExtDienstMgrDn': result['FavvExtDienstMgrDn'],
                         'ChefHierarchique': result['ChefHierarchique'],
                         'groupMembership': result['groupMembership'],
                         'generationQualifier': result['generationQualifier'],

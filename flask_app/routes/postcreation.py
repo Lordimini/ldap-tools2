@@ -71,7 +71,6 @@ def post_creation():
         if user_dn:
             options = {
                 'container': 'all',
-                'simplified': True
                 }
             selected_user = ldap_model.get_user(user_dn, options)
             
@@ -82,7 +81,6 @@ def post_creation():
         if user_dn:
             options = {
                 'container': 'all',
-                'simplified': True
                 }
             selected_user = ldap_model.get_user(user_dn, options)
     

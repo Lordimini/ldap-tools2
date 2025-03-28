@@ -214,7 +214,7 @@
                             
                             <div class="mb-3">
                                 <label for="FavvEmployeeType" class="form-label">Employee Type:</label>
-                                <select id="FavvEmployeeType" name="FavvEmployeeType" class="form-select form-select-sm {% if not selected_user.FavvEmployeeType %}border border-warning bg-warning bg-opacity-10{% endif %}">
+                                <select id="FavvEmployeeType" name="FavvEmployeeType" class="form-select form-select-sm {% if not selected_user.FavvEmployeeType %}border border-warning bg-warning {% endif %}">
                                     <option value="">-- Select an employee type --</option>
                                     <option value="EXTERN" {% if selected_user.FavvEmployeeType == 'EXTERN' %}selected{% endif %}>EXTERN</option>
                                     <option value="CWK - DMO" {% if selected_user.FavvEmployeeType == 'CWK - DMO' %}selected{% endif %}>CWK - DMO</option>

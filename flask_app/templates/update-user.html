@@ -8,17 +8,16 @@
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
 {% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <h1 class="text-center mb-4">Update User</h1>
+<div class="container-fluid mt-3">
+    <h2 class="mb-3">Update User</h2>
     
     <!-- Store the current LDAP source to be included in all forms -->
     <input type="hidden" id="current_ldap_source" name="ldap_source" value="{{ ldap_source }}">
     
-    
     <!-- Flash messages for any errors/warnings -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="alert-messages mb-4">
+            <div class="alert-messages mb-3">
                 {% for category, message in messages %}
                     <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'success' %}success{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
                         {{ message }}
@@ -29,13 +28,15 @@
         {% endif %}
     {% endwith %}
 
-    <!-- User Search Card -->
-    <div class="card p-4 shadow mb-4">
-        <h4 class="mb-3">Search Active User</h4>
-        <form method="POST" action="{{ url_for('userupdate.search_user') }}" class="mb-3">
-            <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
-            <div class="mb-3">
-                <div class="row">
+    <!-- Search Active User -->
+    <div class="card shadow mb-3">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Search Active User</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('userupdate.search_user') }}" class="mb-3">
+                <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
+                <div class="row align-items-end">
                     <div class="col-md-3">
                         <label for="search_type" class="form-label">Search By:</label>
                         <select class="form-select" id="search_type" name="search_type" required>
@@ -49,131 +50,131 @@
                         <label for="search_term" class="form-label">Search Term:</label>
                         <input type="text" class="form-control" id="search_term" name="search_term" value="{{ search_term|default('') }}" required>
                     </div>
-                    <div class="col-md-2 d-flex align-items-end">
+                    <div class="col-md-2">
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="bi bi-search"></i> Search
                         </button>
                     </div>
                 </div>
-            </div>
-        </form>
+            </form>
 
-        {% if search_results %}
-            <h5 class="mb-3">Search Results</h5>
-            <div class="table-responsive">
-                <table class="table table-hover table-dark">
-                    <thead>
-                        <tr>
-                            <th>CN</th>
-                            <th>Full Name</th>
-                            <th>Email</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in search_results %}
-                        <tr>
-                            <td>{{ user.cn }}</td>
-                            <td>{{ user.fullName }}</td>
-                            <td>{{ user.mail }}</td>
-                            <td>
-                                <a href="{{ url_for('userupdate.select_user') }}?user_dn={{ user.dn }}&source={{ ldap_source }}" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-pencil"></i> Select
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% endif %}
+            {% if search_results %}
+                <div class="table-responsive mt-2">
+                    <table class="table table-hover table-dark">
+                        <thead>
+                            <tr>
+                                <th>CN</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in search_results %}
+                            <tr>
+                                <td>{{ user.cn }}</td>
+                                <td>{{ user.fullName }}</td>
+                                <td>{{ user.mail }}</td>
+                                <td>
+                                    <a href="{{ url_for('userupdate.select_user') }}?user_dn={{ user.dn }}&source={{ ldap_source }}" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-pencil"></i> Select
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
     </div>
 
-    <!-- User Details and Modification Form (only displayed if a user is selected) -->
     {% if selected_user %}
-    <form id="userUpdateForm" method="POST" action="{{ url_for('userupdate.update_user') }}" class="card p-4 shadow">
-        <input type="hidden" name="user_dn" value="{{ selected_user.dn }}">
-        <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
-        
-        <div class="row">
-            <!-- Left Column: User Information Summary -->
-            <div class="col-md-6">
-                <h4 class="mb-3">User Information</h4>
-                <table class="table table-dark">
-                    <tbody>
-                        <tr>
-                            <td class="attribute-cell">CN</td>
-                            <td>{{ selected_user.CN }}</td>
-                        </tr>
-                        <tr>
-                            <td class="attribute-cell">Full Name</td>
-                            <td>{{ selected_user.fullName }}</td>
-                        </tr>
-                        <tr>
-                            <td class="attribute-cell">Given Name</td>
-                            <td>{{ selected_user.givenName }}</td>
-                        </tr>
-                        <tr>
-                            <td class="attribute-cell">Surname</td>
-                            <td>{{ selected_user.sn }}</td>
-                        </tr>
-                        <tr>
-                            <td class="attribute-cell">Email</td>
-                            <td>{{ selected_user.mail }}</td>
-                        </tr>
-                        {% if selected_user.FavvNatNr %}
-                        <tr>
-                            <td class="attribute-cell">National Register Number</td>
-                            <td>{{ selected_user.FavvNatNr }}</td>
-                        </tr>
-                        {% endif %}
-                        {% if selected_user.workforceID %}
-                        <tr>
-                            <td class="attribute-cell">Workforce ID</td>
-                            <td>{{ selected_user.workforceID }}</td>
-                        </tr>
-                        {% endif %}
-                        <tr>
-                            <td class="attribute-cell">Service</td>
-                            <td>{{ selected_user.service }}</td>
-                        </tr>
-                        <tr>
-                            <td class="attribute-cell">Title</td>
-                            <td>{{ selected_user.title }}</td>
-                        </tr>
-                        <tr>
-                            <td class="attribute-cell">Employee Type</td>
-                            <td>{{ selected_user.favvEmployeeType }}</td>
-                        </tr>
-                        <tr>
-                            <td class="attribute-cell">Hierarchical Manager</td>
-                            <td>{{ selected_user.ChefHierarchique }}</td>
-                        </tr>
-                        <tr {% if selected_user.loginDisabled == 'YES' %}class="table-danger"{% endif %}>
-                            <td class="attribute-cell">Login Disabled</td>
-                            <td>{{ selected_user.loginDisabled }}</td>
-                        </tr>
-                        <tr>
-                            <td class="attribute-cell">Last Login</td>
-                            <td>{{ selected_user.loginTime }}</td>
-                        </tr>
-                        <tr>
-                            <td class="attribute-cell">Password Expiration</td>
-                            <td>{{ selected_user.passwordExpirationTime }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <h5 class="mt-4">Current Group Memberships</h5>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="d-flex">
-                        <input type="text" id="group-filter" class="form-control form-control-sm me-2" placeholder="Filter groups...">
-                        <button id="sort-groups" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-sort-alpha-down"></i>
-                        </button>
+    <div class="row">
+        <!-- Left Column: User Information -->
+        <div class="col-md-3">
+            <div class="card shadow mb-3">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">User Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-dark table-sm">
+                        <tbody>
+                            <tr>
+                                <td class="attribute-cell">CN</td>
+                                <td>{{ selected_user.CN }}</td>
+                            </tr>
+                            <tr>
+                                <td class="attribute-cell">Full Name</td>
+                                <td>{{ selected_user.fullName }}</td>
+                            </tr>
+                            <tr>
+                                <td class="attribute-cell">Given Name</td>
+                                <td>{{ selected_user.givenName }}</td>
+                            </tr>
+                            <tr>
+                                <td class="attribute-cell">Surname</td>
+                                <td>{{ selected_user.sn }}</td>
+                            </tr>
+                            <tr>
+                                <td class="attribute-cell">Email</td>
+                                <td>{{ selected_user.mail }}</td>
+                            </tr>
+                            {% if selected_user.FavvNatNr %}
+                            <tr>
+                                <td class="attribute-cell">National Register Number</td>
+                                <td>{{ selected_user.FavvNatNr }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if selected_user.workforceID %}
+                            <tr>
+                                <td class="attribute-cell">Workforce ID</td>
+                                <td>{{ selected_user.workforceID }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <td class="attribute-cell">Service</td>
+                                <td>{{ selected_user.service }}</td>
+                            </tr>
+                            <tr>
+                                <td class="attribute-cell">Title</td>
+                                <td>{{ selected_user.title }}</td>
+                            </tr>
+                            <tr>
+                                <td class="attribute-cell">Employee Type</td>
+                                <td>{{ selected_user.favvEmployeeType }}</td>
+                            </tr>
+                            <tr {% if selected_user.loginDisabled == 'YES' %}class="table-danger"{% endif %}>
+                                <td class="attribute-cell">Login Disabled</td>
+                                <td>{{ selected_user.loginDisabled }}</td>
+                            </tr>
+                            <tr>
+                                <td class="attribute-cell">Last Login</td>
+                                <td>{{ selected_user.loginTime }}</td>
+                            </tr>
+                            <tr>
+                                <td class="attribute-cell">Password Expiration</td>
+                                <td>{{ selected_user.passwordExpirationTime }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Group Memberships Card -->
+            <div class="card shadow mb-3">
+                <div class="card-header bg-dark text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Current Groups</h5>
+                        <div class="d-flex">
+                            <input type="text" id="group-filter" class="form-control form-control-sm me-1" placeholder="Filter..." style="max-width: 100px;">
+                            <button id="sort-groups" class="btn btn-sm btn-outline-light">
+                                <i class="bi bi-sort-alpha-down"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="card p-3 bg-dark">
+                <div class="card-body bg-dark">
                     <div id="current_groups">
                         {% if selected_user.groupMembership %}
                             {% for group in selected_user.groupMembership %}
@@ -186,17 +187,22 @@
                         {% endif %}
                     </div>
                 </div>
-                
-                <h5 class="mt-4">Current Role Memberships</h5>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="d-flex">
-                        <input type="text" id="role-filter" class="form-control form-control-sm me-2" placeholder="Filter roles...">
-                        <button id="sort-roles" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-sort-alpha-down"></i>
-                        </button>
+            </div>
+
+            <!-- Role Memberships Card -->
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Current Roles</h5>
+                        <div class="d-flex">
+                            <input type="text" id="role-filter" class="form-control form-control-sm me-1" placeholder="Filter..." style="max-width: 100px;">
+                            <button id="sort-roles" class="btn btn-sm btn-outline-light">
+                                <i class="bi bi-sort-alpha-down"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="card p-3 bg-dark">
+                <div class="card-body bg-dark">
                     <div id="current_roles">
                         {% if selected_user.nrfMemberOf %}
                             {% for role in selected_user.nrfMemberOf %}
@@ -210,168 +216,175 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Right Column: Editable Fields -->
-            <div class="col-md-6">
-                <h4 class="mb-3">Update User Properties</h4>
-                
-                <!-- Basic Information Updates -->
-                <div class="card p-3 mb-4">
-                    <h5>Basic Information</h5>
-                    
-                    <!-- Email -->
-                    <div class="mb-3">
-                        <label for="mail" class="form-label">Email:</label>
-                        <input type="email" id="mail" name="mail" class="form-control" 
-                               value="{{ selected_user.mail }}" 
-                               placeholder="Enter email address">
-                    </div>
-                    
-                    <!-- Workforce ID -->
-                    <div class="mb-3">
-                        <label for="workforceID" class="form-label">Workforce ID:</label>
-                        <input type="text" id="workforceID" name="workforceID" class="form-control" 
-                               value="{{ selected_user.workforceID }}" 
-                               placeholder="Enter workforce ID">
-                    </div>
-                    
-                    <!-- Title -->
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Title:</label>
-                        <input type="text" id="title" name="title" class="form-control" 
-                               value="{{ selected_user.title }}" 
-                               placeholder="Enter job title">
-                    </div>
-                    
-                    <!-- Service (OU) -->
-                    <div class="mb-3">
-                        <label for="ou" class="form-label">Service (OU):</label>
-                        <input type="text" id="ou" name="ou" class="form-control" 
-                               value="{{ selected_user.service }}" 
-                               placeholder="Enter organizational unit">
-                    </div>
-                </div>
-                
-                <!-- Group Management -->
-                <div class="card p-3 mb-4">
-                    <h5>Group Management</h5>
-                    <div class="mb-3">
-                        <label class="form-label">Add to Group:</label>
-                        <div class="input-group mb-2">
-                            <input type="text" id="group_name" class="form-control" placeholder="Start typing a group name...">
-                            <button type="button" id="add_group_btn" class="btn btn-outline-primary">Add</button>
-                        </div>
-                        <div id="groups_to_add" class="mt-2">
-                            <!-- Groups to add will be displayed here -->
-                        </div>
-                        <input type="hidden" id="groups_to_add_data" name="groups_to_add" value="[]">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Remove from Group:</label>
-                        <div class="input-group mb-2">
-                            <input type="text" id="group_remove" class="form-control" placeholder="Start typing a group name...">
-                            <button type="button" id="remove_group_btn" class="btn btn-outline-danger">Remove</button>
-                        </div>
-                        <div id="groups_to_remove" class="mt-2">
-                            <!-- Groups to remove will be displayed here -->
-                        </div>
-                        <input type="hidden" id="groups_to_remove_data" name="groups_to_remove" value="[]">
-                    </div>
-                </div>
-                
-                <!-- Account Settings -->
-                <div class="card p-3 mb-4">
-                    <h5>Account Settings</h5>
-                    
-                    <!-- Hierarchical Manager -->
-                    <div class="mb-3">
-                        <label for="hierarchical_manager" class="form-label">Hierarchical Manager:</label>
-                        <input type="text" id="hierarchical_manager" name="hierarchical_manager" class="form-control" 
-                               value="{{ selected_user.ChefHierarchique }}" 
-                               placeholder="Start typing to search for managers...">
-                        <input type="hidden" id="manager_dn" name="manager_dn" value="{{ selected_user.FavvHierarMgrDN }}">
-                    </div>
-                    
-                    <!-- Employee Type -->
-                    <div class="mb-3">
-                        <label for="FavvEmployeeType" class="form-label">Employee Type:</label>
-                        <select id="FavvEmployeeType" name="FavvEmployeeType" class="form-select">
-                            <option value="">-- Select an employee type --</option>
-                            <option value="EXT" {% if selected_user.favvEmployeeType == 'EXT' %}selected{% endif %}>External</option>
-                            <option value="INT" {% if selected_user.favvEmployeeType == 'INT' %}selected{% endif %}>Internal</option>
-                            <option value="TMP" {% if selected_user.favvEmployeeType == 'TMP' %}selected{% endif %}>Temporary</option>
-                            <option value="STAG" {% if selected_user.favvEmployeeType == 'STAG' %}selected{% endif %}>Trainee</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Account Status -->
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="loginDisabled" name="loginDisabled" value="true" 
-                               {% if selected_user.loginDisabled == 'YES' %}checked{% endif %}>
-                        <label class="form-check-label" for="loginDisabled">
-                            Disable Login
-                        </label>
-                    </div>
-                    
-                    <!-- Password Options -->
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="reset_password" name="reset_password" value="true">
-                        <label class="form-check-label" for="reset_password">
-                            Reset Password to Default
-                        </label>
-                    </div>
-                    
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="expire_password" name="expire_password" value="true">
-                        <label class="form-check-label" for="expire_password">
-                            Force Password Change at Next Login
-                        </label>
-                    </div>
-                </div>
-                
-                <!-- Container Management -->
-                <div class="card p-3 mb-4">
-                    <h5>Container Management</h5>
-                    <div class="mb-3">
-                        <label for="target_container" class="form-label">Move to Container:</label>
-                        <select id="target_container" name="target_container" class="form-select">
-                            <option value="">-- Don't move user --</option>
-                            <option value="ou=users,ou=sync,o=COPY">Active Users</option>
-                            <option value="ou=out,ou=sync,o=COPY">Inactive Users (Archive)</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <!-- Audit Information -->
-                <div class="card p-3 mb-4 bg-dark">
-                    <h5>Audit Information</h5>
-                    <div class="mb-3">
-                        <label for="change_reason" class="form-label">Reason for Changes:</label>
-                        <textarea id="change_reason" name="change_reason" class="form-control" rows="2" 
-                                 placeholder="Describe why these changes are being made"></textarea>
-                    </div>
-                </div>
-                
-                <!-- Submit Button -->
-                <div class="mt-4 d-flex justify-content-between">
-                    <a href="{{ url_for('search.search_user') }}?cn={{ selected_user.CN }}&source={{ ldap_source }}" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Back to Search
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> Save Changes
-                    </button>
-                </div>
-            </div>
         </div>
-    </form>
+        
+        <!-- Middle & Right Columns: Update User Properties -->
+        <div class="col-md-9">
+            <form id="userUpdateForm" method="POST" action="{{ url_for('userupdate.update_user') }}">
+                <input type="hidden" name="user_dn" value="{{ selected_user.dn }}">
+                <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
+                
+                <div class="card shadow mb-3">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Update User Properties</h5>
+                        <div>
+                            <a href="{{ url_for('search.search_user') }}?cn={{ selected_user.CN }}&source={{ ldap_source }}" class="btn btn-sm btn-secondary me-2">
+                                <i class="bi bi-arrow-left"></i> Back to Search
+                            </a>
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-check-circle"></i> Save Changes
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Basic Information -->
+                            <div class="col-md-6">
+                                <h6 class="mb-3 border-bottom pb-2">Basic Information</h6>
+                                
+                                <div class="mb-3">
+                                    <label for="mail" class="form-label">Email:</label>
+                                    <input type="email" id="mail" name="mail" class="form-control form-control-sm" 
+                                        value="{{ selected_user.mail }}" 
+                                        placeholder="Enter email address">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="workforceID" class="form-label">Workforce ID:</label>
+                                    <input type="text" id="workforceID" name="workforceID" class="form-control form-control-sm" 
+                                        value="{{ selected_user.workforceID }}" 
+                                        placeholder="Enter workforce ID">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Title:</label>
+                                    <input type="text" id="title" name="title" class="form-control form-control-sm" 
+                                        value="{{ selected_user.title }}" 
+                                        placeholder="Enter job title">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="ou" class="form-label">Service (OU):</label>
+                                    <input type="text" id="ou" name="ou" class="form-control form-control-sm" 
+                                        value="{{ selected_user.service }}" 
+                                        placeholder="Enter organizational unit">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="hierarchical_manager" class="form-label">Hierarchical Manager:</label>
+                                    <input type="text" id="hierarchical_manager" name="hierarchical_manager" class="form-control form-control-sm" 
+                                        value="{{ selected_user.ChefHierarchique }}" 
+                                        placeholder="Start typing to search for managers...">
+                                    <input type="hidden" id="manager_dn" name="manager_dn" value="{{ selected_user.FavvHierarMgrDN }}">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="FavvEmployeeType" class="form-label">Employee Type:</label>
+                                    <select id="FavvEmployeeType" name="FavvEmployeeType" class="form-select form-select-sm">
+                                        <option value="">-- Select an employee type --</option>
+                                        <option value="EXT" {% if selected_user.favvEmployeeType == 'EXT' %}selected{% endif %}>External</option>
+                                        <option value="INT" {% if selected_user.favvEmployeeType == 'INT' %}selected{% endif %}>Internal</option>
+                                        <option value="TMP" {% if selected_user.favvEmployeeType == 'TMP' %}selected{% endif %}>Temporary</option>
+                                        <option value="STAG" {% if selected_user.favvEmployeeType == 'STAG' %}selected{% endif %}>Trainee</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Account Settings -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6 class="mb-3 border-bottom pb-2">Account Settings</h6>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="loginDisabled" name="loginDisabled" value="true" 
+                                            {% if selected_user.loginDisabled == 'YES' %}checked{% endif %}>
+                                        <label class="form-check-label" for="loginDisabled">
+                                            Disable Login
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="reset_password" name="reset_password" value="true">
+                                        <label class="form-check-label" for="reset_password">
+                                            Reset Password to Default
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="expire_password" name="expire_password" value="true">
+                                        <label class="form-check-label" for="expire_password">
+                                            Force Password Change at Next Login
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h6 class="mb-3 border-bottom pb-2">Container Management</h6>
+                                    <label for="target_container" class="form-label">Move to Container:</label>
+                                    <select id="target_container" name="target_container" class="form-select form-select-sm">
+                                        <option value="">-- Don't move user --</option>
+                                        <option value="ou=users,ou=sync,o=COPY">Active Users</option>
+                                        <option value="ou=out,ou=sync,o=COPY">Inactive Users (Archive)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h6 class="mb-3 border-bottom pb-2">Audit Information</h6>
+                                    <label for="change_reason" class="form-label">Reason for Changes:</label>
+                                    <textarea id="change_reason" name="change_reason" class="form-control form-control-sm" rows="2" 
+                                            placeholder="Describe why these changes are being made"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Group Management Cards -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card shadow mb-3">
+                            <div class="card-header bg-dark text-white">
+                                <h5 class="mb-0">Add to Groups</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="input-group input-group-sm mb-2">
+                                    <input type="text" id="group_name" class="form-control" placeholder="Start typing a group name...">
+                                    <button type="button" id="add_group_btn" class="btn btn-outline-success">Add</button>
+                                </div>
+                                <div id="groups_to_add" class="mt-2">
+                                    <!-- Groups to add will be displayed here -->
+                                </div>
+                                <input type="hidden" id="groups_to_add_data" name="groups_to_add" value="[]">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card shadow mb-3">
+                            <div class="card-header bg-dark text-white">
+                                <h5 class="mb-0">Remove from Groups</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="input-group input-group-sm mb-2">
+                                    <input type="text" id="group_remove" class="form-control" placeholder="Start typing a group name...">
+                                    <button type="button" id="remove_group_btn" class="btn btn-outline-danger">Remove</button>
+                                </div>
+                                <div id="groups_to_remove" class="mt-2">
+                                    <!-- Groups to remove will be displayed here -->
+                                </div>
+                                <input type="hidden" id="groups_to_remove_data" name="groups_to_remove" value="[]">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
     {% endif %}
 </div>
 {% endblock %}
 
 {% block scripts %}
-
-
 <!-- URLs for JavaScript -->
 <script>
     // Passing URL values and user data to JavaScript

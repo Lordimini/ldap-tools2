@@ -187,7 +187,7 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="container-tab" data-bs-toggle="tab" data-bs-target="#container" type="button" role="tab" aria-controls="container" aria-selected="false">
+                <button class="nav-link" id="protime-tab" data-bs-toggle="tab" data-bs-target="#protime" type="button" role="tab" aria-controls="protime" aria-selected="false">
                     <i class="bi bi-folder2"></i> Protime
                 </button>
             </li>
@@ -648,6 +648,31 @@
                                         <li><strong>Inactive Users</strong>: Archived accounts</li>
                                         <li><strong>To-Process</strong>: New accounts awaiting configuration</li>
                                     </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Protime Tab -->
+            <div class="tab-pane fade" id="protime" role="tabpanel" aria-labelledby="protime-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="tab-section">
+                            <h6 class="tab-section-header">Protime Settings</h6>
+                            <div class="row mb-3">
+                                <label for="ProtimeBadgeNr" class="col-md-6 col-form-label">Protime Badge Nr:</label>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" id="protimeBadgeNr" name="protimeBadgeNr" value="{{ selected_user.FavvPTBadgeNr }}">
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <label for="ProtimePinCode" class="col-md-6 col-form-label">Protime Pincode:</label>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" id="protimepincode" name="protimepincode" value="{{ selected_user.FavvPTPinCode }}">
                                 </div>
                             </div>
                         </div>

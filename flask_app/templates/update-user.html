@@ -186,6 +186,11 @@
                     <i class="bi bi-folder2"></i> Container
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="container-tab" data-bs-toggle="tab" data-bs-target="#container" type="button" role="tab" aria-controls="container" aria-selected="false">
+                    <i class="bi bi-folder2"></i> Protime
+                </button>
+            </li>
         </ul>
         
         <!-- Tabs Content -->
@@ -228,7 +233,7 @@
                             <div class="row mb-3">
                                 <label for="location" class="col-md-4 col-form-label">Location:</label>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" id="location" name="location">
+                                    <input type="text" class="form-control" id="location" name="location" value="{{ selected_user.location }}">
                                 </div>
                             </div>
                         </div>

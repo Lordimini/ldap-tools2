@@ -78,7 +78,7 @@ class LDAPUserCRUD(LDAPBase):
                     'fullName', 'mail', 'workforceID', 'groupMembership', 
                     'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 'FavvExtDienstMgrDn', 
                     'nrfMemberOf', 'loginDisabled', 'loginTime', 'passwordExpirationTime',
-                    'generationQualifier'
+                    'generationQualifier', 'FavvPTBadgeNr', 'FavvPTPinCode', 'lockedByIntruder','l'
                 ]
             
             # Déterminer les paramètres de recherche en fonction du mode
@@ -229,8 +229,12 @@ class LDAPUserCRUD(LDAPBase):
                     'FavvExtDienstMgrDn': getattr(user_attributes, 'FavvExtDienstMgrDn', {}).value if hasattr(user_attributes, 'FavvExtDienstMgrDn') else None,
                     'nrfMemberOf': [],
                     'loginDisabled': 'YES' if hasattr(user_attributes, 'loginDisabled') and user_attributes.loginDisabled.value else 'NO',
+                    'lockedByIntruder': 'YES' if hasattr(user_attributes, 'lockedByIntruder') and user_attributes.lockedByIntruder.value else 'NO',
                     'loginTime': getattr(user_attributes, 'loginTime', {}).value if hasattr(user_attributes, 'loginTime') else '',
                     'passwordExpirationTime': getattr(user_attributes, 'passwordExpirationTime', {}).value if hasattr(user_attributes, 'passwordExpirationTime') else '',
+                    'FavvPTBadgeNr': getattr(user_attributes, 'FavvPTBadgeNr', {}).value if hasattr(user_attributes, 'FavvPTBadgeNr') else '',
+                    'FavvPTPinCode': getattr(user_attributes, 'FavvPTPinCode', {}).value if hasattr(user_attributes, 'FavvPTPinCode') else '',
+                    'location': getattr(user_attributes, 'l', {}).value if hasattr(user_attributes, 'l') else '',
                     'is_inactive': is_inactive,
                     'is_pending': is_pending,
                     'generationQualifier': getattr(user_attributes, 'generationQualifier', {}).value if hasattr(user_attributes, 'generationQualifier') else ''

@@ -191,6 +191,11 @@
                     <i class="bi bi-clock"></i> Protime
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="misc-tab" data-bs-toggle="tab" data-bs-target="#misc" type="button" role="tab" aria-controls="miscellaneous" aria-selected="false">
+                    <i class="bi bi-folder1"></i> Miscellaneous
+                </button>
+            </li>
         </ul>
         
         <!-- Tabs Content -->
@@ -677,6 +682,30 @@
                                 <label for="ProtimePinCode" class="col-md-6 col-form-label">Protime Pincode:</label>
                                 <div class="col-md-6">
                                     <input type="text" class="form-control" id="protimepincode" name="protimepincode" value="{{ selected_user.FavvPTPinCode }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Miscellaneous Tab -->
+            <div class="tab-pane fade" id="misc" role="tabpanel" aria-labelledby="misc-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="tab-section">
+                            <h6 class="tab-section-header">Miscellaneous Settings</h6>
+                            <div class="row mb-3">
+                                <label for="FavvAccountStatus" class="col-md-6 col-form-label">Account Status (FavvAccountStatus):</label>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" id="accountStatus" name="accountStatus" value="{{ selected_user.FavvAccountStatus }}">
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <label for="FavvAffecStat" class="col-md-6 col-form-label">Protime Pincode:</label>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" id="affectStat" name="affectStat" value="{{ selected_user.FavvAffecStat }}">
                                 </div>
                             </div>
                         </div>

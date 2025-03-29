@@ -78,7 +78,9 @@ class LDAPUserCRUD(LDAPBase):
                     'fullName', 'mail', 'workforceID', 'groupMembership', 
                     'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 'FavvExtDienstMgrDn', 
                     'nrfMemberOf', 'loginDisabled', 'loginTime', 'passwordExpirationTime',
-                    'generationQualifier', 'FavvPTBadgeNr', 'FavvPTPinCode', 'lockedByIntruder','l', 'telephoneNumber'
+                    'generationQualifier', 'FavvPTBadgeNr', 'FavvPTPinCode', 'lockedByIntruder','l', 'telephoneNumber',
+                    
+                    'FavvAccountStatus', 'FavvAffecStat', 'FavvCorrLang', 'FavvDienstHoofd', 'FavvEmployeeSubType', 'FavvFuncMgrDn', 'FavvInDatum', 'pwmLastPwdUpdate', 'pwmResponseSet', 'roomNumber', 'FavvBuildFloor', 'mobile'
                 ]
             
             # Déterminer les paramètres de recherche en fonction du mode
@@ -238,7 +240,21 @@ class LDAPUserCRUD(LDAPBase):
                     'telephoneNumber': getattr(user_attributes, 'telephoneNumber', {}).value if hasattr(user_attributes, 'telephoneNumber') else None,
                     'is_inactive': is_inactive,
                     'is_pending': is_pending,
-                    'generationQualifier': getattr(user_attributes, 'generationQualifier', {}).value if hasattr(user_attributes, 'generationQualifier') else ''
+                    'generationQualifier': getattr(user_attributes, 'generationQualifier', {}).value if hasattr(user_attributes, 'generationQualifier') else '',
+                    'FavvAccountStatus': getattr(user_attributes, 'FavvAccountStatus', {}).value if hasattr(user_attributes, 'FavvAccountStatus') else '',
+                    'FavvAffecStat': getattr(user_attributes, 'FavvAffecStat', {}).value if hasattr(user_attributes, 'FavvAffecStat') else '',
+                    'FavvCorrLang': getattr(user_attributes, 'FavvCorrLang', {}).value if hasattr(user_attributes, 'FavvCorrLang') else '',
+                    'FavvDienstHoofd': getattr(user_attributes, 'FavvDienstHoofd', {}).value if hasattr(user_attributes, 'FavvDienstHoofd') else '',
+                    'FavvEmployeeSubType': getattr(user_attributes, 'FavvEmployeeSubType', {}).value if hasattr(user_attributes, 'FavvEmployeeSubType') else '',
+                    'FavvCorrLang': getattr(user_attributes, 'FavvCorrLang', {}).value if hasattr(user_attributes, 'FavvCorrLang') else '',
+                    'FavvFuncMgrDn': getattr(user_attributes, 'FavvFuncMgrDn', {}).value if hasattr(user_attributes, 'FavvFuncMgrDn') else '',
+                    'FavvInDatum': getattr(user_attributes, 'FavvInDatum', {}).value if hasattr(user_attributes, 'FavvInDatum') else '',
+                    'pwmLastPwdUpdate': getattr(user_attributes, 'pwmLastPwdUpdate', {}).value if hasattr(user_attributes, 'pwmLastPwdUpdate') else '',
+                    'pwmResponseSet': getattr(user_attributes, 'pwmResponseSet', {}).value if hasattr(user_attributes, 'pwmResponseSet') else None,
+                    'roomNumber': getattr(user_attributes, 'roomNumber', {}).value if hasattr(user_attributes, 'roomNumber') else '',
+                    'FavvBuildFloor': getattr(user_attributes, 'FavvBuildFloor', {}).value if hasattr(user_attributes, 'FavvBuildFloor') else '',
+                    'mobile': getattr(user_attributes, 'mobile', {}).value if hasattr(user_attributes, 'mobile') else '',
+                    
                 }
                 
                 # Récupérer le nom complet du manager

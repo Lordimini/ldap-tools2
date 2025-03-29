@@ -2,33 +2,68 @@
 
 {% block title %}Update User - LDAP Manager{% endblock %}
 {% block head %}
-{{ super() }}  <!-- Important pour conserver le contenu du bloc head du parent -->
+{{ super() }}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <!-- jQuery UI CSS -->
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+<style>
+    .nav-tabs .nav-link {
+        color: var(--text-white);
+        background-color: var(--medium-gray);
+        border-color: var(--border-color);
+        margin-right: 4px;
+        border-bottom: none;
+    }
+    .nav-tabs .nav-link:hover {
+        background-color: var(--light-gray);
+    }
+    .nav-tabs .nav-link.active {
+        color: var(--text-white);
+        background-color: var(--dark-blue);
+        border-color: var(--accent-color);
+        border-bottom: none;
+    }
+    .tab-content {
+        background-color: var(--dark-blue);
+        border: 1px solid var(--border-color);
+        border-top: none;
+        padding: 20px;
+        border-bottom-left-radius: 4px;
+        border-bottom-right-radius: 4px;
+    }
+    .user-header {
+        background-color: var(--medium-blue);
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    .user-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background-color: var(--accent-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--text-white);
+    }
+    .tab-section {
+        margin-bottom: 20px;
+    }
+    .tab-section-header {
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+</style>
 {% endblock %}
+
 {% block content %}
 <div class="container-fluid mt-3">
-    <h2 class="mb-3">Update User</h2>
-    
-    <!-- Store the current LDAP source to be included in all forms -->
-    <input type="hidden" id="current_ldap_source" name="ldap_source" value="{{ ldap_source }}">
-    
-    <!-- Flash messages for any errors/warnings -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="alert-messages mb-3">
-                {% for category, message in messages %}
-                    <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'success' %}success{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-
-    <!-- Search Active User -->
+    <!-- Search Form -->
     <div class="card shadow mb-3">
         <div class="card-header bg-dark text-white">
             <h5 class="mb-0">Search Active User</h5>
@@ -90,247 +125,532 @@
     </div>
 
     {% if selected_user %}
-    <div class="row">
-        <!-- Left Column: User Information -->
-        <div class="col-md-3">
-            <div class="card shadow mb-3">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">User Information</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-dark table-sm">
-                        <tbody>
-                            <tr>
-                                <td class="attribute-cell">CN</td>
-                                <td>{{ selected_user.CN }}</td>
-                            </tr>
-                            <tr>
-                                <td class="attribute-cell">Full Name</td>
-                                <td>{{ selected_user.fullName }}</td>
-                            </tr>
-                            <tr>
-                                <td class="attribute-cell">Given Name</td>
-                                <td>{{ selected_user.givenName }}</td>
-                            </tr>
-                            <tr>
-                                <td class="attribute-cell">Surname</td>
-                                <td>{{ selected_user.sn }}</td>
-                            </tr>
-                            <tr>
-                                <td class="attribute-cell">Email</td>
-                                <td>{{ selected_user.mail }}</td>
-                            </tr>
-                            {% if selected_user.FavvNatNr %}
-                            <tr>
-                                <td class="attribute-cell">National Register Number</td>
-                                <td>{{ selected_user.FavvNatNr }}</td>
-                            </tr>
-                            {% endif %}
-                            {% if selected_user.workforceID %}
-                            <tr>
-                                <td class="attribute-cell">Workforce ID</td>
-                                <td>{{ selected_user.workforceID }}</td>
-                            </tr>
-                            {% endif %}
-                            <tr>
-                                <td class="attribute-cell">Service</td>
-                                <td>{{ selected_user.service }}</td>
-                            </tr>
-                            <tr>
-                                <td class="attribute-cell">Title</td>
-                                <td>{{ selected_user.title }}</td>
-                            </tr>
-                            <tr>
-                                <td class="attribute-cell">Employee Type</td>
-                                <td>{{ selected_user.favvEmployeeType }}</td>
-                            </tr>
-                            <tr {% if selected_user.loginDisabled == 'YES' %}class="table-danger"{% endif %}>
-                                <td class="attribute-cell">Login Disabled</td>
-                                <td>{{ selected_user.loginDisabled }}</td>
-                            </tr>
-                            <tr>
-                                <td class="attribute-cell">Last Login</td>
-                                <td>{{ selected_user.loginTime }}</td>
-                            </tr>
-                            <tr>
-                                <td class="attribute-cell">Password Expiration</td>
-                                <td>{{ selected_user.passwordExpirationTime }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Group Memberships Card -->
-            <div class="card shadow mb-3">
-                <div class="card-header bg-dark text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Current Groups</h5>
-                        <div class="d-flex">
-                            <input type="text" id="group-filter" class="form-control form-control-sm me-1" placeholder="Filter..." style="max-width: 100px;">
-                            <button id="sort-groups" class="btn btn-sm btn-outline-light">
-                                <i class="bi bi-sort-alpha-down"></i>
-                            </button>
-                        </div>
+    <!-- User Profile and Tabs -->
+    <form id="userUpdateForm" method="POST" action="{{ url_for('userupdate.update_user') }}">
+        <input type="hidden" name="user_dn" value="{{ selected_user.dn }}">
+        <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
+        
+        <!-- User Header -->
+        <div class="user-header mb-4">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <div class="user-avatar">
+                        {{ selected_user.CN[0] | upper }}
                     </div>
                 </div>
-                <div class="card-body bg-dark">
-                    <div id="current_groups">
-                        {% if selected_user.groupMembership %}
-                            {% for group in selected_user.groupMembership %}
-                                <div class="badge bg-info me-2 mb-2 p-2 group-badge">
-                                    {{ group.cn }}
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="text-muted">No group memberships</div>
-                        {% endif %}
-                    </div>
+                <div class="col">
+                    <h3 class="text-white mb-1">{{ selected_user.fullName }}</h3>
+                    <div class="text-light">{{ selected_user.CN }} <span class="badge bg-info">{{ selected_user.favvEmployeeType }}</span></div>
+                    <div class="text-light">{{ selected_user.mail }}</div>
                 </div>
-            </div>
-
-            <!-- Role Memberships Card -->
-            <div class="card shadow">
-                <div class="card-header bg-dark text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Current Roles</h5>
-                        <div class="d-flex">
-                            <input type="text" id="role-filter" class="form-control form-control-sm me-1" placeholder="Filter..." style="max-width: 100px;">
-                            <button id="sort-roles" class="btn btn-sm btn-outline-light">
-                                <i class="bi bi-sort-alpha-down"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body bg-dark">
-                    <div id="current_roles">
-                        {% if selected_user.nrfMemberOf %}
-                            {% for role in selected_user.nrfMemberOf %}
-                                <div class="badge bg-secondary me-2 mb-2 p-2 role-badge">
-                                    {{ role.cn }} ({{ role.category }})
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="text-muted">No role memberships</div>
-                        {% endif %}
-                    </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Save Changes
+                    </button>
+                    <a href="{{ url_for('search.search_user') }}?cn={{ selected_user.CN }}&source={{ ldap_source }}" class="btn btn-secondary ms-2">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
                 </div>
             </div>
         </div>
         
-        <!-- Middle & Right Columns: Update User Properties -->
-        <div class="col-md-9">
-            <form id="userUpdateForm" method="POST" action="{{ url_for('userupdate.update_user') }}">
-                <input type="hidden" name="user_dn" value="{{ selected_user.dn }}">
-                <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
-                
-                <div class="card shadow mb-3">
-                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Update User Properties</h5>
-                        <div>
-                            <a href="{{ url_for('search.search_user') }}?cn={{ selected_user.CN }}&source={{ ldap_source }}" class="btn btn-sm btn-secondary me-2">
-                                <i class="bi bi-arrow-left"></i> Back to Search
-                            </a>
-                            <button type="submit" class="btn btn-sm btn-primary">
-                                <i class="bi bi-check-circle"></i> Save Changes
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <!-- Left Column: Account Settings -->
-                            <div class="col-md-6">
-                                <div class="mb-4">
-                                    <h6 class="mb-3 border-bottom pb-2">Account Settings</h6>
-                                    
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="loginDisabled" name="loginDisabled" value="true" 
-                                            {% if selected_user.loginDisabled == 'YES' %}checked{% endif %}>
-                                        <label class="form-check-label" for="loginDisabled">
-                                            Disable Login
-                                        </label>
-                                    </div>
-                                    
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="reset_password" name="reset_password" value="true">
-                                        <label class="form-check-label" for="reset_password">
-                                            Reset Password to Default
-                                        </label>
-                                    </div>
-                                    
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="expire_password" name="expire_password" value="true">
-                                        <label class="form-check-label" for="expire_password">
-                                            Force Password Change at Next Login
-                                        </label>
-                                    </div>
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs" id="userTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab" aria-controls="general" aria-selected="true">
+                    <i class="bi bi-person"></i> General
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="groups-tab" data-bs-toggle="tab" data-bs-target="#groups" type="button" role="tab" aria-controls="groups" aria-selected="false">
+                    <i class="bi bi-people"></i> Groups
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" aria-selected="false">
+                    <i class="bi bi-shield-lock"></i> Security
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="account-tab" data-bs-toggle="tab" data-bs-target="#account" type="button" role="tab" aria-controls="account" aria-selected="false">
+                    <i class="bi bi-key"></i> Account
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="restrictions-tab" data-bs-toggle="tab" data-bs-target="#restrictions" type="button" role="tab" aria-controls="restrictions" aria-selected="false">
+                    <i class="bi bi-lock"></i> Restrictions
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="container-tab" data-bs-toggle="tab" data-bs-target="#container" type="button" role="tab" aria-controls="container" aria-selected="false">
+                    <i class="bi bi-folder2"></i> Container
+                </button>
+            </li>
+        </ul>
+        
+        <!-- Tabs Content -->
+        <div class="tab-content" id="userTabsContent">
+            <!-- General Tab -->
+            <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="tab-section">
+                            <h6 class="tab-section-header">User Information</h6>
+                            
+                            <div class="row mb-3">
+                                <label for="givenName" class="col-md-4 col-form-label">Given Name:</label>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" id="givenName" name="givenName" value="{{ selected_user.givenName }}" readonly>
                                 </div>
                             </div>
                             
-                            <!-- Right Column: Container & Audit -->
-                            <div class="col-md-6">
-                                <div class="mb-4">
-                                    <h6 class="mb-3 border-bottom pb-2">Container Management</h6>
-                                    <label for="target_container" class="form-label">Move to Container:</label>
-                                    <select id="target_container" name="target_container" class="form-select form-select-sm">
-                                        <option value="">-- Don't move user --</option>
-                                        <option value="ou=users,ou=sync,o=COPY">Active Users</option>
-                                        <option value="ou=out,ou=sync,o=COPY">Inactive Users (Archive)</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <h6 class="mb-3 border-bottom pb-2">Audit Information</h6>
-                                    <label for="change_reason" class="form-label">Reason for Changes:</label>
-                                    <textarea id="change_reason" name="change_reason" class="form-control form-control-sm" rows="3" 
-                                            placeholder="Describe why these changes are being made"></textarea>
+                            <div class="row mb-3">
+                                <label for="surname" class="col-md-4 col-form-label">Surname:</label>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" id="surname" name="surname" value="{{ selected_user.sn }}" readonly>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Group Management Cards -->
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card shadow mb-3">
-                            <div class="card-header bg-dark text-white">
-                                <h5 class="mb-0">Add to Groups</h5>
+                            
+                            <div class="row mb-3">
+                                <label for="email" class="col-md-4 col-form-label">Email Address:</label>
+                                <div class="col-md-8">
+                                    <input type="email" class="form-control" id="email" name="mail" value="{{ selected_user.mail }}">
+                                </div>
                             </div>
-                            <div class="card-body">
-                                <div class="input-group input-group-sm mb-2">
-                                    <input type="text" id="group_name" class="form-control" placeholder="Start typing a group name...">
-                                    <button type="button" id="add_group_btn" class="btn btn-outline-success">Add</button>
+                            
+                            <div class="row mb-3">
+                                <label for="title" class="col-md-4 col-form-label">Title:</label>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" id="title" name="title" value="{{ selected_user.title }}">
                                 </div>
-                                <div id="groups_to_add" class="mt-2">
-                                    <!-- Groups to add will be displayed here -->
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <label for="location" class="col-md-4 col-form-label">Location:</label>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" id="location" name="location">
                                 </div>
-                                <input type="hidden" id="groups_to_add_data" name="groups_to_add" value="[]">
                             </div>
                         </div>
                     </div>
                     
                     <div class="col-md-6">
-                        <div class="card shadow mb-3">
-                            <div class="card-header bg-dark text-white">
-                                <h5 class="mb-0">Remove from Groups</h5>
+                        <div class="tab-section">
+                            <h6 class="tab-section-header">Organization</h6>
+                            
+                            <div class="row mb-3">
+                                <label for="ou" class="col-md-4 col-form-label">Service (OU):</label>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" id="ou" name="ou" value="{{ selected_user.service }}">
+                                </div>
                             </div>
-                            <div class="card-body">
-                                <div class="input-group input-group-sm mb-2">
-                                    <input type="text" id="group_remove" class="form-control" placeholder="Start typing a group name...">
-                                    <button type="button" id="remove_group_btn" class="btn btn-outline-danger">Remove</button>
+                            
+                            <div class="row mb-3">
+                                <label for="department" class="col-md-4 col-form-label">Department:</label>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" id="department" name="department">
                                 </div>
-                                <div id="groups_to_remove" class="mt-2">
-                                    <!-- Groups to remove will be displayed here -->
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <label for="workforceID" class="col-md-4 col-form-label">Workforce ID:</label>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" id="workforceID" name="workforceID" value="{{ selected_user.workforceID }}">
                                 </div>
-                                <input type="hidden" id="groups_to_remove_data" name="groups_to_remove" value="[]">
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <label for="employeeType" class="col-md-4 col-form-label">Employee Type:</label>
+                                <div class="col-md-8">
+                                    <select id="employeeType" name="FavvEmployeeType" class="form-select">
+                                        <option value="">-- Select an employee type --</option>
+                                        <option value="EXT" {% if selected_user.favvEmployeeType == 'EXT' %}selected{% endif %}>External</option>
+                                        <option value="INT" {% if selected_user.favvEmployeeType == 'INT' %}selected{% endif %}>Internal</option>
+                                        <option value="TMP" {% if selected_user.favvEmployeeType == 'TMP' %}selected{% endif %}>Temporary</option>
+                                        <option value="STAG" {% if selected_user.favvEmployeeType == 'STAG' %}selected{% endif %}>Trainee</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <label for="hierarchical_manager" class="col-md-4 col-form-label">Manager:</label>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" id="hierarchical_manager" name="hierarchical_manager" value="{{ selected_user.ChefHierarchique }}" placeholder="Start typing to search for managers...">
+                                    <input type="hidden" id="manager_dn" name="manager_dn" value="{{ selected_user.FavvHierarMgrDN }}">
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </form>
+            </div>
+            
+            <!-- Groups Tab -->
+            <div class="tab-pane fade" id="groups" role="tabpanel" aria-labelledby="groups-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="tab-section">
+                            <h6 class="tab-section-header">Current Group Memberships</h6>
+                            <div class="input-group mb-3">
+                                <input type="text" id="group-filter" class="form-control" placeholder="Filter groups...">
+                                <button id="sort-groups" class="btn btn-outline-secondary">
+                                    <i class="bi bi-sort-alpha-down"></i>
+                                </button>
+                            </div>
+                            <div class="card bg-dark p-3" style="max-height: 300px; overflow-y: auto;">
+                                <div id="current_groups">
+                                    {% if selected_user.groupMembership %}
+                                        {% for group in selected_user.groupMembership %}
+                                            <div class="badge bg-info me-2 mb-2 p-2 group-badge">
+                                                {{ group.cn }}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="text-muted">No group memberships</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-section mt-4">
+                            <h6 class="tab-section-header">Current Role Memberships</h6>
+                            <div class="input-group mb-3">
+                                <input type="text" id="role-filter" class="form-control" placeholder="Filter roles...">
+                                <button id="sort-roles" class="btn btn-outline-secondary">
+                                    <i class="bi bi-sort-alpha-down"></i>
+                                </button>
+                            </div>
+                            <div class="card bg-dark p-3" style="max-height: 300px; overflow-y: auto;">
+                                <div id="current_roles">
+                                    {% if selected_user.nrfMemberOf %}
+                                        {% for role in selected_user.nrfMemberOf %}
+                                            <div class="badge bg-secondary me-2 mb-2 p-2 role-badge">
+                                                {{ role.cn }} ({{ role.category }})
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="text-muted">No role memberships</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="tab-section">
+                            <h6 class="tab-section-header">Add to Groups</h6>
+                            <div class="input-group mb-3">
+                                <input type="text" id="group_name" class="form-control" placeholder="Start typing a group name...">
+                                <button type="button" id="add_group_btn" class="btn btn-outline-success">Add</button>
+                            </div>
+                            <div class="card bg-dark p-3" style="min-height: 100px;">
+                                <div id="groups_to_add">
+                                    <!-- Groups to add will be displayed here -->
+                                </div>
+                            </div>
+                            <input type="hidden" id="groups_to_add_data" name="groups_to_add" value="[]">
+                        </div>
+                        
+                        <div class="tab-section mt-4">
+                            <h6 class="tab-section-header">Remove from Groups</h6>
+                            <div class="input-group mb-3">
+                                <input type="text" id="group_remove" class="form-control" placeholder="Start typing a group name...">
+                                <button type="button" id="remove_group_btn" class="btn btn-outline-danger">Remove</button>
+                            </div>
+                            <div class="card bg-dark p-3" style="min-height: 100px;">
+                                <div id="groups_to_remove">
+                                    <!-- Groups to remove will be displayed here -->
+                                </div>
+                            </div>
+                            <input type="hidden" id="groups_to_remove_data" name="groups_to_remove" value="[]">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Security Tab -->
+            <div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="tab-section">
+                            <h6 class="tab-section-header">Security Settings</h6>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="loginDisabled" name="loginDisabled" value="true" 
+                                        {% if selected_user.loginDisabled == 'YES' %}checked{% endif %}>
+                                    <label class="form-check-label" for="loginDisabled">
+                                        Disable Login
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="requireUniquePassword" name="requireUniquePassword">
+                                    <label class="form-check-label" for="requireUniquePassword">
+                                        Require Unique Passwords
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <label for="passwordExpiration" class="col-md-6 col-form-label">Password Expiration:</label>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" id="passwordExpiration" name="passwordExpiration" value="{{ selected_user.passwordExpirationTime }}" readonly>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <label for="lastLogin" class="col-md-6 col-form-label">Last Login:</label>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" id="lastLogin" name="lastLogin" value="{{ selected_user.loginTime }}" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="tab-section">
+                            <h6 class="tab-section-header">Password Management</h6>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="reset_password" name="reset_password" value="true">
+                                    <label class="form-check-label" for="reset_password">
+                                        Reset Password to Default
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="expire_password" name="expire_password" value="true">
+                                    <label class="form-check-label" for="expire_password">
+                                        Force Password Change at Next Login
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="allowUserChangePassword" name="allowUserChangePassword" checked>
+                                    <label class="form-check-label" for="allowUserChangePassword">
+                                        Allow User to Change Password
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <label for="minPasswordLength" class="col-md-6 col-form-label">Minimum Password Length:</label>
+                                <div class="col-md-6">
+                                    <input type="number" class="form-control" id="minPasswordLength" name="minPasswordLength" value="8">
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <label for="graceLogins" class="col-md-6 col-form-label">Grace Logins:</label>
+                                <div class="col-md-6">
+                                    <input type="number" class="form-control" id="graceLogins" name="graceLogins" value="5">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Account Tab -->
+            <div class="tab-pane fade" id="account" role="tabpanel" aria-labelledby="account-tab">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="tab-section">
+                            <h6 class="tab-section-header">Account Information</h6>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-dark">
+                                    <tbody>
+                                        <tr>
+                                            <td width="30%">Common Name (CN):</td>
+                                            <td>{{ selected_user.CN }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Distinguished Name (DN):</td>
+                                            <td><code>{{ selected_user.dn }}</code></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Created On:</td>
+                                            <td>[Creation Date Not Available]</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Modified On:</td>
+                                            <td>[Last Modified Date Not Available]</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Last Login:</td>
+                                            <td>{{ selected_user.loginTime }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Account Status:</td>
+                                            <td>
+                                                {% if selected_user.loginDisabled == 'YES' %}
+                                                <span class="badge bg-danger">Disabled</span>
+                                                {% else %}
+                                                <span class="badge bg-success">Active</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Password Expiration:</td>
+                                            <td>{{ selected_user.passwordExpirationTime }}</td>
+                                        </tr>
+                                        {% if selected_user.FavvNatNr %}
+                                        <tr>
+                                            <td>National Register Number:</td>
+                                            <td>{{ selected_user.FavvNatNr }}</td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Restrictions Tab -->
+            <div class="tab-pane fade" id="restrictions" role="tabpanel" aria-labelledby="restrictions-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="tab-section">
+                            <h6 class="tab-section-header">Login Restrictions</h6>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="limitConcurrentConnections" name="limitConcurrentConnections">
+                                    <label class="form-check-label" for="limitConcurrentConnections">
+                                        Limit Concurrent Connections
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <label for="maxConnections" class="col-md-6 col-form-label">Maximum Connections:</label>
+                                <div class="col-md-6">
+                                    <input type="number" class="form-control" id="maxConnections" name="maxConnections" value="2" disabled>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="limitStationRestrictions" name="limitStationRestrictions">
+                                    <label class="form-check-label" for="limitStationRestrictions">
+                                        Limit Station Restrictions
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="allowedStations" class="form-label">Allowed Stations:</label>
+                                <textarea class="form-control" id="allowedStations" name="allowedStations" rows="3" disabled></textarea>
+                                <small class="form-text text-muted">Enter one station per line</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="tab-section">
+                            <h6 class="tab-section-header">Time Restrictions</h6>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="enableTimeRestrictions" name="enableTimeRestrictions">
+                                    <label class="form-check-label" for="enableTimeRestrictions">
+                                        Enable Time Restrictions
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-dark p-3 mb-3">
+                                <div class="time-restriction-grid" style="pointer-events: none; opacity: 0.6;">
+                                    <!-- This would be a grid of checkboxes for time slots -->
+                                    <p class="text-center mb-0">Time restriction grid not implemented</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                                        Monday-Friday 8am-6pm
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                                        All Hours
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                                        No Access
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Container Tab -->
+            <div class="tab-pane fade" id="container" role="tabpanel" aria-labelledby="container-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="tab-section">
+                            <h6 class="tab-section-header">Container Management</h6>
+                            
+                            <div class="mb-3">
+                                <label for="current_container" class="form-label">Current Container:</label>
+                                <input type="text" class="form-control" id="current_container" value="{{ selected_user.dn.split(',', 1)[1] }}" readonly>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="target_container" class="form-label">Move to Container:</label>
+                                <select id="target_container" name="target_container" class="form-select">
+                                    <option value="">-- Don't move user --</option>
+                                    <option value="ou=users,ou=sync,o=COPY">Active Users</option>
+                                    <option value="ou=out,ou=sync,o=COPY">Inactive Users (Archive)</option>
+                                    <option value="ou=to-process,ou=sync,o=COPY">To-Process</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="change_reason" class="form-label">Reason for Changes:</label>
+                                <textarea id="change_reason" name="change_reason" class="form-control" rows="4" 
+                                        placeholder="Describe why these changes are being made"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="tab-section">
+                            <h6 class="tab-section-header">Container Information</h6>
+                            
+                            <div class="mb-3">
+                                <p class="text-muted mb-2">A container represents a location in the LDAP directory tree. Moving a user to a different container can change their access rights and visibility.</p>
+                                
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Information:</strong> Moving a user will change their Distinguished Name (DN).
+                                </div>
+                                
+                                <div class="card bg-dark p-3">
+                                    <div class="mb-2"><strong>Common Containers:</strong></div>
+                                    <ul class="mb-0">
+                                        <li><strong>Active Users</strong>: Normal active user accounts</li>
+                                        <li><strong>Inactive Users</strong>: Archived accounts</li>
+                                        <li><strong>To-Process</strong>: New accounts awaiting configuration</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
+    </form>
     {% endif %}
 </div>
 {% endblock %}

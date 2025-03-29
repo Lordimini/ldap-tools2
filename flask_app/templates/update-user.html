@@ -269,10 +269,14 @@
                                 <div class="col-md-8">
                                     <select id="employeeType" name="FavvEmployeeType" class="form-select">
                                         <option value="">-- Select an employee type --</option>
-                                        <option value="EXT" {% if selected_user.favvEmployeeType == 'EXT' %}selected{% endif %}>External</option>
-                                        <option value="INT" {% if selected_user.favvEmployeeType == 'INT' %}selected{% endif %}>Internal</option>
-                                        <option value="TMP" {% if selected_user.favvEmployeeType == 'TMP' %}selected{% endif %}>Temporary</option>
-                                        <option value="STAG" {% if selected_user.favvEmployeeType == 'STAG' %}selected{% endif %}>Trainee</option>
+                                        <option value="EXTERN" {% if selected_user.FavvEmployeeType == 'EXTERN' %}selected{% endif %}>EXTERN</option>
+                                        <option value="CWK - DMO" {% if selected_user.FavvEmployeeType == 'CWK - DMO' %}selected{% endif %}>CWK - DMO</option>
+                                        <option value="EMP - Employee" {% if selected_user.FavvEmployeeType == 'EMP - Employee' %}selected{% endif %}>EMP - Employee</option>
+                                        <option value="EMP - Andere" {% if selected_user.FavvEmployeeType == 'EMP - Andere' %}selected{% endif %}>EMP - Andere</option>
+                                        <option value="EMP - STAG" {% if selected_user.FavvEmployeeType == 'EMP - STAG' %}selected{% endif %}>EMP - STAG</option>
+                                        {% if selected_user.FavvEmployeeType and selected_user.FavvEmployeeType not in ['EXTERN', 'CWK - DMO', 'EMP - Employee', 'EMP - Andere', 'EMP - STAG'] %}
+                                        <option value="{{ selected_user.FavvEmployeeType }}" selected>{{ selected_user.FavvEmployeeType }}</option>
+                                        {% endif %}
                                     </select>
                                 </div>
                             </div>

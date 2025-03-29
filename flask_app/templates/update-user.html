@@ -251,9 +251,9 @@
                             </div>
                             
                             <div class="row mb-3">
-                                <label for="department" class="col-md-4 col-form-label">Department:</label>
+                                <label for="department" class="col-md-4 col-form-label">Telephone Number:</label>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" id="department" name="department">
+                                    <input type="text" class="form-control" id="telephoneNumber" name="telephoneNumber" value="{{ selected_user.telephoneNumber }}">
                                 </div>
                             </div>
                             
@@ -268,7 +268,7 @@
                                 <label for="employeeType" class="col-md-4 col-form-label">Employee Type:</label>
                                 <div class="col-md-8">
                                     <select id="employeeType" name="FavvEmployeeType" class="form-select">
-                                        <option value="">-- Select an employee type - test --</option>
+                                        <option value="">-- Select an employee type --</option>
                                         <option value="EXTERN" {% if selected_user.FavvEmployeeType == 'EXTERN' %}selected{% endif %}>EXTERN</option>
                                         <option value="CWK - DMO" {% if selected_user.FavvEmployeeType == 'CWK - DMO' %}selected{% endif %}>CWK - DMO</option>
                                         <option value="EMP - Employee" {% if selected_user.FavvEmployeeType == 'EMP - Employee' %}selected{% endif %}>EMP - Employee</option>

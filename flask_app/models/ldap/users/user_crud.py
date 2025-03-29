@@ -78,7 +78,7 @@ class LDAPUserCRUD(LDAPBase):
                     'fullName', 'mail', 'workforceID', 'groupMembership', 
                     'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 'FavvExtDienstMgrDn', 
                     'nrfMemberOf', 'loginDisabled', 'loginTime', 'passwordExpirationTime',
-                    'generationQualifier', 'FavvPTBadgeNr', 'FavvPTPinCode', 'lockedByIntruder','l'
+                    'generationQualifier', 'FavvPTBadgeNr', 'FavvPTPinCode', 'lockedByIntruder','l', 'telephoneNumber'
                 ]
             
             # Déterminer les paramètres de recherche en fonction du mode
@@ -235,6 +235,7 @@ class LDAPUserCRUD(LDAPBase):
                     'FavvPTBadgeNr': getattr(user_attributes, 'FavvPTBadgeNr', {}).value if hasattr(user_attributes, 'FavvPTBadgeNr') else '',
                     'FavvPTPinCode': getattr(user_attributes, 'FavvPTPinCode', {}).value if hasattr(user_attributes, 'FavvPTPinCode') else '',
                     'location': getattr(user_attributes, 'l', {}).value if hasattr(user_attributes, 'l') else '',
+                    'telephoneNumber': getattr(user_attributes, 'telephoneNumber', {}).value if hasattr(user_attributes, 'telephoneNumber') else None,
                     'is_inactive': is_inactive,
                     'is_pending': is_pending,
                     'generationQualifier': getattr(user_attributes, 'generationQualifier', {}).value if hasattr(user_attributes, 'generationQualifier') else ''

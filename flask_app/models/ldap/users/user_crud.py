@@ -237,6 +237,7 @@ class LDAPUserCRUD(LDAPBase):
                 }
                 
                 # Récupérer le nom complet du manager
+                # Ensuite dans la section qui récupère le nom du manager:
                 if result['FavvHierarMgrDN']:
                     try:
                         conn.search(result['FavvHierarMgrDN'], '(objectClass=*)', attributes=['fullName'])
@@ -252,29 +253,23 @@ class LDAPUserCRUD(LDAPBase):
                         error_msg = f'Error fetching manager: {str(e)}'
                         result['ChefHierarchique'] = error_msg
                         result['manager_name'] = error_msg
-                else:
-                    result['ChefHierarchique'] = 'No manager specified'
-                    result['manager_name'] = 'No manager specified'
-                    
-                # Récupérer le nom complet du manager
+
+                # De même pour le FavvExtDienstMgrDn
                 if result['FavvExtDienstMgrDn']:
                     try:
                         conn.search(result['FavvExtDienstMgrDn'], '(objectClass=*)', attributes=['fullName'])
                         if conn.entries:
-                            # Standardiser les noms de champs pour le manager
-                            manager_name = conn.entries[0].fullName.value
-                            result['ChefHierarchique'] = manager_name
-                            result['manager_name'] = manager_name  # Pour la compatibilité
+                            # Ne pas écraser ChefHierarchique s'il a déjà été défini par FavvHierarMgrDN
+                            service_manager_name = conn.entries[0].fullName.value
+                            if result['ChefHierarchique'] == 'No manager specified' or result['ChefHierarchique'] == 'Manager not found':
+                                result['ChefHierarchique'] = service_manager_name
+                            # Ajouter une clé spécifique pour le manager de service
+                            result['ServiceManager'] = service_manager_name
                         else:
-                            result['ChefHierarchique'] = 'Manager not found'
-                            result['manager_name'] = 'Manager not found'
+                            result['ServiceManager'] = 'Service Manager not found'
                     except Exception as e:
-                        error_msg = f'Error fetching manager: {str(e)}'
-                        result['ChefHierarchique'] = error_msg
-                        result['manager_name'] = error_msg
-                else:
-                    result['ChefHierarchique'] = 'No manager specified'
-                    result['manager_name'] = 'No manager specified'
+                        error_msg = f'Error fetching service manager: {str(e)}'
+                        result['ServiceManager'] = error_msg
                 
                 # Récupérer les groupes (groupMembership)
                 if hasattr(user_attributes, 'groupMembership') and user_attributes.groupMembership:

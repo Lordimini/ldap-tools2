@@ -25,9 +25,9 @@ def update_user_page():
     session['ldap_source'] = ldap_source
     session.modified = True
     
-    # Render the form initially without any data
-    search_type = None
-    search_term = None
+    # Render the form initially without any data - use empty strings instead of None
+    search_type = ""
+    search_term = ""
     search_results = None
     selected_user = None
 

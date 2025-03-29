@@ -238,61 +238,9 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <!-- Basic Information -->
+                            <!-- Left Column: Account Settings -->
                             <div class="col-md-6">
-                                <h6 class="mb-3 border-bottom pb-2">Basic Information</h6>
-                                
-                                <div class="mb-3">
-                                    <label for="mail" class="form-label">Email:</label>
-                                    <input type="email" id="mail" name="mail" class="form-control form-control-sm" 
-                                        value="{{ selected_user.mail }}" 
-                                        placeholder="Enter email address">
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="workforceID" class="form-label">Workforce ID:</label>
-                                    <input type="text" id="workforceID" name="workforceID" class="form-control form-control-sm" 
-                                        value="{{ selected_user.workforceID }}" 
-                                        placeholder="Enter workforce ID">
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="title" class="form-label">Title:</label>
-                                    <input type="text" id="title" name="title" class="form-control form-control-sm" 
-                                        value="{{ selected_user.title }}" 
-                                        placeholder="Enter job title">
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="ou" class="form-label">Service (OU):</label>
-                                    <input type="text" id="ou" name="ou" class="form-control form-control-sm" 
-                                        value="{{ selected_user.service }}" 
-                                        placeholder="Enter organizational unit">
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="hierarchical_manager" class="form-label">Hierarchical Manager:</label>
-                                    <input type="text" id="hierarchical_manager" name="hierarchical_manager" class="form-control form-control-sm" 
-                                        value="{{ selected_user.ChefHierarchique }}" 
-                                        placeholder="Start typing to search for managers...">
-                                    <input type="hidden" id="manager_dn" name="manager_dn" value="{{ selected_user.FavvHierarMgrDN }}">
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="FavvEmployeeType" class="form-label">Employee Type:</label>
-                                    <select id="FavvEmployeeType" name="FavvEmployeeType" class="form-select form-select-sm">
-                                        <option value="">-- Select an employee type --</option>
-                                        <option value="EXT" {% if selected_user.favvEmployeeType == 'EXT' %}selected{% endif %}>External</option>
-                                        <option value="INT" {% if selected_user.favvEmployeeType == 'INT' %}selected{% endif %}>Internal</option>
-                                        <option value="TMP" {% if selected_user.favvEmployeeType == 'TMP' %}selected{% endif %}>Temporary</option>
-                                        <option value="STAG" {% if selected_user.favvEmployeeType == 'STAG' %}selected{% endif %}>Trainee</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <!-- Account Settings -->
-                            <div class="col-md-6">
-                                <div class="mb-3">
+                                <div class="mb-4">
                                     <h6 class="mb-3 border-bottom pb-2">Account Settings</h6>
                                     
                                     <div class="form-check mb-3">
@@ -317,8 +265,11 @@
                                         </label>
                                     </div>
                                 </div>
-                                
-                                <div class="mb-3">
+                            </div>
+                            
+                            <!-- Right Column: Container & Audit -->
+                            <div class="col-md-6">
+                                <div class="mb-4">
                                     <h6 class="mb-3 border-bottom pb-2">Container Management</h6>
                                     <label for="target_container" class="form-label">Move to Container:</label>
                                     <select id="target_container" name="target_container" class="form-select form-select-sm">
@@ -331,7 +282,7 @@
                                 <div class="mb-3">
                                     <h6 class="mb-3 border-bottom pb-2">Audit Information</h6>
                                     <label for="change_reason" class="form-label">Reason for Changes:</label>
-                                    <textarea id="change_reason" name="change_reason" class="form-control form-control-sm" rows="2" 
+                                    <textarea id="change_reason" name="change_reason" class="form-control form-control-sm" rows="3" 
                                             placeholder="Describe why these changes are being made"></textarea>
                                 </div>
                             </div>

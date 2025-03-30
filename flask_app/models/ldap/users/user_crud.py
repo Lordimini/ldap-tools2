@@ -79,7 +79,6 @@ class LDAPUserCRUD(LDAPBase):
                     'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 'FavvExtDienstMgrDn', 
                     'nrfMemberOf', 'loginDisabled', 'loginTime', 'passwordExpirationTime',
                     'generationQualifier', 'FavvPTBadgeNr', 'FavvPTPinCode', 'lockedByIntruder','l', 'telephoneNumber',
-                    
                     'FavvAccountStatus', 'FavvAffecStat', 'FavvCorrLang', 'FavvDienstHoofd', 'FavvEmployeeSubType', 'FavvFuncMgrDn', 'FavvInDatum', 'pwmLastPwdUpdate', 'pwmResponseSet', 'roomNumber', 'FavvBuildFloor', 'mobile'
                 ]
             
@@ -275,6 +274,20 @@ class LDAPUserCRUD(LDAPBase):
                         result['ChefHierarchique'] = error_msg
                         result['manager_name'] = error_msg
 
+                # Récupérer le nom complet du chef fonctionnel
+                if result['FavvFuncMgrDn']:
+                    try:
+                        conn.search(result['FavvFuncMgrDn'], '(objectClass=*)', attributes=['fullName'])
+                        if conn.entries:
+                            # Standardiser les noms de champs pour le manager
+                            func_manager_name = conn.entries[0].fullName.value
+                            result['ChefFonctionnel'] = func_manager_name
+                        else:
+                            result['ChefFonctionnel'] = 'func chef not found'
+                    except Exception as e:
+                        error_msg = f'Error fetching func chef: {str(e)}'
+                        result['ChefFonctionnel'] = error_msg
+                
                 # De même pour le FavvExtDienstMgrDn
                 if result['FavvExtDienstMgrDn']:
                     try:

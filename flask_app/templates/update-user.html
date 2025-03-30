@@ -224,21 +224,21 @@
                             <div class="row mb-3">
                                 <label for="email" class="col-md-4 col-form-label">Email Address:</label>
                                 <div class="col-md-8">
-                                    <input type="email" class="form-control" id="email" name="mail" value="{{ selected_user.mail }}">
+                                    <input type="email" class="form-control" id="email" name="mail" value="{{ selected_user.mail }}" readonly>
                                 </div>
                             </div>
                             
                             <div class="row mb-3">
                                 <label for="title" class="col-md-4 col-form-label">Title:</label>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" id="title" name="title" value="{{ selected_user.title }}">
+                                    <input type="text" class="form-control" id="title" name="title" value="{{ selected_user.title }}" readonly>
                                 </div>
                             </div>
                             
                             <div class="row mb-3">
                                 <label for="location" class="col-md-4 col-form-label">Location:</label>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" id="location" name="location" value="{{ selected_user.location }}">
+                                    <input type="text" class="form-control" id="location" name="location" value="{{ selected_user.location }}" readonly>
                                 </div>
                             </div>
                         </div>
@@ -251,14 +251,14 @@
                             <div class="row mb-3">
                                 <label for="ou" class="col-md-4 col-form-label">Service (OU):</label>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" id="ou" name="ou" value="{{ selected_user.service }}">
+                                    <input type="text" class="form-control" id="ou" name="ou" value="{{ selected_user.service }}" readonly>
                                 </div>
                             </div>
                             
                             <div class="row mb-3">
                                 <label for="department" class="col-md-4 col-form-label">Telephone Number:</label>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" id="telephoneNumber" name="telephoneNumber" value="{{ selected_user.telephoneNumber }}">
+                                    <input type="text" class="form-control" id="telephoneNumber" name="telephoneNumber" value="{{ selected_user.telephoneNumber }}" readonly>
                                 </div>
                             </div>
                             
@@ -290,7 +290,7 @@
                                 <label for="hierarchical_manager" class="col-md-4 col-form-label">Manager:</label>
                                 <div class="col-md-8">
                                     <input type="text" class="form-control" id="hierarchical_manager" name="hierarchical_manager" value="{{ selected_user.ChefHierarchique }}" placeholder="Start typing to search for managers...">
-                                    <input type="hidden" id="manager_dn" name="manager_dn" value="{{ selected_user.FavvHierarMgrDN }}">
+                                    <input type="hidden" id="manager_dn" name="manager_dn" value="{{ selected_user.FavvHierarMgrDN }}" readonly>
                                 </div>
                             </div>
                         </div>
@@ -698,19 +698,19 @@
                             <div class="row mb-3">
                                 <label for="FavvAccountStatus" class="col-md-6 col-form-label">Account Status (FavvAccountStatus):</label>
                                 <div class="col-md-6">
-                                    <input type="text" class="form-control" id="accountStatus" name="accountStatus" value="{{ selected_user.FavvAccountStatus }}">
+                                    <input type="text" class="form-control" id="accountStatus" name="accountStatus" value="{{ selected_user.FavvAccountStatus }}" readonly>
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <label for="FavvAffecStat" class="col-md-6 col-form-label">Affectation Status (FavvAffecStat):</label>
                                 <div class="col-md-6">
-                                    <input type="text" class="form-control" id="affectStat" name="affectStat" value="{{ selected_user.FavvAffecStat }}">
+                                    <input type="text" class="form-control" id="affectStat" name="affectStat" value="{{ selected_user.FavvAffecStat }}" readonly>
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <label for="FavvFuncMgrDn" class="col-md-6 col-form-label">Chef Fonctionnel (FavvFuncMgrDn):</label>
                                 <div class="col-md-6">
-                                    <input type="text" class="form-control" id="chefFunc" name="chefFunc" value="{{ selected_user.ChefFonctionnel }}">
+                                    <input type="text" class="form-control" id="chefFunc" name="chefFunc" value="{{ selected_user.ChefFonctionnel }}" readonly>
                                 </div>
                             </div>
                         </div>

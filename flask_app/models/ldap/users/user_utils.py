@@ -165,3 +165,64 @@ class LDAPUserUtils(LDAPBase):
         except Exception as e:
             print(f"Une erreur s'est produite lors de la vérification du FavvNatNr: {str(e)}")
             return False, "", ""
+    
+    def extract_multilingual_value(self, attribute_value, language, attribute_name=None):
+        """
+        Extrait la valeur d'un attribut multilingue en fonction de la langue préférée.
+        
+        Les attributs multilingues sont typiquement formatés comme:
+        'fr~Valeur en français|nl~Waarde in het Nederlands|en~Value in English'
+        
+        Args:
+            attribute_value (str): La valeur de l'attribut multilingue
+            language (str): La langue préférée ('NL' ou 'FR')
+            attribute_name (str, optional): Nom de l'attribut (pour la journalisation)
+        
+        Returns:
+            str: La valeur extraite dans la langue préférée, ou dans la langue alternative si non disponible
+        """
+        if not attribute_value:
+            return ""
+        
+        try:
+            # Déterminer le préfixe de langue à chercher
+            prefix = 'nl~' if language == 'NL' else 'fr~'
+            
+            # Extraire la partie après le préfixe
+            if prefix in attribute_value:
+                # Diviser la chaîne au niveau du préfixe pour obtenir la partie après
+                parts = attribute_value.split(prefix)
+                if len(parts) > 1:
+                    value = parts[1]  # Prendre la partie après le préfixe
+                    
+                    # Si la valeur contient d'autres langues (délimitées par '|'), ne garder que la première partie
+                    if '|' in value:
+                        value = value.split('|')[0]
+                        
+                    return value
+            else:
+                # Si le préfixe de langue préféré n'est pas trouvé, utiliser la valeur en anglais comme fallback
+                if 'en~' in attribute_value:
+                    parts = attribute_value.split('en~')
+                    if len(parts) > 1:
+                        value = parts[1]
+                        if '|' in value:
+                            value = value.split('|')[0]
+                        return value
+                
+                # Si pas de valeur dans la langue préférée ou en anglais, essayer l'autre langue principale
+                other_prefix = 'fr~' if language == 'NL' else 'nl~'
+                if other_prefix in attribute_value:
+                    parts = attribute_value.split(other_prefix)
+                    if len(parts) > 1:
+                        value = parts[1]
+                        if '|' in value:
+                            value = value.split('|')[0]
+                        return value
+                        
+                # Si aucune langue n'est trouvée, retourner la valeur brute
+                return attribute_value
+        except Exception as e:
+            error_msg = f"Error parsing multilingual attribute {attribute_name or 'unknown'}: {str(e)}"
+            print(error_msg)
+            return attribute_value

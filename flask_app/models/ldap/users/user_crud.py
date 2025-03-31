@@ -1,7 +1,8 @@
 # flask_app/models/ldap/users/user_crud.py
 from ldap3 import MODIFY_REPLACE, MODIFY_DELETE, MODIFY_ADD
-from flask import flash, redirect, url_for
+# from flask import flash, redirect, url_for
 from ..base import LDAPBase
+from .user_utils import LDAPUserUtils
 
 
 class LDAPUserCRUD(LDAPBase):
@@ -259,17 +260,29 @@ class LDAPUserCRUD(LDAPBase):
                 }
                 
                 # formattage des données multi-langue
+                # Dans la méthode get_user de LDAPUserCRUD
+                # Traitement des attributs multilingues
                 if result['FavvGem']:
-                    try:
-                        if result['generationQualifier' == 'NL']:
-                            gem_name = result.entries['FavvGem']. parse value après nl
-                            result['Commune'] = gem_name
-                        else:
-                            gem_name =result.entries['FavvGem']. parse value après fr
-                            result['Commune'] = gem_name
-                    except Exception as e:
-                        error_msg = f'Error fetching FavvGem: {str(e)}'
-                        result['Commune'] = error_msg    
+                    user_utils = LDAPUserUtils(self._get_config_for_utils())
+                    result['Commune'] = user_utils.extract_multilingual_value(
+                        result['FavvGem'], 
+                        result['generationQualifier'],
+                        'FavvGem'
+                    )
+                
+                if 'FavvGbw' in result and result['FavvGbw']:
+                    result['Batiment'] = user_utils.extract_multilingual_value(
+                        result['FavvGbw'], 
+                        result['generationQualifier'],
+                        'FavvGbw'
+                    )
+                
+                if 'FavvAffecStat' in result and result['FavvAffecStat']:
+                    result['Affectation'] = user_utils.extract_multilingual_value(
+                        result['FavvAffecStat'], 
+                        result['generationQualifier'],
+                        'FavvAffecStat'
+                    )
                 
                 # Récupérer le nom complet du manager
                 # Ensuite dans la section qui récupère le nom du manager:

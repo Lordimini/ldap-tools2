@@ -79,7 +79,7 @@ class LDAPUserCRUD(LDAPBase):
                     'DirXML-Associations', 'ou', 'title', 'FavvHierarMgrDN', 'FavvExtDienstMgrDn', 
                     'nrfMemberOf', 'loginDisabled', 'loginTime', 'passwordExpirationTime',
                     'generationQualifier', 'FavvPTBadgeNr', 'FavvPTPinCode', 'lockedByIntruder','l', 'telephoneNumber',
-                    'FavvAccountStatus', 'FavvAffecStat', 'FavvCorrLang', 'FavvDienstHoofd', 'FavvEmployeeSubType', 'FavvFuncMgrDn', 'FavvInDatum', 'pwmLastPwdUpdate', 'pwmResponseSet', 'roomNumber', 'FavvBuildFloor', 'mobile'
+                    'FavvAccountStatus', 'FavvAffecStat', 'FavvCorrLang', 'FavvDienstHoofd', 'FavvEmployeeSubType', 'FavvFuncMgrDn', 'FavvInDatum', 'pwmLastPwdUpdate', 'pwmResponseSet', 'roomNumber', 'FavvGem', 'FavvGbw', 'FavvBuildFloor', 'mobile'
                 ]
             
             # Déterminer les paramètres de recherche en fonction du mode
@@ -252,6 +252,8 @@ class LDAPUserCRUD(LDAPBase):
                     'pwmResponseSet': getattr(user_attributes, 'pwmResponseSet', {}).value if hasattr(user_attributes, 'pwmResponseSet') else None,
                     'roomNumber': getattr(user_attributes, 'roomNumber', {}).value if hasattr(user_attributes, 'roomNumber') else '',
                     'FavvBuildFloor': getattr(user_attributes, 'FavvBuildFloor', {}).value if hasattr(user_attributes, 'FavvBuildFloor') else '',
+                    'FavvGbw': getattr(user_attributes, 'FavvGbw', {}).value if hasattr(user_attributes, 'FavvGbw') else '',
+                    'FavvGem': getattr(user_attributes, 'FavvGem', {}).value if hasattr(user_attributes, 'FavvGem') else '',
                     'mobile': getattr(user_attributes, 'mobile', {}).value if hasattr(user_attributes, 'mobile') else '',
                     
                 }

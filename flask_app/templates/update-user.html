@@ -216,14 +216,14 @@
                                 </div>
                             </div>
                             <div class="row mb-3">
-                                <label for="roomNumber" class="col-md-6 col-form-label">Room Number:</label>
+                                <label for="roomNumber" class="col-md-4 col-form-label">Room Number:</label>
                                 <div class="col-md-6">
                                     <input type="text" class="form-control" id="roonNumber" name="roomNumber" value="{{ selected_user.roomNumber }}" readonly>
                                 </div>
                             </div>
 
                             <div class="row mb-3">
-                                <label for="FavvBuildFloor" class="col-md-6 col-form-label">Floor:</label>
+                                <label for="FavvBuildFloor" class="col-md-4 col-form-label">Floor:</label>
                                 <div class="col-md-6">
                                     <input type="text" class="form-control" id="buildFloor" name="buildFloor" value="{{ selected_user.FavvBuildFloor }}" readonly>
                                 </div>
@@ -256,7 +256,7 @@
                             </div>
                             
                             <div class="row mb-3">
-                                <label for="hierarchical_manager" class="col-md-4 col-form-label">Manager:</label>
+                                <label for="hierarchical_manager" class="col-md-4 col-form-label">Chef Hiérarchique:</label>
                                 <div class="col-md-8">
                                     <input type="text" class="form-control" id="hierarchical_manager" name="hierarchical_manager" value="{{ selected_user.ChefHierarchique }}" placeholder="Start typing to search for managers...">
                                     <input type="hidden" id="manager_dn" name="manager_dn" value="{{ selected_user.FavvHierarMgrDN }}" readonly>
@@ -264,7 +264,7 @@
                             </div>
 
                             <div class="row mb-3">
-                                <label for="FavvFuncMgrDn" class="col-md-6 col-form-label">Chef Fonctionnel:</label>
+                                <label for="FavvFuncMgrDn" class="col-md-4 col-form-label">Chef Fonctionnel:</label>
                                 <div class="col-md-6">
                                     <input type="text" class="form-control" id="chefFunc" name="chefFunc" value="{{ selected_user.ChefFonctionnel }}" readonly>
                                 </div>

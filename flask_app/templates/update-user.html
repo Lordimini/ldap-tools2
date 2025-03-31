@@ -6,59 +6,6 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <!-- jQuery UI CSS -->
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
-<style>
-    .nav-tabs .nav-link {
-        color: var(--text-white);
-        background-color: var(--medium-gray);
-        border-color: var(--border-color);
-        margin-right: 4px;
-        border-bottom: none;
-    }
-    .nav-tabs .nav-link:hover {
-        background-color: var(--light-gray);
-    }
-    .nav-tabs .nav-link.active {
-        color: var(--text-white);
-        background-color: var(--dark-blue);
-        border-color: var(--accent-color);
-        border-bottom: none;
-    }
-    .tab-content {
-        background-color: var(--dark-blue);
-        border: 1px solid var(--border-color);
-        border-top: none;
-        padding: 20px;
-        border-bottom-left-radius: 4px;
-        border-bottom-right-radius: 4px;
-    }
-    .user-header {
-        background-color: var(--medium-blue);
-        padding: 15px;
-        border-radius: 4px;
-        margin-bottom: 20px;
-    }
-    .user-avatar {
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
-        background-color: var(--accent-color);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        font-weight: bold;
-        color: var(--text-white);
-    }
-    .tab-section {
-        margin-bottom: 20px;
-    }
-    .tab-section-header {
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 10px;
-        margin-bottom: 15px;
-        font-weight: 600;
-    }
-</style>
 {% endblock %}
 
 {% block content %}
@@ -234,13 +181,20 @@
                                     <input type="text" class="form-control" id="title" name="title" value="{{ selected_user.title }}" readonly>
                                 </div>
                             </div>
-                            
                             <div class="row mb-3">
-                                <label for="location" class="col-md-4 col-form-label">Location:</label>
+                                <label for="department" class="col-md-4 col-form-label">Telephone Number:</label>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" id="location" name="location" value="{{ selected_user.location }}" readonly>
+                                    <input type="text" class="form-control" id="telephoneNumber" name="telephoneNumber" value="{{ selected_user.telephoneNumber }}" readonly>
                                 </div>
                             </div>
+
+                            <div class="row mb-3">
+                                <label for="department" class="col-md-4 col-form-label">Mobile phone Number:</label>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" id="mobileNumber" name="mobileNumber" value="{{ selected_user.mobile }}" readonly>
+                                </div>
+                            </div>
+                            
                         </div>
                     </div>
                     
@@ -256,18 +210,26 @@
                             </div>
                             
                             <div class="row mb-3">
-                                <label for="department" class="col-md-4 col-form-label">Telephone Number:</label>
+                                <label for="location" class="col-md-4 col-form-label">Location:</label>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" id="telephoneNumber" name="telephoneNumber" value="{{ selected_user.telephoneNumber }}" readonly>
+                                    <input type="text" class="form-control" id="location" name="location" value="{{ selected_user.location }}" readonly>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <label for="roomNumber" class="col-md-6 col-form-label">Room Number:</label>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" id="roonNumber" name="roomNumber" value="{{ selected_user.roomNumber }}" readonly>
                                 </div>
                             </div>
 
                             <div class="row mb-3">
-                                <label for="department" class="col-md-4 col-form-label">Mobile phone Number:</label>
-                                <div class="col-md-8">
-                                    <input type="text" class="form-control" id="mobileNumber" name="mobileNumber" value="{{ selected_user.mobile }}" readonly>
+                                <label for="FavvBuildFloor" class="col-md-6 col-form-label">Floor:</label>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" id="buildFloor" name="buildFloor" value="{{ selected_user.FavvBuildFloor }}" readonly>
                                 </div>
                             </div>
+
+                            
                             
                             <div class="row mb-3">
                                 <label for="workforceID" class="col-md-4 col-form-label">Workforce ID:</label>
@@ -302,7 +264,7 @@
                             </div>
 
                             <div class="row mb-3">
-                                <label for="FavvFuncMgrDn" class="col-md-6 col-form-label">Chef Fonctionnel (FavvFuncMgrDn):</label>
+                                <label for="FavvFuncMgrDn" class="col-md-6 col-form-label">Chef Fonctionnel:</label>
                                 <div class="col-md-6">
                                     <input type="text" class="form-control" id="chefFunc" name="chefFunc" value="{{ selected_user.ChefFonctionnel }}" readonly>
                                 </div>
@@ -728,19 +690,7 @@
                                 </div>
                             </div>
 
-                            <div class="row mb-3">
-                                <label for="roomNumber" class="col-md-6 col-form-label">Room Number:</label>
-                                <div class="col-md-6">
-                                    <input type="text" class="form-control" id="roonNumber" name="roomNumber" value="{{ selected_user.roomNumber }}" readonly>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <label for="FavvBuildFloor" class="col-md-6 col-form-label">Room Number:</label>
-                                <div class="col-md-6">
-                                    <input type="text" class="form-control" id="buildFloor" name="buildFloor" value="{{ selected_user.FavvBuildFloor }}" readonly>
-                                </div>
-                            </div>
+                            
                         </div>
                     </div>
                 </div>

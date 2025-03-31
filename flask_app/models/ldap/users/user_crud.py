@@ -258,6 +258,19 @@ class LDAPUserCRUD(LDAPBase):
                     
                 }
                 
+                # formattage des données multi-langue
+                if result['FavvGem']:
+                    try:
+                        if result['generationQualifier' == 'NL']:
+                            gem_name = result.entries['FavvGem']. parse value après nl
+                            result['Commune'] = gem_name
+                        else:
+                            gem_name =result.entries['FavvGem']. parse value après fr
+                            result['Commune'] = gem_name
+                    except Exception as e:
+                        error_msg = f'Error fetching FavvGem: {str(e)}'
+                        result['Commune'] = error_msg    
+                
                 # Récupérer le nom complet du manager
                 # Ensuite dans la section qui récupère le nom du manager:
                 if result['FavvHierarMgrDN']:

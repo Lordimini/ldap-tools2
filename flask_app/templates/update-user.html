@@ -261,6 +261,13 @@
                                     <input type="text" class="form-control" id="telephoneNumber" name="telephoneNumber" value="{{ selected_user.telephoneNumber }}" readonly>
                                 </div>
                             </div>
+
+                            <div class="row mb-3">
+                                <label for="department" class="col-md-4 col-form-label">Mobile phone Number:</label>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" id="mobileNumber" name="mobileNumber" value="{{ selected_user.mobile }}" readonly>
+                                </div>
+                            </div>
                             
                             <div class="row mb-3">
                                 <label for="workforceID" class="col-md-4 col-form-label">Workforce ID:</label>
@@ -291,6 +298,13 @@
                                 <div class="col-md-8">
                                     <input type="text" class="form-control" id="hierarchical_manager" name="hierarchical_manager" value="{{ selected_user.ChefHierarchique }}" placeholder="Start typing to search for managers...">
                                     <input type="hidden" id="manager_dn" name="manager_dn" value="{{ selected_user.FavvHierarMgrDN }}" readonly>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="FavvFuncMgrDn" class="col-md-6 col-form-label">Chef Fonctionnel (FavvFuncMgrDn):</label>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" id="chefFunc" name="chefFunc" value="{{ selected_user.ChefFonctionnel }}" readonly>
                                 </div>
                             </div>
                         </div>
@@ -708,9 +722,23 @@
                                 </div>
                             </div>
                             <div class="row mb-3">
-                                <label for="FavvFuncMgrDn" class="col-md-6 col-form-label">Chef Fonctionnel (FavvFuncMgrDn):</label>
+                                <label for="FavvInDatum" class="col-md-6 col-form-label">Entry date (FavvInDatum):</label>
                                 <div class="col-md-6">
-                                    <input type="text" class="form-control" id="chefFunc" name="chefFunc" value="{{ selected_user.ChefFonctionnel }}" readonly>
+                                    <input type="text" class="form-control" id="indatum" name="indatum" value="{{ selected_user.FavvinDatum }}" readonly>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="roomNumber" class="col-md-6 col-form-label">Room Number:</label>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" id="roonNumber" name="roomNumber" value="{{ selected_user.roomNumber }}" readonly>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="FavvBuildFloor" class="col-md-6 col-form-label">Room Number:</label>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" id="buildFloor" name="buildFloor" value="{{ selected_user.FavvBuildFloor }}" readonly>
                                 </div>
                             </div>
                         </div>

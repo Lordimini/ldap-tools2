@@ -112,6 +112,7 @@ def authenticate_user(username, password, ldap_source='meta'):
         
         # Create and return user
         user = User.from_ldap_data(username, user_data, ldap_source)
+        
         return user
     
     except Exception as e:

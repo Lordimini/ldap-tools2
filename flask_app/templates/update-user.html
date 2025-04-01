@@ -143,6 +143,12 @@
                     <i class="bi bi-folder1"></i> Miscellaneous
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="DirXML-tab" data-bs-toggle="tab" data-bs-target="#DirXML" type="button" role="tab" aria-controls="DirXML" aria-selected="false">
+                    <i class="bi bi-folder1"></i> Dirxml Associations
+                </button>
+                <!-- <div class="tab-pane fade" id="DirXML" role="tabpanel" aria-labelledby="DirXML-tab"></div> -->
+            </li>
         </ul>
         
         <!-- Tabs Content -->
@@ -690,12 +696,47 @@
                                     <input type="text" class="form-control" id="indatum" name="indatum" value="{{ selected_user.FavvinDatum }}" readonly>
                                 </div>
                             </div>
-
-                            
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- DirXML associations Tab -->
+            <div class="tab-pane fade" id="DirXML" role="tabpanel" aria-labelledby="DirXML-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="tab-section">
+                            <h6 class="tab-section-header">DirXML - IDM Associations</h6>
+                            <div class="card p-3 bg-dark">
+                                <div id="dirxml">
+                                    {% if selected_user.DirXMLAssociations %}
+                                        <div class="table-responsive">
+                                            <table class="table table-dark table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Association</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for association in selected_user.DirXMLAssociations %}
+                                                    <tr>
+                                                        <td class="text-break">{{ association }}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-muted">No DirXML Associations found.</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </form>
     {% endif %}

@@ -251,37 +251,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- DirXML Associations Section -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <h5 class="mb-3">DirXML Associations</h5>
-                <div class="card p-3 bg-dark">
-                    <div id="dirxml">
-                        {% if result.DirXMLAssociations %}
-                            <div class="table-responsive">
-                                <table class="table table-dark table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Association</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for association in result.DirXMLAssociations %}
-                                        <tr>
-                                            <td class="text-break">{{ association }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {% else %}
-                            <div class="text-muted">No DirXML Associations found.</div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
     {% endif %}
 </div>

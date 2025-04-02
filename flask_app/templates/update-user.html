@@ -91,9 +91,6 @@
                     <div class="text-light">{{ selected_user.mail }}</div>
                 </div>
                 <div class="col-auto">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> Save Changes
-                    </button>
                     <a href="{{ url_for('search.search_user') }}?cn={{ selected_user.CN }}&source={{ ldap_source }}" class="btn btn-secondary ms-2">
                         <i class="bi bi-arrow-left"></i> Back
                     </a>
@@ -284,8 +281,12 @@
                         </div>
                     </div>
                 </div>
+                <div class="mt-3 text-end">
+                    <button type="button" class="btn btn-primary apply-changes-btn" data-tab-id="general">
+                        <i class="bi bi-check-circle"></i> Apply General Changes
+                    </button>
+                </div>
             </div>
-            
             <!-- Groups Tab -->
             <div class="tab-pane fade" id="groups" role="tabpanel" aria-labelledby="groups-tab">
                 <div class="row">
@@ -294,7 +295,7 @@
                             <h6 class="tab-section-header">Current Group Memberships</h6>
                             <div class="input-group mb-3">
                                 <input type="text" id="group-filter" class="form-control" placeholder="Filter groups...">
-                                <button id="sort-groups" class="btn btn-outline-secondary">
+                                <button type="button" id="sort-groups" class="btn btn-outline-secondary">
                                     <i class="bi bi-sort-alpha-down"></i>
                                 </button>
                             </div>
@@ -348,8 +349,12 @@
                         </div>
                     </div>
                 </div>
+                <div class="mt-3 text-end">
+                    <button type="button" class="btn btn-primary apply-changes-btn" data-tab-id="groups">
+                        <i class="bi bi-check-circle"></i> Apply Group Changes
+                    </button>
+                </div>
             </div>
-
             <!-- RBPM Roles Tab -->
             <div class="tab-pane fade" id="roles" role="tabpanel" aria-labelledby="roles-tab">
                 <div class="row">
@@ -358,7 +363,7 @@
                             <h6 class="tab-section-header">Current Role Memberships</h6>
                             <div class="input-group mb-3">
                                 <input type="text" id="role-filter" class="form-control" placeholder="Filter roles...">
-                                <button id="sort-roles" class="btn btn-outline-secondary">
+                                <button type="button" id="sort-roles" class="btn btn-outline-secondary">
                                     <i class="bi bi-sort-alpha-down"></i>
                                 </button>
                             </div>
@@ -366,12 +371,9 @@
                                 <div id="current_roles">
                                     {% if selected_user.nrfMemberOf %}
                                         {% for role in selected_user.nrfMemberOf %}
-                                            <!-- <div class="badge bg-secondary me-2 mb-2 p-2 role-badge">
-                                                {{ role.cn }} ({{ role.category }})
-                                            </div> -->
-                                            <a href="{{ url_for('role.role_users') }}?role_cn={{ role.cn | urlencode }}&role_dn={{ role.dn | urlencode }}&source={{ ldap_source }}" 
-                                               class="badge bg-info me-2 mb-2 p-2 group-badge text-decoration-none" 
-                                               style="cursor: pointer;" 
+                                            <a href="{{ url_for('role.role_users') }}?role_cn={{ role.cn | urlencode }}&role_dn={{ role.dn | urlencode }}&source={{ ldap_source }}"
+                                               class="badge bg-info me-2 mb-2 p-2 role-badge text-decoration-none"
+                                               style="cursor: pointer;"
                                                title="View members of {{ role.cn }}">
                                                 {{ role.cn }} ({{ role.category }})
                                                 <i class="bi bi-people-fill ms-1"></i>
@@ -382,36 +384,6 @@
                                     {% endif %}
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="tab-section">
-                            <h6 class="tab-section-header">Add to Role</h6>
-                            <div class="input-group mb-3">
-                                <input type="text" id="group_name" class="form-control" placeholder="Start typing a group name...">
-                                <button type="button" id="add_group_btn" class="btn btn-outline-success">Add</button>
-                            </div>
-                            <div class="card bg-dark p-3" style="min-height: 100px;">
-                                <div id="groups_to_add">
-                                    <!-- Groups to add will be displayed here -->
-                                </div>
-                            </div>
-                            <input type="hidden" id="groups_to_add_data" name="groups_to_add" value="[]">
-                        </div>
-                        
-                        <div class="tab-section mt-4">
-                            <h6 class="tab-section-header">Remove from Role</h6>
-                            <div class="input-group mb-3">
-                                <input type="text" id="group_remove" class="form-control" placeholder="Start typing a group name...">
-                                <button type="button" id="remove_group_btn" class="btn btn-outline-danger">Remove</button>
-                            </div>
-                            <div class="card bg-dark p-3" style="min-height: 100px;">
-                                <div id="groups_to_remove">
-                                    <!-- Groups to remove will be displayed here -->
-                                </div>
-                            </div>
-                            <input type="hidden" id="groups_to_remove_data" name="groups_to_remove" value="[]">
                         </div>
                     </div>
                 </div>
@@ -506,8 +478,12 @@
                         </div>
                     </div>
                 </div>
+                <div class="mt-3 text-end">
+                    <button type="button" class="btn btn-primary apply-changes-btn" data-tab-id="security">
+                        <i class="bi bi-check-circle"></i> Apply Security Changes
+                    </button>
+                </div>
             </div>
-            
             <!-- Account Tab -->
             <div class="tab-pane fade" id="account" role="tabpanel" aria-labelledby="account-tab">
                 <div class="row">
@@ -561,6 +537,11 @@
                                     </tbody>
                                 </table>
                             </div>
+                            <div class="mt-3 text-end">
+                                <button type="button" class="btn btn-primary apply-changes-btn" data-tab-id="account">
+                                    <i class="bi bi-check-circle"></i> Apply Account Changes
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -604,6 +585,11 @@
                                 <small class="form-text text-muted">Enter one station per line</small>
                             </div>
                         </div>
+                        <div class="mt-3 text-end">
+                            <button type="button" class="btn btn-primary apply-changes-btn" data-tab-id="restrictions">
+                                <i class="bi bi-check-circle"></i> Apply Restriction Changes
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="col-md-6">
@@ -641,6 +627,11 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                <div class="mt-3 text-end">
+                    <button type="button" class="btn btn-primary apply-changes-btn" data-tab-id="container">
+                        <i class="bi bi-check-circle"></i> Apply Container Changes
+                    </button>
                 </div>
             </div>
             
@@ -695,6 +686,11 @@
                                     </ul>
                                 </div>
                             </div>
+                            <div class="mt-3 text-end">
+                                <button type="button" class="btn btn-primary apply-changes-btn" data-tab-id="protime">
+                                    <i class="bi bi-check-circle"></i> Apply Protime Changes
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -748,6 +744,11 @@
                                 <div class="col-md-6">
                                     <input type="text" class="form-control" id="indatum" name="indatum" value="{{ selected_user.FavvinDatum }}" readonly>
                                 </div>
+                            </div>
+                            <div class="mt-3 text-end">
+                                <button type="button" class="btn btn-primary apply-changes-btn" data-tab-id="misc">
+                                    <i class="bi bi-check-circle"></i> Apply Miscellaneous Changes
+                                </button>
                             </div>
                         </div>
                     </div>

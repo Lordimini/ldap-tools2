@@ -341,3 +341,45 @@ $(document).ready(function() {
         }
     });
 });
+
+// JavaScript to handle DirXML Association deletion (UI only)
+$(document).ready(function() {
+    // Initialize the array of associations to delete
+    let associationsToDelete = [];
+    
+    // Handle delete button clicks
+    $(document).on('click', '.delete-association-btn', function() {
+        const associationIndex = $(this).data('association-index');
+        const associationValue = $(this).data('association-value');
+        
+        // Confirm deletion
+        if (confirm('Are you sure you want to delete this association?')) {
+            // Add to the delete list
+            associationsToDelete.push({
+                index: associationIndex,
+                value: associationValue
+            });
+            
+            // Update the hidden input with the JSON data
+            $('#associations_to_delete').val(JSON.stringify(associationsToDelete));
+            
+            // Visual feedback - fade out the row
+            $(this).closest('tr').fadeOut(300, function() {
+                // Add a class to indicate deleted status
+                $(this).addClass('deleted-association')
+                       .removeClass('d-none')
+                       .fadeIn(300);
+                
+                // Change the button to "Undo"
+                const btn = $(this).find('.delete-association-btn');
+                btn.removeClass('btn-danger')
+                   .addClass('btn-secondary')
+                   .html('<i class="bi bi-arrow-counterclockwise"></i>')
+                   .attr('title', 'Undo deletion');
+                
+                // Add strikethrough to the text
+                $(this).find('td.text-break').addClass('text-decoration-line-through text-muted');
+            });
+        }
+    });
+});

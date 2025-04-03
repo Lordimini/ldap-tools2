@@ -5,6 +5,16 @@ from flask import flash
 
 class LDAPGroupMixin(LDAPBase):
     
+    def create_group (self,group_name, target_dn):
+        pass
+    
+    def delete_group (self, group_name, target_dn):
+        pass
+    
+    def modify_group (self, group_name, options):
+        pass
+    
+    
     def get_group_users(self, group_name):
         conn = Connection(self.ldap_server, user=self.bind_dn, password=self.password, auto_bind=True) 
         group_dn = None

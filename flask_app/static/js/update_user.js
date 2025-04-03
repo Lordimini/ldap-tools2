@@ -340,4 +340,137 @@ $(document).ready(function() {
             });
         }
     });
+
+    // Handle tab-specific Apply Changes buttons
+    $('.apply-changes-btn').on('click', function(event) {
+        event.preventDefault(); // Prevent default button behavior
+
+        const $button = $(this);
+        const tabId = $button.data('tab-id');
+        const $form = $('#userUpdateForm');
+        const formAction = $form.attr('action');
+
+        // Disable button to prevent multiple clicks
+        $button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
+
+        // Serialize the entire form data
+        let formData = $form.serializeArray();
+
+        // Add the identifier for the tab being saved
+        formData.push({ name: 'update_section', value: tabId });
+
+        // Send data via AJAX
+        $.ajax({
+            url: formAction,
+            type: 'POST',
+            data: $.param(formData), // Convert array to URL-encoded string
+            dataType: 'json', // Expect JSON response from server
+            success: function(response) {
+                // Display success message (using alert for simplicity, consider Bootstrap toasts)
+                if (response.status === 'success') {
+                    alert('Success: ' + response.message);
+                    // Optionally reload parts of the page or update UI based on response
+                    if (tabId === 'groups' || tabId === 'roles') {
+                         // Reload might be needed if group/role memberships changed display
+                         // window.location.reload(); // Or more targeted update
+                    }
+                     if (tabId === 'DirXML') {
+                         // Reload might be needed if associations changed display
+                         // window.location.reload(); // Or more targeted update
+                    }
+                } else {
+                    alert('Error: ' + (response.message || 'An unknown error occurred.'));
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                // Display error message
+                alert('AJAX Error: ' + textStatus + ' - ' + errorThrown);
+                console.error("AJAX Error:", jqXHR.responseText);
+            },
+            complete: function() {
+                // Re-enable button and restore original text
+                 // Find the icon class (adjust if icons change)
+                const iconClass = $button.find('i').attr('class') || 'bi bi-check-circle';
+                // Attempt to get original text more robustly
+                let originalText = $button.text().replace('Saving...', '').trim();
+                if (!originalText) {
+                    // Fallback based on tabId if text was completely replaced by spinner
+                    switch(tabId) {
+                        case 'general': originalText = 'Apply General Changes'; break;
+                        case 'groups': originalText = 'Apply Group Changes'; break;
+                        case 'security': originalText = 'Apply Security Changes'; break;
+                        case 'account': originalText = 'Apply Account Changes'; break;
+                        case 'restrictions': originalText = 'Apply Restriction Changes'; break;
+                        case 'container': originalText = 'Apply Container Changes'; break;
+                        case 'protime': originalText = 'Apply Protime Changes'; break;
+                        case 'misc': originalText = 'Apply Miscellaneous Changes'; break;
+                        default: originalText = 'Apply Changes'; // Generic fallback
+                    }
+                }
+                $button.prop('disabled', false).html(`<i class="${iconClass}"></i> ${originalText}`);
+            }
+        });
+    });
+});
+
+// JavaScript to handle DirXML Association deletion (UI only)
+$(document).ready(function() {
+    // Initialize the array of associations to delete
+    let associationsToDelete = [];
+    
+    // Handle delete/undo button clicks
+    $(document).on('click', '.delete-association-btn', function() {
+        const associationIndex = $(this).data('association-index');
+        const associationValue = $(this).data('association-value');
+        const $button = $(this);
+        const $row = $button.closest('tr');
+
+        if ($button.hasClass('btn-secondary')) { // Handle UNDO
+            // Remove from the delete list
+            associationsToDelete = associationsToDelete.filter(item => item.index !== associationIndex);
+            
+            // Update the hidden input
+            $('#associations_to_delete').val(JSON.stringify(associationsToDelete));
+            
+            // Restore visual appearance
+            $row.removeClass('deleted-association');
+            $row.find('td.text-break').removeClass('text-decoration-line-through text-muted');
+            
+            // Change button back to "Delete"
+            $button.removeClass('btn-secondary')
+                   .addClass('btn-danger')
+                   .html('<i class="bi bi-trash"></i>')
+                   .attr('title', 'Delete association');
+            
+        } else { // Handle DELETE
+            // Confirm deletion
+            if (confirm('Are you sure you want to delete this association?')) {
+                // Add to the delete list
+                associationsToDelete.push({
+                    index: associationIndex,
+                    value: associationValue
+                });
+                
+                // Update the hidden input with the JSON data
+                $('#associations_to_delete').val(JSON.stringify(associationsToDelete));
+                
+                // Visual feedback - fade out the row
+                $row.fadeOut(300, function() {
+                    // Add a class to indicate deleted status
+                    $(this).addClass('deleted-association')
+                           .removeClass('d-none') // Ensure it's not hidden if previously undone
+                           .fadeIn(300);
+                    
+                    // Change the button to "Undo"
+                    $button.removeClass('btn-danger')
+                           .addClass('btn-secondary')
+                           .html('<i class="bi bi-arrow-counterclockwise"></i>')
+                           .attr('title', 'Undo deletion');
+                    
+                    // Add strikethrough to the text
+                    $(this).find('td.text-break').addClass('text-decoration-line-through text-muted');
+                });
+            }
+        }
+    });
 });

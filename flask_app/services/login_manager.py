@@ -88,7 +88,8 @@ def authenticate_user(username, password, ldap_source='meta'):
         # Get user details
         options = {
             'search_type': 'cn',
-            'container': 'active'  
+            'container': 'active',
+            'simplified': True 
         }
         user_data = ldap_model.get_user(username, options)
         

@@ -117,6 +117,18 @@
                                 <td>{{ selected_user.title }}</td>
                             </tr>
                             {% endif %}
+                            {% if selected_user.ServiceManager %}
+                            <tr>
+                                <td class="attribute-cell">Ext Service Manager</td>
+                                <td>{{ selected_user.ServiceManager }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if selected_user.manager_name %}
+                            <tr>
+                                <td class="attribute-cell">Manager</td>
+                                <td>{{ selected_user.manager_name }}</td>
+                            </tr>
+                            {% endif %}
                             {% if selected_user.ou %}
                             <tr>
                                 <td class="attribute-cell">Service</td>
@@ -172,6 +184,7 @@
                                 <label for="target_container" class="form-label">Target Container:</label>
                                 <select id="target_container" name="target_container" class="form-select form-select-sm" required>
                                     <option value="ou=users,ou=sync,o=COPY">Active Users</option>
+                                    <option value="ou=OCI,ou=users,ou=sync,o=COPY">OCI Users</option>
                                     <option value="ou=out,ou=sync,o=COPY">Inactive Users</option>
                                     <option value="ou=to-process,ou=sync,o=COPY">to-process Users</option>
                                 </select>

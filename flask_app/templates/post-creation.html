@@ -181,7 +181,7 @@
                             <div class="mb-3">
                                 <label for="workforceID" class="form-label">Workforce ID:</label>
                                 <input type="text" id="workforceID" name="workforceID" class="form-control form-control-sm" 
-                                    value="{{ selected_user.workforceID if selected_user.workforceID and selected_user.workforceID != 'None' else '' }}" 
+                                    value="{{ selected_user.workforceID|default('') }}" 
                                     placeholder="Enter workforce ID">
                             </div>
                             

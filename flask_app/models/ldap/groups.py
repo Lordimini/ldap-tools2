@@ -8,11 +8,16 @@ class LDAPGroupMixin(LDAPBase):
     def create_group (self,group_name, target_dn):
         pass
     
+    def read_group (self, group_name):
+        pass
+    
     def delete_group (self, group_name, target_dn):
         pass
     
-    def modify_group (self, group_name, options):
+    def update_group (self, group_name, options):
         pass
+    
+    
     
     
     def get_group_users(self, group_name):

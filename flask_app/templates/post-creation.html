@@ -183,8 +183,8 @@
                             <div class="mb-3">
                                 <label for="target_container" class="form-label">Target Container:</label>
                                 <select id="target_container" name="target_container" class="form-select form-select-sm" required>
-                                    <option value="ou=users,ou=sync,o=COPY">Active Users</option>
-                                    <option value="ou=OCI,ou=users,ou=sync,o=COPY">OCI Users</option>
+                                    <option value="ou=users,ou=sync,o=COPY" {% if not selected_user.title == 'OCI' %}selected{% endif %}>Active Users</option>
+                                    <option value="ou=OCI,ou=users,ou=sync,o=COPY" {% if selected_user.title == 'OCI' %}selected{% endif %}>OCI Users</option>
                                     <option value="ou=out,ou=sync,o=COPY">Inactive Users</option>
                                     <option value="ou=to-process,ou=sync,o=COPY">to-process Users</option>
                                 </select>

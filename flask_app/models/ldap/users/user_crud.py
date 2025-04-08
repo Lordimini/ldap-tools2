@@ -284,13 +284,17 @@ class LDAPUserCRUD(LDAPBase):
                         'FavvAffecStat'
                     )
                 
-                # Récupérer le nom complet du manager
-                # Ensuite dans la section qui récupère le nom du manager:
+                # Initialiser les champs de manager à des valeurs par défaut
+                result['ChefHierarchique'] = 'No manager specified'
+                result['manager_name'] = 'No manager specified'
+                result['ChefFonctionnel'] = 'No functional manager specified'
+                result['ServiceManager'] = 'No external service manager specified'
+
+                # Récupérer le nom complet du manager hiérarchique
                 if result['FavvHierarMgrDN']:
                     try:
                         conn.search(result['FavvHierarMgrDN'], '(objectClass=*)', attributes=['fullName'])
                         if conn.entries:
-                            # Standardiser les noms de champs pour le manager
                             manager_name = conn.entries[0].fullName.value
                             result['ChefHierarchique'] = manager_name
                             result['manager_name'] = manager_name  # Pour la compatibilité
@@ -302,31 +306,31 @@ class LDAPUserCRUD(LDAPBase):
                         result['ChefHierarchique'] = error_msg
                         result['manager_name'] = error_msg
 
-                # Récupérer le nom complet du chef fonctionnel
+                # Récupérer le nom du chef fonctionnel
                 if result['FavvFuncMgrDn']:
                     try:
                         conn.search(result['FavvFuncMgrDn'], '(objectClass=*)', attributes=['fullName'])
                         if conn.entries:
-                            # Standardiser les noms de champs pour le manager
                             func_manager_name = conn.entries[0].fullName.value
                             result['ChefFonctionnel'] = func_manager_name
                         else:
-                            result['ChefFonctionnel'] = 'func chef not found'
+                            result['ChefFonctionnel'] = 'Functional manager not found'
                     except Exception as e:
-                        error_msg = f'Error fetching func chef: {str(e)}'
+                        error_msg = f'Error fetching functional manager: {str(e)}'
                         result['ChefFonctionnel'] = error_msg
-                
-                # De même pour le FavvExtDienstMgrDn
+
+                # Récupérer le nom du manager de service
                 if result['FavvExtDienstMgrDn']:
                     try:
                         conn.search(result['FavvExtDienstMgrDn'], '(objectClass=*)', attributes=['fullName'])
                         if conn.entries:
-                            # Ne pas écraser ChefHierarchique s'il a déjà été défini par FavvHierarMgrDN
                             service_manager_name = conn.entries[0].fullName.value
+                            result['ServiceManager'] = service_manager_name
+                            
+                            # Si aucun manager hiérarchique n'est défini, utiliser le manager de service
                             if result['ChefHierarchique'] == 'No manager specified' or result['ChefHierarchique'] == 'Manager not found':
                                 result['ChefHierarchique'] = service_manager_name
-                            # Ajouter une clé spécifique pour le manager de service
-                            result['ServiceManager'] = service_manager_name
+                                result['manager_name'] = service_manager_name  # Pour la compatibilité
                         else:
                             result['ServiceManager'] = 'Service Manager not found'
                     except Exception as e:

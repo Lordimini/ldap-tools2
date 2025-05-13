@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Search User - LDAP Manager{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <input type="hidden" name="ldap_source" value="{{ ldap_source }}">
+    <h1 class="text-center mb-4">Search User</h1>
+    <form method="POST" action="{{ url_for('search.search_user') }}" class="card p-4 shadow mb-4">
+        <div class="mb-3">
+            <label for="search_type" class="form-label">Search By:</label>
+            <select class="form-select" id="search_type" name="search_type" required>
+                <option value="fullName" {% if prefill_fullName %}selected{% endif %}>Full Name</option>
+                <option value="cn" {% if prefill_cn %}selected{% endif %}>CN (Common Name)</option>
+                <option value="workforceID" {% if prefill_workforceID %}selected{% endif %}>Stamnummer - Numéro de Matricule</option>
+                <option value="FavvNatNr" {% if prefill_FavvNatNr %}selected{% endif %}>RijksregisterNr - N° de registre Nat.</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="search_term" class="form-label">Search Term:</label>
+            <input type="text" class="form-control" id="search_term" name="search_term" value="{% if prefill_fullName %}{{ prefill_fullName }}{% elif prefill_cn %}{{ prefill_cn }}{% elif prefill_workforceID %}{{ prefill_workforceID }}{% elif prefill_FavvNatNr %}{{ prefill_FavvNatNr }}{% endif %}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    {% if result %}
+    <div class="card p-4 shadow">
+        <h2 class="text-center mb-4">Search Results</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Attribute</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Intranet Contact</td>
+                    <td>
+                        <a href="http://intranet.linux.ici/contact/fr/ICIPDetail.asp?StamNr={{ result.workforceID }}">{{ result.givenName + ' ' + result.sn }}</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>CN</td>
+                    <td>{{ result.CN }}</td>
+                </tr>
+                <tr>
+                    <td>Employee Type</td>
+                    <td>{{ result.favvEmployeeType }}</td>
+                </tr>
+                <tr>
+                    <td>Full Name</td>
+                    <td>{{ result.fullName }}</td>
+                </tr>
+                <tr>
+                    <td>Email</td>
+                    <td>{{ result.mail }}</td>
+                </tr>
+                <tr>
+                    <td>Stamnummer - numéro de matricule</td>
+                    <td>{{ result.workforceID }}</td>
+                </tr>
+                <tr>
+                    <td>RRN - NRN</td>
+                    <td>{{ result.FavvNatNr }}</td>
+                </tr>
+                <tr>
+                    <td>Service - Dienst</td>
+                    <td>
+                        {% if result.service %}
+                            <a href="{{ url_for('service.service_users') }}?service_name={{ result.service }}">{{ result.service }}</a>
+                        {% else %}
+                            No service found.
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Title</td>
+                    <td>{{ result.title }}</td>
+                </tr>
+                <tr {% if result.loginDisabled == 'YES' %}class="table-danger"{% endif %}>
+                    <td>Login Disabled</td>
+                    <td>{{ result.loginDisabled }}</td>
+                </tr>
+                <tr>
+                    <td>Last Login time</td>
+                    <td>{{ result.loginTime }}</td>
+                </tr>
+                <tr>
+                    <td>Password Expiration date</td>
+                    <td>{{ result.passwordExpirationTime }}</td>
+                </tr>
+                <tr>
+                    <td>Chef Hiérarchique</td>
+                    <td>{{ result.ChefHierarchique }}</td>
+                </tr>
+                <tr>
+                    <td>Group Membership</td>
+                    <td>
+                        {% if result.groupMembership %}
+                        <button class="btn btn-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#groupMembershipList">
+                            Show Group Memberships
+                        </button>
+                        <div class="collapse" id="groupMembershipList">
+                            <ul class="list-group mt-2">
+                                {% for group in result.groupMembership %}
+                                <li class="list-group-item list-group-item-action" onclick="window.location.href='{{ url_for('group.group_users') }}?group_name={{ group.cn }}'" style="cursor: pointer;">{{ group.cn }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% else %}
+                        No group memberships found.
+                        {% endif %}
+                    </td>
+                </tr>
+
+                
+                <tr>
+                    <td>Assigned Roles</td>
+                    <td>
+                        {% if result.nrfMemberOf %}
+                        <button class="btn btn-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#rolesAssignedList">
+                            Show assigned roles
+                        </button>
+                        <div class="collapse" id="rolesAssignedList">
+                            <ul class="list-group mt-2">
+                                {% for role in result.nrfMemberOf %}
+                                <li class="list-group-item list-group-item-action" onclick="window.location.href='{{ url_for('role.role_users') }}?role_cn={{ role.cn }}'" style="cursor: pointer;">    
+                                    {{ role.cn }} (category:{{ role.category }})</li>
+                            {% endfor %}
+                            </ul>
+                        </div>
+                        {% else %}
+                        No assigned role found.
+                        {% endif %}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>DirXML-Associations</td>
+                    <td>
+                        {% if result.DirXMLAssociations %}
+                        <button class="btn btn-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#DirXMLAssociationsList">
+                            Show DirXML Associations
+                        </button>
+                        <div class="collapse" id="DirXMLAssociationsList">
+                            <ul class="list-group mt-2">
+                                {% for association in result.DirXMLAssociations %}
+                                <li class="list-group-item list-group-item-action">{{ association }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% else %}
+                        No DirXML-Associations found.
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+<!-- jQuery (required for autocomplete) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- jQuery UI (for autocomplete) -->
+<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+
+<script>
+    $(document).ready(function() {
+        // Function to initialize autocomplete
+        function initializeAutocomplete() {
+            $('#search_term').autocomplete({
+                source: function(request, response) {
+                    $.getJSON("{{ url_for('autocomplete.autocomplete_fullName') }}", {
+                        term: request.term
+                    }, function(data) {
+                        response(data);
+                    });
+                },
+                select: function(event, ui) {
+                    $('#search_term').val(ui.item.value);
+                    return false;
+                }
+            }).data('ui-autocomplete')._renderItem = function(ul, item) {
+                return $('<li>')
+                    .append(`<div>${item.label}</div>`)
+                    .appendTo(ul);
+            };
+        }
+
+        // Check the selected search type and initialize autocomplete if needed
+        $('#search_type').change(function() {
+            if ($(this).val() === 'fullName') {
+                initializeAutocomplete();
+            } else {
+                // Unbind existing autocomplete if any
+                $('#search_term').autocomplete('destroy');
+            }
+        });
+
+        // Initialize autocomplete on page load for the selected option
+        if ($('#search_type option:selected').val() === 'fullName') {
+            initializeAutocomplete();
+        }
+    });
+</script>
+
+{% endblock %}

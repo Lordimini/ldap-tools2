@@ -724,6 +724,11 @@ const UserCreationUtils = {
    */
   fillHiddenForm: function(data) {
     // S'assurer que le champ user_type est correctement rempli
+    const emailOverrideField = document.getElementById('email_override');
+    const hiddenEmailOverrideField = document.getElementById('hidden_email_override');
+    if (emailOverrideField && hiddenEmailOverrideField) {
+        hiddenEmailOverrideField.value = emailOverrideField.value;
+    }
     const hiddenUserType = document.getElementById('hidden_user_type');
     if (hiddenUserType) {
       hiddenUserType.value = data.userType;

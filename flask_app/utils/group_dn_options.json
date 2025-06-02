@@ -1,6 +1,7 @@
 [
     {"value": "ou=AER,o=FAVV", "label": "AER (FAVV)"},
     {"value": "ou=BECERT,o=FAVV", "label": "BECERT (FAVV)"},
+    {"value": "ou=BECERTNT,o=FAVV", "label": "BECERT-NT (FAVV)"},
     {"value": "ou=BMO,o=FAVV", "label": "BMO (FAVV)"},
     {"value": "ou=DASHBOARD,o=FAVV", "label": "Dashboard (FAVV)"},
     {"value": "ou=FCAD,o=FAVV", "label": "FCAD (FAVV)"},

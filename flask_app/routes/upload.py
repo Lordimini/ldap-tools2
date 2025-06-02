@@ -47,7 +47,7 @@ def upload_file():
             group_dn_structure = request.form['group_dn']
             
             # Validate the CSV entries
-            valid_entries, invalid_entries = validate_entries(file_path, group_dn_structure, ldap_source)
+            valid_entries, invalid_entries = validate_entries(file_path, group_dn_structure)
             
             # Render the validation report
             return render_template('report.html', 
@@ -85,10 +85,10 @@ def apply():
     group_dn_structure = request.form['group_dn_structure']
 
     # Validate the CSV entries again (for safety)
-    valid_entries, _ = validate_entries(file_path, group_dn_structure, ldap_source)
+    valid_entries, _ = validate_entries(file_path, group_dn_structure)
 
     # Apply the changes
-    success_count, failure_count, failures = apply_changes(valid_entries, group_dn_structure, ldap_source)
+    success_count, failure_count, failures = apply_changes(valid_entries, group_dn_structure)
 
     # Render the results
     return render_template('results.html',
